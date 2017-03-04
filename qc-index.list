@@ -1,0 +1,35 @@
+#
+# List of qc indexes to create.
+#
+# A index line is build like this:
+#
+# 1) The name of the index. Must be a valid file name that ends with '.index'
+#    or '.index.ext'. The index will be created in the directory '~/.qc'.
+#
+# 2) OPTIONAL: One or more filter expressions '-f filter'. This is only
+#    needed if only directories with a certain name should be included
+#    in the index. The filter is matched against the entire path name. 
+#    Main use: To create a index that only contains hidden directories
+#    and their descendants use '-f "*/.*"'
+#    The filter will contain wildcards, so it has to be quoted.
+#
+# 3) One or more root directories. The index is build for this directories
+#    and their descendants.
+#
+# 4) OPTIONAL: A '--' followed by directory names to ignore. If a directroy
+#    name contains wildcards, it has to be quoted.
+#    
+# Empty lines and lines starting wiht '#' are ignored.
+#
+
+
+# create index of $HOME that ignores all hidden directories and directories named 'CVS'
+home.index $HOME -- '.*' CVS
+
+# create extension index of home only containing hidden directories.
+# Ignores some 'useless' hidden dirs.
+home.hidden.index.ext -f '*/.*' $HOME -- .metadata .settings .git .svn .hg '.jazz*' .bzr .qc .cp .cache CVS
+
+# create a extension index of the log directrories of a WebSphere Application Server
+#was-log.index.ext /opt/IBM/WebSphere/AppServer/profiles/*/logs
+
