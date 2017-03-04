@@ -512,8 +512,8 @@ function qc
 # Update/create the index.
 function __qc_updateIndex
 {
-    echo "Updating index ..."
     if [ -e $QC_DIR/qc-process-idx-list.sh ]; then
+        echo "Updating index ..."
         typeset ARGS
         ARGS=()
         for d in "$@"; do
@@ -523,7 +523,8 @@ function __qc_updateIndex
         
         $QC_DIR/qc-process-idx-list.sh "${ARGS[@]}"
     else
-        __qc_internalUpdateIndex "$1"
+        echo "Updating index (internal update)..."
+        __qc_internalUpdateIndex "$@"
     fi
 }
 
@@ -566,14 +567,23 @@ function __qc_internalUpdateIndex
     done
 
     typeset -a searchDirs
-    if [ $# -ne 0 ]; then
+    if [ $# -ne 0 ] && [ -e $INDEX_FILE ]; then
         for d in "$@"; do
             d="$(readlink -f "$d")"
-            searchDirs=( "${searchDirs[@]}" "$d" )
+            if [ -d "$d" ]; then
+                searchDirs=( "${searchDirs[@]}" "$d" )
+            else
+                echo >&2 "WARN: $d does not exist"
+            fi
         done
+        if [ ${#searchDirs[@]} -eq 0 ]; then
+            echo >&2 "No dir found: [ $@ ]"
+            return 1
+        fi
+
         re=$(printf "%s|" "${searchDirs[@]}")
         re=${re:0:-1}
-        egrep -v "^($re)/" $INDEX_FILE > $NEW_INDEX
+        egrep -v "^($re)(/|$)" $INDEX_FILE > $NEW_INDEX
     else
         searchDirs=( "$ROOT" )
     fi

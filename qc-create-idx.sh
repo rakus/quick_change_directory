@@ -145,10 +145,14 @@ INC_ROOTS=()
 if [ ${#INC_UPD[@]} -gt 0 ]; then
     if [ -e "$INDEX_FILE" ]; then
         for d in "${INC_UPD[@]}"; do
-            if is_descendant "$d" "${ROOTS[@]}"; then
-                INC_ROOTS+=( "$d" )
+            if [ -d "$d" ]; then
+                if is_descendant "$d" "${ROOTS[@]}"; then
+                    INC_ROOTS+=( "$d" )
+                else
+                    echo "WARN: Index $IDX_NAME does not contain $d -- ignored"
+                fi
             else
-                echo "WARN: Index $IDX_NAME does not contain $d -- ignored"
+                echo "WARN: $d does not exist -- ignored"
             fi
         done
         if [ ${#INC_ROOTS[@]} -eq 0 ]; then
