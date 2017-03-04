@@ -27,7 +27,7 @@ script_dir=$(cd "$(dirname $0)" 2>/dev/null; pwd)
 script_name="$(basename "$0")"
 script_file="$script_dir/$script_name"
 
-LST="$script_dir/qc-index.list"
+LST="$HOME/.qc/qc-index.list"
 
 usage()
 {
