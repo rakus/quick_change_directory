@@ -7,8 +7,6 @@
 # your .bashrc:
 #  . $HOME/.quick_change_dir
 #
-# IMPORTANT: Don't change the name, as parts of the script rely on it.
-#
 # Portability:
 # - KSH93: Should run unchanged. Needs testing.
 # - KSH88: UNKNOWN
@@ -282,8 +280,6 @@ QC_DIR=$HOME/.qc
 # file is managed using the command 'dstore'.
 QC_DSTORE_INDEX=$QC_DIR/index.dstore
 
-[ "$1" = "QC_CONSTANTS_ONLY" ] && return 0
-
 #function qc_debug
 #{
 #    echo "$*" >> $HOME/qc-debug.log
@@ -540,7 +536,7 @@ function __qc_internalUpdateIndex
     typeset -a IGNORE_DIRS
     IGNORE_DIRS=( '.*' CVS )
 
-    [ ! $QC_DIR ] && . ~/.quick_change_dir QC_CONSTANTS_ONLY
+    [ ! $QC_DIR ] && QC_DIR="$HOME/.qc"
     [ ! -d "$QC_DIR" ] && mkdir $QC_DIR
 
     typeset INDEX_FILE=$QC_DIR/$IDX_NAME.index
