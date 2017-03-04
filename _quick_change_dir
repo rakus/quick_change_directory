@@ -433,11 +433,7 @@ function qc
                 ;;
             u)
                 shift $((OPTIND-1))
-                if [ $# -gt 1 ]; then
-                    echo >&2 "ERROR: -u can only handle one argument"
-                    return 1
-                fi
-                __qc_updateIndex "$1"
+                __qc_updateIndex "$@"
                 return 0
                 ;;
             S)
@@ -473,9 +469,8 @@ function qc
                 echo >&2 "  qc :name"
                 echo >&2 "      Search for dir labeled with ':name' in index and cd to it."
                 echo >&2 "      Use the command 'dstore' to manage labeled directories."
-                echo >&2 "  qc -u [dir]"
-                          ....+....1....+....2....+....3....+....4....+....5....+....6....+....7....+....
-                echo >&2 "      Updates index. If dir is given only that directory is updated,"
+                echo >&2 "  qc -u [dir...]"
+                echo >&2 "      Updates index. If dirs are given only that directories are updated,"
                 echo >&2 "      This uses the external command '~/.qc/qc-process-idx-list.sh', if it"
                 echo >&2 "      is available. Else the internal update is used."
                 echo >&2 "  qc -l"
@@ -519,7 +514,14 @@ function __qc_updateIndex
 {
     echo "Updating index ..."
     if [ -e $QC_DIR/qc-process-idx-list.sh ]; then
-        $QC_DIR/qc-process-idx-list.sh -i "$1"
+        typeset ARGS
+        ARGS=()
+        for d in "$@"; do
+            d="$(readlink -f "$d")"
+            ARGS+=( "-i" "$d")
+        done
+        
+        $QC_DIR/qc-process-idx-list.sh "${ARGS[@]}"
     else
         __qc_internalUpdateIndex "$1"
     fi

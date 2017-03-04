@@ -4,6 +4,8 @@
 #
 # ABSTRACT: Script to create a directory index file for qc
 #
+# This script is intended to be called by qc-process-idx-list.sh.
+#
 # AUTHOR: Ralf Schandl
 #
 
@@ -40,6 +42,25 @@ usage()
     echo >&2 ""
 }
 
+is_descendant()
+{  
+    local e
+    for e in "${@:2}"; do
+        case "$1" in
+            $e)
+                return 0
+                ;;
+            $e/*)
+                return 0
+                ;;
+        esac
+    done
+    return 1
+}
+
+
+#---------[ MAIN ]-------------------------------------------------------------
+
 if [ $# -eq 0 ]; then
     usage
     exit 1
@@ -65,18 +86,15 @@ case "$IDX_NAME" in
 esac
 
 FILTER=()
-INC_UPD=
+INC_UPD=()
 while getopts ":f:i:" o "$@"; do
     case $o in
         f) FILTER=( "${FILTER[@]}" "$OPTARG" )
             ;;
         i)
-            if [ -n "$INC_UPD" ]; then
-                echo >&2 "Duplicate '-i'."
-                exit 1
-            fi
-            INC_UPD=$OPTARG
-            INC_UPD="${INC_UPD%"${INC_UPD##*[!/]}"}"
+            d=$OPTARG
+            d="${d%"${d##*[!/]}"}"
+            INC_UPD+=( "$d" )
             ;;
         *)
             [ "${!OPTIND}" != "--help" ] && echo >&2 "can't parse: ${!OPTIND}" && echo >&2 ""
@@ -123,24 +141,22 @@ fi
 
 INDEX_FILE=$QC_DIR/$IDX_NAME
 
-if [ -n "$INC_UPD" ]; then
+INC_ROOTS=()
+if [ ${#INC_UPD[@]} -gt 0 ]; then
     if [ -e "$INDEX_FILE" ]; then
-        for r in "${ROOTS[@]}"; do
-            case "$INC_UPD/" in
-                $r)
-                    HIT=true
-                    ;;
-                $r/*)
-                    DO_INC_UPD=true
-                    ;;
-            esac
+        for d in "${INC_UPD[@]}"; do
+            if is_descendant "$d" "${ROOTS[@]}"; then
+                INC_ROOTS+=( "$d" )
+            else
+                echo "WARN: Index $IDX_NAME does not contain $d -- ignored"
+            fi
         done
-        if [ ! $DO_INC_UPD ]; then
+        if [ ${#INC_ROOTS[@]} -eq 0 ]; then
             if [ ! $QC_LIST_UPD ]; then
-                echo >&2 "ERROR: Index $IDX_NAME does not contain $INC_UPD"
+                echo >&2 "ERROR: Index $IDX_NAME does not contain any of [ ${INC_UPD[@]} ]"
                 exit 1
             else 
-                echo >&2 "Skipping $IDX_NAME: does not contain $INC_UPD"
+                echo >&2 "Skipping $IDX_NAME: does not contain any of [ ${INC_UPD[@]} ]"
                 exit 0
             fi
         fi
@@ -151,11 +167,14 @@ fi
 
 NEW_INDEX=$(mktemp ${INDEX_FILE}.XXXX)
 
-# if incremental update set new ROOT and prefill index file
-if [ $DO_INC_UPD ]; then
-    ROOTS=($INC_UPD)
-    egrep -v "^$INC_UPD(/|$)" $INDEX_FILE > $NEW_INDEX
+# if incremental update set new ROOTS and prefill index file
+if [ ${#INC_ROOTS[@]} -gt 0 ]; then
+    ROOTS=( "${INC_ROOTS[@]}" )
+    re=$(printf "%s|" "${ROOTS[@]}")
+    re=${re:0:-1}
+    egrep -v "^($re)(/|$)" $INDEX_FILE > $NEW_INDEX
 fi
+inc_start=$(wc -l < $NEW_INDEX)
 
 # Build the 'find' expression for ignored dirs.
 ignDirs=()
@@ -206,6 +225,9 @@ find "${ROOTS[@]}" -xdev -type d "${ignDirs[@]}" -prune -o -xtype d "${filter[@]
 # replace .qc/index with new content
 mv -f $NEW_INDEX $INDEX_FILE
 
-echo "Stored $(wc -l < $INDEX_FILE) directory names."
+dir_count=$(wc -l < $INDEX_FILE)
+dir_diff=$(($dir_count - $inc_start))
+
+echo "Stored $dir_count directory names (New: $dir_diff)."
 
 #---------[ END OF FILE qc-create-idx.sh ]-------------------------------------

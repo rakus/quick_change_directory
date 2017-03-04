@@ -48,16 +48,13 @@ trim_str() {
     echo -n "$str"
 }
 
-INC_UPD=
+INC_UPD=()
 while getopts ":i:" o "$@"; do
     case $o in
         i)
-            if [ -n "$INC_UPD" ]; then
-                echo >&2 "Duplicate '-i'."
-                exit 1
-            fi
-            INC_UPD=$OPTARG
-            INC_UPD="${INC_UPD%"${INC_UPD##*[!/]}"}"
+            d=$OPTARG
+            d="${d%"${d##*[!/]}"}"
+            INC_UPD+=( -i "$d" )
             ;;
         *)
             [ "${!OPTIND}" != "--help" ] && echo >&2 "can't parse: ${!OPTIND}" && echo >&2 ""
@@ -82,9 +79,9 @@ for ln  in $(cat "$LST"); do
         exit 1
     fi
 
-    if [ $INC_UPD ]; then
+    if [ ${#INC_UPD[@]} -gt 0  ]; then
         tmpargs=("${ARGS[0]}")
-        tmpargs+=(-i "$INC_UPD")
+        tmpargs+=( "${INC_UPD[@]}")
         tmpargs+=("${ARGS[@]:1}")
         ARGS=("${tmpargs[@]}")
     fi
