@@ -14,7 +14,7 @@
 #
 #    # create index of $HOME
 #    test.index $HOME -- '.*' CVS
-#    
+#
 #    # create index of home that only containing hidden directories (and their childs)
 #    test.hidden.index.ext -f '*/.*' $HOME -- .settings .git .svn .hg '.jazz*' .bzr .qc .cp .cache CVS
 #
@@ -31,10 +31,15 @@ LST="$HOME/.qc/qc-index.list"
 
 usage()
 {
-    echo >&2 "USAGE: $script_dir [-i dir]"
+    echo >&2 "USAGE: $script_dir [-i dir] [index...]"
     echo >&2 ""
     echo >&2 "   -i dir  Incremental update the given dir in the affected index(es)."
     echo >&2 "           Indexes that does not contain the dir are not touched."
+    echo >&2 ""
+    echo >&2 "   index   Name of the indexes that should be updated. The given names"
+    echo >&2 "           are matched against the index names. So 'home' will match"
+    echo >&2 "           'home.index' and 'home.hidden.index.ext'."
+    echo >&2 "           To only update extension indexes use '*.ext'."
     echo >&2 ""
     exit 1
 }
@@ -44,9 +49,27 @@ trim_str() {
     # remove leading whitespaces
     str="${str#"${str%%[![:space:]]*}"}"
     # remove trailing whitespaces
-    str="${str%"${str##*[![:space:]]}"}"   
+    str="${str%"${str##*[![:space:]]}"}"
     echo -n "$str"
 }
+
+#
+# Check whether the first argument is somewhere in the following.
+# Used like: contains x.txt "${file[@]}"
+#
+contained()
+{
+    local e
+    for e in "${@:2}"; do
+        case "$1" in
+            $e*)
+                return 0
+                ;;
+        esac
+    done
+    return 1
+}
+#---------[ MAIN ]-------------------------------------------------------------
 
 INC_UPD=()
 while getopts ":i:" o "$@"; do
@@ -63,6 +86,8 @@ while getopts ":i:" o "$@"; do
     esac
 done
 
+shift $((OPTIND-1))
+
 export QC_LIST_UPD=true
 
 oifs="$IFS"
@@ -77,6 +102,12 @@ for ln  in $(cat "$LST"); do
     if [ $? -ne 0 ]; then
         echo >&2 "Error parsing: $ln"
         exit 1
+    fi
+
+    if [ $# -gt 0 ]; then
+        if ! contained "${ARGS[0]}" "$@"; then
+            continue
+        fi
     fi
 
     if [ ${#INC_UPD[@]} -gt 0  ]; then
