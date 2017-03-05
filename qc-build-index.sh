@@ -1,14 +1,14 @@
 #!/bin/bash
 #
-# FILE: qc-process-idx-list.sh
+# FILE: qc-build-index.sh
 #
-# ABSTRACT: Reads qc-index.list and builds indexes using qc-create-idx.sh.
+# ABSTRACT: Reads qc-index.list and builds indexes using qc-index-proc.sh.
 #
 # Content of qc-index.list are the command line parameters used for
-# qc-create-idx.sh. Each line describes one call of that script.
+# qc-index-proc.sh. Each line describes one call of that script.
 # Empty lines and lines starting with '#' are ignored.
 #
-# See 'qc-create-idx.sh --help'.
+# See 'qc-index-proc.sh --help'.
 #
 # Example qc-index.list:
 #
@@ -118,7 +118,7 @@ for ln  in $(cat "$LST"); do
     fi
 
     echo "Updating ${ARGS[0]}..."
-    #(set -x;$script_dir/qc-create-idx.sh "${ARGS[@]}")
-    ($script_dir/qc-create-idx.sh "${ARGS[@]}")
+    #(set -x;$script_dir/qc-index-proc.sh "${ARGS[@]}")
+    ($script_dir/qc-index-proc.sh "${ARGS[@]}")
 done
 

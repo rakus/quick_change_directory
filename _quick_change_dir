@@ -208,7 +208,7 @@ function qc
                 echo >&2 "      Use the command 'dstore' to manage labeled directories."
                 echo >&2 "  qc -u [dir...]"
                 echo >&2 "      Updates index. If dirs are given only that directories are updated,"
-                echo >&2 "      This uses the external command '~/.qc/qc-process-idx-list.sh', if it"
+                echo >&2 "      This uses the external command '~/.qc/qc-build-index.sh', if it"
                 echo >&2 "      is available. Else the internal update is used."
                 echo >&2 "  qc -l"
                 echo >&2 "      List labeled dirs."
@@ -249,7 +249,7 @@ function qc
 # Update/create the index.
 function __qc_updateIndex
 {
-    if [ -e $QC_DIR/qc-process-idx-list.sh ]; then
+    if [ -e $QC_DIR/qc-build-index.sh ]; then
         echo "Updating index ..."
         typeset ARGS
         ARGS=()
@@ -257,7 +257,7 @@ function __qc_updateIndex
             d="$(readlink -f "$d")"
             ARGS+=( "-i" "$d")
         done
-        $QC_DIR/qc-process-idx-list.sh "${ARGS[@]}"
+        $QC_DIR/qc-build-index.sh "${ARGS[@]}"
     else
         echo "Updating index (internal update)..."
         __qc_internalUpdateIndex "$@"

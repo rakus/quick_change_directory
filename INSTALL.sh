@@ -89,10 +89,10 @@ copy_file()
 
 add_to_crontab()
 {
-    if crontab -l | grep "qc-process-idx-list.sh" >/dev/null 2>&1; then
+    if crontab -l | grep "qc-build-index.sh" >/dev/null 2>&1; then
         echo "SKIPPED: Crontab entry seems to exist"
     else
-        CRE="*/10 * * * * \${HOME}/.qc/qc-process-idx-list.sh >\${HOME}/.qc/qc-process-idx-list.log 2>&1"
+        CRE="*/10 * * * * \${HOME}/.qc/qc-build-index.sh >\${HOME}/.qc/qc-build-index.log 2>&1"
         echo "Installing crontab entry:"
         echo "    $CRE"
         # to complex for run_cmd
@@ -135,8 +135,8 @@ if [ ! -d "$TGT" ]; then
     [ $? -ne 0 ] && exit 1
 fi
 
-copy_file qc-create-idx.sh "$TGT/qc-create-idx.sh"
-copy_file qc-process-idx-list.sh "$TGT/qc-process-idx-list.sh"
+copy_file qc-index-proc.sh "$TGT/qc-index-proc.sh"
+copy_file qc-build-index.sh "$TGT/qc-build-index.sh"
 copy_file _quick_change_dir "$HOME/.quick_change_dir"
 
 if [ ! -e "$TGT/qc-index.list" ]; then

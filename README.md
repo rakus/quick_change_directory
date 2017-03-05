@@ -42,8 +42,8 @@ there is no wildcard at the end.
 
 Example: `qc Documents//Cust`
 
-This searches for a directory named `Cust` somewhere below a directory named
-`Customer`.
+This searches for a directory named `Cust*` somewhere below a directory named
+`Documents`.
 
     .../Documents/Customer
     .../Documents/Test/Customer
@@ -75,7 +75,7 @@ Example: `qc :apachelog`
 
 This searches for a entry that is labeled with ":apachelog". 
 
-See [Manual Index](#Manual-Index)
+See [Manual Index](#manual-index)
 
 
 ### Multiple matches
@@ -135,18 +135,18 @@ would do for the cd commands.
 
 Assume you have a directory
 
-   ~/Documents/Customer/YoYo/MyProject/Admin
+    ~/Documents/Customer/YoYo/MyProject/Admin
 
 Examples to change to that directory:
 
-   qc C Y M A
-   qc MyPr Adm
-   qc MyProject/Ad
-   qc Customer//Admin    # "Admin" somewhere below "Customer"
-   qc YoYo/+/Admin       # '+' matches on subdirs
-   qc Customer/++/Admin  # '++' matches multiple subdirs
-   qc YoYo + Admin
-   qc Cust ++ Admin
+    qc C Y M A
+    qc MyPr Adm
+    qc MyProject/Ad
+    qc Customer//Admin    # "Admin" somewhere below "Customer"
+    qc YoYo/+/Admin       # '+' matches on subdirs
+    qc Customer/++/Admin  # '++' matches multiple subdirs
+    qc YoYo + Admin
+    qc Cust ++ Admin
 
 ### Other qc option:
 
@@ -174,7 +174,7 @@ This indexes are normal text files with one directory name per line.
 
 Normal indexes have the file extension `.index` and are always searched by qc.
 
-Extension indexes hate the file extension `.index.ext` and are only searched when
+Extension indexes have the file extension `.index.ext` and are only searched when
 qc is called with the option `-e`.
 
 The indexes are defined in the file `~/.qc/qc-index.list`. 
@@ -187,7 +187,7 @@ This defines the index "home.index" (file: `~/.qc/home.index`), that contains
 all directories below `$HOME`, but excludes `.*` (= hidden dirs) and directories
 named `CVS`.
 
-The file `qc-index.list` is processed using the script `qc-process-idx-list.sh`.
+The file `qc-index.list` is processed using the script `qc-build-index.sh`.
 
 ### Manual Index
 
@@ -204,13 +204,13 @@ The content of `index.dstore` is handled by the command `dstore`.
 
 | Command | Description |
 | --- | --- |
-|`dstore` | Adds the current dir. |
-|`dstore dirname` | Adds the named dir. |
-|`dstore -d` | Removes the current dir. |
-|`dstore -d dirname` | Removes the named dir. |
-|`dstore :lbl` | Adds the current dir with the label ':lbl'. Note: A label must always start with a ':'. |
-|`dstore :lbl dirname` | Adds the named dir with the label ':lbl'. |
-|`dstore -d :lbl` | Removes the entry labeled with ':lbl'. |
+|`dstore` | Adds the current dir to index. |
+|`dstore dirname` | Adds the named dir to index. |
+|`dstore -d` | Removes the current dir from index. |
+|`dstore -d dirname` | Removes the named dir from index.. |
+|`dstore :lbl` | Adds the current dir with the label ':lbl' to index. |
+|`dstore :lbl dirname` | Adds the named dir with the label ':lbl' to index. |
+|`dstore -d :lbl` | Removes the entry labeled with ':lbl' from index. |
 
 Other usage of `dstore`:
 
@@ -223,6 +223,18 @@ Other usage of `dstore`:
 
 
 ## Installation
+
+The following files are distributed:
+
+| File | Description | Install Location |
+| ---- | ----------- | ---------------- |
+| `README.md' | The file you are just reading. | Not installed |
+| `INSTALL.sh' | The installation script. | Not installed |
+| `_quick_change_dir' | The script to be sourced by .bashrc. | `~/.quick_change_dir` |
+| `qc-build-index.sh' | Processes `qc-index.list` to create index files. | `~/.qc/qc-build-index.sh` |
+| `qc-index-proc.sh' | Creates a single index file. | `~/.qc/qc-index-proc.sh` |
+| `qc-index.list' | Defines indexes to create. | `~/.qc/qc-index.list` |
+
 
 ### I don't want to install -- just test it
 
@@ -238,11 +250,11 @@ all directories in your home directory (excluding hidden dirs).
 1. Create the directory `$HOME/.qc`.
 
 2. Copy the following files to `$HOME/.qc`:
-  * `qc-process-idx-list.sh`
-  * `qc-create-idx.sh`
+  * `qc-build-index.sh`
+  * `qc-index-proc.sh`
   * `qc-index.list`
 
-3. Copy `_quick_change_dir` to `$HOME`
+3. Copy `_quick_change_dir` to `$HOME/.quick_change_dir`. Note the leading dot!
 
 4. Add the following line to your `.bashrc`:
 
@@ -253,11 +265,10 @@ all directories in your home directory (excluding hidden dirs).
    
    Run `crontab -e` and add the following line at the end of the file:
    
-   `*/10 * * * * ${HOME}/.qc/qc-process-idx-list.sh >${HOME}/.qc/qc-process-idx-list.log 2>&1`
+   `*/10 * * * * ${HOME}/.qc/qc-build-index.sh >${HOME}/.qc/qc-build-index.log 2>&1`
 
-   Every execution will write its output to `~/.qc/qc-process-idx-list.log`. This log file
+   Every execution will write its output to `~/.qc/qc-build-index.log`. This log file
    is always overwritten, so it only contains the log of the last execution.
-
 
 6. Now source `.quick_change_dir` by executing `. $HOME/.quick_change_dir` or just start a new shell.
    During the first sourcing of the script, the indexes are created. 
@@ -280,11 +291,17 @@ During the first sourcing of the script, the indexes are created.
 
 ## Portability
 
-**ksh93**: Should(!) run unchanged. Needs testing.
+### ksh93
 
-**ksh88**: Unknown.
+Should(!) run unchanged. Needs testing.
 
-**zsh**: Some code has to be adjusted. Search for "ZSH" in `_quick_change_dir`.
+### ksh88
+
+Unknown.
+
+### zsh
+
+Some code has to be adjusted. Search for "ZSH" in `_quick_change_dir`.
 
 [//]:  vim:ft=markdown:et:ts=4:spelllang=en_us:spell:tw=80
 

@@ -1,10 +1,10 @@
 #!/bin/bash
 #
-# FILE: qc-create-idx.sh
+# FILE: qc-index-proc.sh
 #
 # ABSTRACT: Script to create a directory index file for qc
 #
-# This script is intended to be called by qc-process-idx-list.sh.
+# This script is intended to be called by qc-build-index.sh.
 #
 # AUTHOR: Ralf Schandl
 #
@@ -239,4 +239,4 @@ fi
 
 echo "Stored $dir_count directory names$UPD."
 
-#---------[ END OF FILE qc-create-idx.sh ]-------------------------------------
+#---------[ END OF FILE qc-index-proc.sh ]-------------------------------------
