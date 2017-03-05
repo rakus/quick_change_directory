@@ -55,7 +55,7 @@ This searches for a directory named `Cust` somewhere below a directory named
 Example: `qc Project Ser`
 
 This searches for directory path that ends with `.../Project*/Ser*`
-It would match somthing like:
+It would match something like:
 
     ~/Documents/Customer/Project/Server
     ~/Documents/Customer/Project/Serial
@@ -116,7 +116,7 @@ Select the directory to change to by number. Enter 'q' to abort.
 
 6) A double slash ('//') is equivalent to '/**/'.
 
-7) A double asteriks _not_ followd by '/' matches zero or more characters
+7) A double asterisk _not_ followd by '/' matches zero or more characters
    (including '/')
 
 Note: More than two consecutive '*' are handled as '**'. The same is true for
@@ -151,7 +151,7 @@ Examples to change to that directory:
 ### Other qc option:
 
 * `-i` Search is case-insensitive (and slower). Only when searching by name.
-* `-e` Also serch extended index files.
+* `-e` Also search extended index files.
 * `-u` Update the indexes.
 * `-l` List labeled directories.
 * `-S` Print statistics of index files
@@ -192,15 +192,15 @@ The file `qc-index.list` is processed using the script `qc-process-idx-list.sh`.
 ### Manual Index
 
 The manual index is stored in the file `~/.qc/index.dstore`. It is used by qc
-during normal searches and while searching for labled directories.
+during normal searches and while searching for labeled directories.
 
 The file contains two types of entries (lines):
 
 1. Normal entries, that are just a directory name. (Like for the previous
    indexes.)
-2. Labeled entries, where the directory name is prefixed with a lable.
+2. Labeled entries, where the directory name is prefixed with a label.
 
-The content of `index.dstore` is handeled by the command `dstore`.
+The content of `index.dstore` is handled by the command `dstore`.
 
 | Command | Description |
 | --- | --- |
@@ -231,7 +231,7 @@ This is easy. Just do:
     . ./_quick_change_dir
 
 As no index exist, this will create the directory `~/.qc` and create a index of
-all directories in your home directory. 
+all directories in your home directory (excluding hidden dirs). 
 
 ### Manual Installation
 
@@ -254,6 +254,9 @@ all directories in your home directory.
    Run `crontab -e` and add the following line at the end of the file:
    
    `*/10 * * * * ${HOME}/.qc/qc-process-idx-list.sh >${HOME}/.qc/qc-process-idx-list.log 2>&1`
+
+   Every execution will write its output to `~/.qc/qc-process-idx-list.log`. This log file
+   is always overwritten, so it only contains the log of the last execution.
 
 
 6. Now source `.quick_change_dir` by executing `. $HOME/.quick_change_dir` or just start a new shell.
@@ -281,6 +284,7 @@ During the first sourcing of the script, the indexes are created.
 
 **ksh88**: Unknown.
 
-**zsh**: Some code has to be adjusted. search for "ZSH" in `_quick_change_dir`.
+**zsh**: Some code has to be adjusted. Search for "ZSH" in `_quick_change_dir`.
 
+[//]:  vim:ft=markdown:et:ts=4:spelllang=en_us:spell:tw=80
 
