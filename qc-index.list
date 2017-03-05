@@ -16,7 +16,7 @@
 # 3) One or more root directories. The index is build for this directories
 #    and their descendants.
 #
-# 4) OPTIONAL: A '--' followed by directory names to ignore. If a directroy
+# 4) OPTIONAL: A '--' followed by directory names to ignore. If a directory
 #    name contains wildcards, it has to be quoted.
 #
 # Empty lines and lines starting wiht '#' are ignored.
