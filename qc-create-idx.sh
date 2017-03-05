@@ -43,7 +43,7 @@ usage()
 }
 
 is_descendant()
-{  
+{
     local e
     for e in "${@:2}"; do
         case "$1" in
@@ -159,7 +159,7 @@ if [ ${#INC_UPD[@]} -gt 0 ]; then
             if [ ! $QC_LIST_UPD ]; then
                 echo >&2 "ERROR: Index $IDX_NAME does not contain any of [ ${INC_UPD[@]} ]"
                 exit 1
-            else 
+            else
                 echo >&2 "Skipping $IDX_NAME: does not contain any of [ ${INC_UPD[@]} ]"
                 exit 0
             fi
@@ -221,7 +221,7 @@ if [ ${#FILTER[@]} -gt 0 ]; then
     filter+=(")")
 fi
 
-# find all directories excluding those configured 
+# find all directories excluding those configured
 find "${ROOTS[@]}" -xdev -type d "${ignDirs[@]}" -prune -o -xtype d "${filter[@]}" -print >> $NEW_INDEX
 # Don't check exit code.
 # A "permission denied" in some subdir would kill the index
@@ -230,8 +230,13 @@ find "${ROOTS[@]}" -xdev -type d "${ignDirs[@]}" -prune -o -xtype d "${filter[@]
 mv -f $NEW_INDEX $INDEX_FILE
 
 dir_count=$(wc -l < $INDEX_FILE)
-dir_diff=$(($dir_count - $inc_start))
 
-echo "Stored $dir_count directory names (New: $dir_diff)."
+UPD=''
+if [ ${#INC_ROOTS[@]} -gt 0 ]; then
+    dir_diff=$(($dir_count - $inc_start))
+    UPD=" (Updated: $dir_diff)"
+fi
+
+echo "Stored $dir_count directory names$UPD."
 
 #---------[ END OF FILE qc-create-idx.sh ]-------------------------------------
