@@ -158,7 +158,7 @@ else
     fi
 fi
 
-add_to_crontab 
+add_to_crontab
 
 add_to_init_file "$HOME/.bashrc"
 

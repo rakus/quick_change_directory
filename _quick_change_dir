@@ -257,7 +257,6 @@ function __qc_updateIndex
             d="$(readlink -f "$d")"
             ARGS+=( "-i" "$d")
         done
-        
         $QC_DIR/qc-process-idx-list.sh "${ARGS[@]}"
     else
         echo "Updating index (internal update)..."
