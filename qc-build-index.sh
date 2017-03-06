@@ -45,7 +45,7 @@ usage()
 }
 
 trim_str() {
-    local str="$*"
+    typeset str="$*"
     # remove leading whitespaces
     str="${str#"${str%%[![:space:]]*}"}"
     # remove trailing whitespaces
@@ -59,7 +59,7 @@ trim_str() {
 #
 contained()
 {
-    local e
+    typeset e
     for e in "${@:2}"; do
         case "$1" in
             $e*)
@@ -71,7 +71,7 @@ contained()
 }
 #---------[ MAIN ]-------------------------------------------------------------
 
-INC_UPD=()
+typeset -a INC_UPD
 while getopts ":i:" o "$@"; do
     case $o in
         i)
@@ -105,18 +105,21 @@ for ln  in $(cat "$LST"); do
     fi
 
     if [ $# -gt 0 ]; then
+        # ZSH: Arrays are 1-based
         if ! contained "${ARGS[0]}" "$@"; then
             continue
         fi
     fi
 
     if [ ${#INC_UPD[@]} -gt 0  ]; then
+        # ZSH: Arrays are 1-based
         tmpargs=("${ARGS[0]}")
         tmpargs+=( "${INC_UPD[@]}")
         tmpargs+=("${ARGS[@]:1}")
         ARGS=("${tmpargs[@]}")
     fi
 
+    # ZSH: Arrays are 1-based
     echo "Updating ${ARGS[0]}..."
     #(set -x;$script_dir/qc-index-proc.sh "${ARGS[@]}")
     ($script_dir/qc-index-proc.sh "${ARGS[@]}")

@@ -44,7 +44,7 @@ usage()
 
 is_descendant()
 {
-    local e
+    typeset e
     for e in "${@:2}"; do
         case "$1" in
             $e)
@@ -85,8 +85,8 @@ case "$IDX_NAME" in
         ;;
 esac
 
-FILTER=()
-INC_UPD=()
+typeset -a FILTER
+typeset -a INC_UPD
 while getopts ":f:i:" o "$@"; do
     case $o in
         f) FILTER=( "${FILTER[@]}" "$OPTARG" )
@@ -106,9 +106,9 @@ done
 
 shift $((OPTIND-1))
 
-ROOTS=( )
+typeset -a ROOTS
 while [ $# -gt 0 ]; do
-    if [ $1 == '--' ]; then
+    if [ "$1" = "--" ]; then
         shift
         break
     fi
@@ -123,7 +123,7 @@ if [ ${#ROOTS[@]} -eq 0 ]; then
 fi
 
 
-IGNORE_DIRS=( )
+typeset -a IGNORE_DIRS
 while [ $# -gt 0 ]; do
     IGNORE_DIRS=( "${IGNORE_DIRS[@]}" "$1" )
     shift
@@ -141,7 +141,7 @@ fi
 
 INDEX_FILE=$QC_DIR/$IDX_NAME
 
-INC_ROOTS=()
+typeset -a INC_ROOTS
 if [ ${#INC_UPD[@]} -gt 0 ]; then
     if [ -e "$INDEX_FILE" ]; then
         for d in "${INC_UPD[@]}"; do
@@ -181,7 +181,7 @@ fi
 inc_start=$(wc -l < $NEW_INDEX)
 
 # Build the 'find' expression for ignored dirs.
-ignDirs=()
+typeset -a ignDirs
 if [ ${#IGNORE_DIRS[@]} -gt 0 ]; then
     ignDirs=( '(' )
     for ign in "${IGNORE_DIRS[@]}"; do
@@ -208,7 +208,7 @@ else
 fi
 
 
-filter=()
+typeset -a filter
 if [ ${#FILTER[@]} -gt 0 ]; then
     filter=( '(' )
     for f in "${FILTER[@]}"; do

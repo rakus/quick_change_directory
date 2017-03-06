@@ -100,8 +100,8 @@ Select the directory to change to by number. Enter 'q' to abort.
 2. The character '+' is equivalent to '*'. The '+' doesn't need escaping on
    the command line.
 
-3. Every word, that does not end with a '/' gets a '*' appended before it is
-   joined with the next word with a '/'.
+3. Every parameter, that does not end with a '/' gets a '*' appended before it
+   is joined with the next word with a '/'.
    So:
    * `Hallo World`  -> `Hallo*/World*`
    * `Hallo/ World` -> `Hallo/World*`
@@ -293,15 +293,21 @@ During the first sourcing of the script, the indexes are created.
 
 ### ksh93
 
-Should(!) run unchanged. Needs testing.
+Should(!) run unchanged. The script `.quick_change_dir` and the supporting
+scripts `qc-build-index.sh` and `qc-index-proc.sh` were briefly tested with
+ksh93 version "93u+ 2012-08-01".
 
-### ksh88
-
-Unknown.
+Needs further testing.
 
 ### zsh
 
-Some code has to be adjusted. Search for "ZSH" in `_quick_change_dir`.
+Running `.quick_change_dir` with zsh needs some porting:
+
+* zsh arrays are 1-based while bash/ksh uses 0-based arrays
+* In the context of `getopt`, shifting by `OPTIND` seems different.
+* Some language constructs used in bash/ksh do not work as expected. Like
+  `${@:2}`.
+
 
 [//]:  vim:ft=markdown:et:ts=4:spelllang=en_us:spell:tw=80
 
