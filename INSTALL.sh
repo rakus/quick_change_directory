@@ -24,19 +24,37 @@ script_name="$(basename "$0")"
 script_file="$script_dir/$script_name"
 
 
+usage()
+{
+        echo ""
+        echo "USAGE: $script_name [YES|HARD]"
+        echo ""
+        echo "  If called WITHOUT paramater, just print what would be done."
+        echo ""
+        echo "  If called with paramater \"YES\", does the installation and creates"
+        echo "  backup copies of already existing files."
+        echo ""
+        echo "  If called with parameter \"HARD\", does the installation and overwrites"
+        echo "  existing files."
+        echo "  WARNING: This will remove all local adaptations, including changes"
+        echo "           to '~/.qc/qc-index.list'."
+        echo ""
+}
+
 EXECUTE=''
+HARD=''
 if [ $# -gt 0 ]; then
-    if [ "$1" = "YES" ]; then
+    if [ $# -ne 1 ]; then
+        usage
+        exit 1
+    elif [ "$1" = "YES" ]; then
         EXECUTE=true
+    elif [ "$1" = "HARD" ]; then
+        EXECUTE=true
+        HARD=true
     else
         echo "ERROR: unknown parameter $1"
-        echo ""
-        echo "USAGE: $script_name [YES]"
-        echo ""
-        echo "  If called WITHOUT paramater "YES", just print what would be done."
-        echo ""
-        echo "  If called with paramater "YES", do the installation."
-        echo ""
+        usage
         exit 1
     fi
 fi
@@ -76,7 +94,7 @@ copy_file()
         return 0
     fi
 
-    if [ -e "$tgt" ]; then
+    if [ -e "$tgt" ] && [ ! $HARD ]; then
         echo "Saving existing $tgt to $tgt.install-prev"
         run_cmd mv -f "$tgt" "$tgt.install-prev"
         [ $? -ne 0 ] && exit 1
@@ -85,6 +103,9 @@ copy_file()
     echo "Copying $src to $tgt..."
     run_cmd cp -f "$src" "$tgt"
     [ $? -ne 0 ] && exit 1
+    if [[ "$tgt" == *.sh ]]; then
+        run_cmd chmod +x "$tgt"
+    fi
 }
 
 add_to_crontab()
@@ -139,7 +160,7 @@ copy_file qc-index-proc.sh "$TGT/qc-index-proc.sh"
 copy_file qc-build-index.sh "$TGT/qc-build-index.sh"
 copy_file _quick_change_dir "$HOME/.quick_change_dir"
 
-if [ ! -e "$TGT/qc-index.list" ]; then
+if [ ! -e "$TGT/qc-index.list" ] || [ $HARD ]; then
     copy_file qc-index.list "$TGT/qc-index.list"
 else
     if diff qc-index.list "$TGT/qc-index.list" >/dev/null 2>&1; then
