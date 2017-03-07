@@ -502,7 +502,7 @@ function dstore
                     echo >&2 "Invalid label '$lbl'. Must not contain whitespaces."
                     return 1
                 fi
-                grep -v "^$lbl " $QC_DSTORE_INDEX > $QC_DSTORE_INDEX.tmp
+                grep -vi "^$lbl " $QC_DSTORE_INDEX > $QC_DSTORE_INDEX.tmp
                 mv $QC_DSTORE_INDEX.tmp $QC_DSTORE_INDEX
                 if [ "$delete" != "true" ]; then
                     typeset dir
