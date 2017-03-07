@@ -122,6 +122,7 @@ for ln  in $(cat "$LST"); do
     # ZSH: Arrays are 1-based
     echo "Updating ${ARGS[0]}..."
     #(set -x;$script_dir/qc-index-proc.sh "${ARGS[@]}")
-    ($script_dir/qc-index-proc.sh "${ARGS[@]}")
+    $script_dir/qc-index-proc.sh "${ARGS[@]}"
+    [ $? -ne 0 ] && exit 1
 done
 

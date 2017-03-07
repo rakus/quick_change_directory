@@ -79,11 +79,15 @@ case "$IDX_NAME" in
     *.index.ext) :
         ;;
     *)
-        echo >&2 "Index name invalid. Must end with '.index' or '.index.ext'"
+        echo >&2 "ERROR: Index name invalid. Must end with '.index' or '.index.ext'"
         usage
         exit 1
         ;;
 esac
+if [ "$IDX_NAME" != "$(basename "$IDX_NAME")" ]; then
+    echo >&2 "ERROR: Index name must be a plain filename."
+    exit 1
+fi
 
 typeset -a FILTER
 typeset -a INC_UPD
@@ -97,7 +101,7 @@ while getopts ":f:i:" o "$@"; do
             INC_UPD+=( "$d" )
             ;;
         *)
-            [ "${!OPTIND}" != "--help" ] && echo >&2 "can't parse: ${!OPTIND}" && echo >&2 ""
+            [ "${!OPTIND}" != "--help" ] && echo >&2 "ERROR: can't parse: ${!OPTIND}" && echo >&2 ""
             usage
             exit 1
             ;;
