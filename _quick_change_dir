@@ -187,7 +187,7 @@ function qc
                     echo "$QC_DSTORE_INDEX"
                     echo "   Last Upd: $(stat -c "%y" $QC_DSTORE_INDEX)"
                     printf "   Entries:  %'d (%'d bytes)\n" $(cat "$QC_DSTORE_INDEX" | wc -lc)
-                    echo "   Labeled entries:  $(grep "^:" $QC_DSTORE_INDEX|wc -l| cut "-d " -f1)"
+                    echo "   Labeled entries:  $(grep -c "^:" $QC_DSTORE_INDEX)"
                 fi
                 return 0
                 ;;
@@ -322,7 +322,7 @@ function __qc_internalUpdateIndex
 
         re=$(printf "%s|" "${searchDirs[@]}")
         re=${re:0:-1}
-        egrep -v "^($re)(/|$)" $INDEX_FILE > $NEW_INDEX
+        grep -Ev "^($re)(/|$)" $INDEX_FILE > $NEW_INDEX
     else
         searchDirs=( "$ROOT" )
     fi
@@ -360,13 +360,11 @@ function __dstore_clean
 
     # get other index files
     typeset -a otherIdx
-    for fn in $QC_DIR/*.index; do
-        if [[ $fn != $QC_DSTORE_INDEX ]]; then
-            otherIdx+=($fn)
-        fi
-    done
-    if [ ${#otherIdx[*]} -eq 0 ]; then
-        otherIdx+=( /dev/null )
+    otherIdx=( $QC_DIR/*.index )
+    if [ ${#otherIdx[@]} -eq 0 ]; then
+        otherIdx=( /dev/null )
+    elif [ ${#otherIdx[@]} -eq 1 ]; then
+        [ ! -e "${otherIdx[0]}" ] && otherIdx=( /dev/null )
     fi
 
     typeset IFS=$'\n'
