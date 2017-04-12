@@ -269,78 +269,23 @@ function __qc_updateIndex
 
 function __qc_internalUpdateIndex
 {
-    # Root directory of the index
-    typeset ROOT="$HOME"
-
-    # Name of the index
-    typeset IDX_NAME="home"
-
-    # Array of directories to ignore
-    typeset -a IGNORE_DIRS
-    IGNORE_DIRS=( '.*' CVS )
-
     [ ! $QC_DIR ] && QC_DIR="$HOME/.qc"
-    [ ! -d "$QC_DIR" ] && mkdir $QC_DIR
+    if [ ! -d "$QC_DIR" ]; then
+        mkdir $QC_DIR
+        [ $? -ne 0 ] && return 1
+    fi
 
-    typeset INDEX_FILE=$QC_DIR/$IDX_NAME.index
-
+    typeset INDEX_FILE=$QC_DIR/home.index
     typeset NEW_INDEX=$(mktemp ${INDEX_FILE}.XXXX)
 
-    typeset -a ignDirs
-    for ign in "${IGNORE_DIRS[@]}"; do
-        if [ ${#ignDirs[@]} -gt 0 ]; then
-            ignDirs+=(-o)
-        fi
-        if [[ "$ign" =~ ^/.*$ ]]; then
-            ignDirs+=(-wholename)
-        elif [[ "$ign" =~ ^\./.*$ ]]; then
-            ignDirs+=(-wholename)
-            ign="${ROOT}${ign:1}"
-        elif [[ "$ign" =~ ^.*/.*$ ]]; then
-            ignDirs+=(-wholename)
-            ign="*$ign"
-        else
-            ignDirs+=(-name)
-        fi
-        ignDirs+=( "$ign" )
-    done
+    find "${HOME}" -xdev -type d \( -name '.*' -o -name CVS \) -prune -o -xtype d -print >> $NEW_INDEX
 
-    typeset -a searchDirs
-    if [ $# -ne 0 ] && [ -e $INDEX_FILE ]; then
-        for d in "$@"; do
-            d="$(readlink -f "$d")"
-            if [ -d "$d" ]; then
-                searchDirs=( "${searchDirs[@]}" "$d" )
-            else
-                echo >&2 "WARN: $d does not exist"
-            fi
-        done
-        if [ ${#searchDirs[@]} -eq 0 ]; then
-            echo >&2 "No dir found: [ $@ ]"
-            return 1
-        fi
-
-        re=$(printf "%s|" "${searchDirs[@]}")
-        re=${re:0:-1}
-        grep -Ev "^($re)(/|$)" $INDEX_FILE > $NEW_INDEX
-    else
-        searchDirs=( "$ROOT" )
-    fi
-
-    # find all directories excluding hidden dirs and those configured above
-    if [ ${#ignDirs[@]} -gt 0 ]; then
-        find "${searchDirs[@]}" -xdev -type d \( "${ignDirs[@]}" \) -prune -o -xtype d -print >> $NEW_INDEX
-    else
-        find "${searchDirs[@]}" -xdev -xtype d -print >> $NEW_INDEX
-    fi
-
-    # replace .qc/index with new content
     mv -f $NEW_INDEX $INDEX_FILE
 
     echo "Stored $(wc -l < $INDEX_FILE) directory names."
 }
 
-if [ ! -e $QC_DIR/home.index ]; then
+if ! ls $QC_DIR/*.index >/dev/null 2>&1; then
     echo "QuickChangeDirectory: No index files found .. creating ..."
     __qc_updateIndex
 fi
@@ -621,7 +566,7 @@ function __qc_complete
             #qc_debug "curRE >>$curRE<<"
             #qc_debug "cleanRE >>$cleanRE<<"
             typeset IFS=$'\n'
-            opts=($(grep --no-filename $ic -o -- "/$curRE" $QC_DIR/*.index $extIdx | sort | uniq  | sed "s|^.*/${cleanRE}|/${cur}|$sedIC" | cut -c2-))
+            opts=($(grep --no-filename $ic -o -- "/$curRE" $QC_DIR/*.index $QC_DSTORE_INDEX $extIdx | sort | uniq  | sed "s|^.*/${cleanRE}|/${cur}|$sedIC" | cut -c2-))
             #qc_debug "OPTS >>${opts[*]}<<"
             COMPREPLY=( $(compgen -o nospace -S/ -W "${opts[*]}" -- "$cur" ))
             #COMPREPLY=( "${opts[@]}")
