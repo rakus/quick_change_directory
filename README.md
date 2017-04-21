@@ -21,7 +21,7 @@ This searches for a directory named `Pro*`. It would match something like:
     ~/Documents/Customer/YoYo/Protocols
     ~/Documents/private/Profile
 
-If only one name matches, the directory is changed to that dir.
+If only one name matches, the directory is changed immediately.
 If multiple entries matches, a list of possible target directories is
 displayed. Choose one by number and the directory is changed.
 
@@ -75,7 +75,7 @@ Example: `qc :apachelog`
 
 This searches for a entry that is labeled with ":apachelog". 
 
-See [Manual Index](#manual-index)
+Labels are explained in [Manual Index](#manual-index).
 
 
 ### Multiple matches
@@ -189,6 +189,17 @@ named `CVS`.
 
 The file `qc-index.list` is processed using the script `qc-build-index.sh`.
 
+**Update Performance**
+
+My home directory contains ~100000 directories and my HD is a SSD. 
+I have two indexes defined (see file qc-index.list).
+
+After dropping the file caches the first update takes about 19 seconds.
+Subsequent updates are much faster, they take about 2.5 seconds.
+
+BTW: Due to ignored dirs (like .git, .metadata, ...) only half of the existing
+directories are stored in the indexes.
+
 ### Manual Index
 
 The manual index is stored in the file `~/.qc/index.dstore`. It is used by qc
@@ -200,14 +211,19 @@ The file contains two types of entries (lines):
    indexes.)
 2. Labeled entries, where the directory name is prefixed with a label.
 
-The content of `index.dstore` is handled by the command `dstore`.
+Example:
+
+    /opt/IBM/WebSphere/AppServer/profiles
+    :tsmlog /var/log/tsm
+
+The content of `index.dstore` is managed with the command `dstore`.
 
 | Command | Description |
 | --- | --- |
 |`dstore` | Adds the current dir to index. |
 |`dstore dirname` | Adds the named dir to index. |
 |`dstore -d` | Removes the current dir from index. |
-|`dstore -d dirname` | Removes the named dir from index.. |
+|`dstore -d dirname` | Removes the named dir from index. |
 |`dstore :lbl` | Adds the current dir with the label ':lbl' to index. |
 |`dstore :lbl dirname` | Adds the named dir with the label ':lbl' to index. |
 |`dstore -d :lbl` | Removes the entry labeled with ':lbl' from index. |
@@ -218,7 +234,7 @@ Other usage of `dstore`:
 | --- | --- |
 |`dstore --help` | Shows help. |
 |`dstore -l` | Lists content. |
-|`dstore -e` | Opens `index.dstore` in a editor (default vi) |
+|`dstore -e` | Opens `index.dstore` in a editor (default vi). |
 |`dstore -c` | Cleans up by removing none-existing or duplicate entries or entries already contained in another index file. It also warns about duplicate labels. |
 
 
@@ -228,12 +244,12 @@ The following files are distributed:
 
 | File | Description | Install Location |
 | ---- | ----------- | ---------------- |
-| `README.md' | The file you are just reading. | Not installed |
-| `INSTALL.sh' | The installation script. | Not installed |
-| `_quick_change_dir' | The script to be sourced by .bashrc. | `~/.quick_change_dir` |
-| `qc-build-index.sh' | Processes `qc-index.list` to create index files. | `~/.qc/qc-build-index.sh` |
-| `qc-index-proc.sh' | Creates a single index file. | `~/.qc/qc-index-proc.sh` |
-| `qc-index.list' | Defines indexes to create. | `~/.qc/qc-index.list` |
+| `README.md` | The file you are just reading. | Not installed |
+| `INSTALL.sh` | The installation script. | Not installed |
+| `_quick_change_dir` | The script to be sourced by .bashrc. | `~/.quick_change_dir` |
+| `qc-build-index.sh` | Processes `qc-index.list` to create index files. | `~/.qc/qc-build-index.sh` |
+| `qc-index-proc.sh` | Called by `qc-build-index.sh` to creates a index file. | `~/.qc/qc-index-proc.sh` |
+| `qc-index.list` | Defines indexes to create. | `~/.qc/qc-index.list` |
 
 
 ### I don't want to install -- just test it
@@ -256,7 +272,7 @@ all directories in your home directory (excluding hidden dirs).
 
 3. Copy `_quick_change_dir` to `$HOME/.quick_change_dir`. Note the leading dot!
 
-4. Add the following line to your `.bashrc`:
+4. Add the following line to your `.bashrc` (or `.kshrc`):
 
    `[ -e "$HOME/.quick_change_dir" ] && . $HOME/.quick_change_dir`
 
@@ -277,7 +293,7 @@ all directories in your home directory (excluding hidden dirs).
 
 The installation script `INSTALL.sh` automates the steps described in the
 section "Manual Installation" above. This includes the change to your local
-crontab.
+crontab and updates to .bashrc and .kshrc (if available).
 
 If the script is called without parameter, it will run in "simulation mode" and
 only print what would be done.

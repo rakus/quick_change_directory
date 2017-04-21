@@ -152,8 +152,8 @@ if [ ${#INC_UPD[@]} -gt 0 ]; then
             if [ -d "$d" ]; then
                 if is_descendant "$d" "${ROOTS[@]}"; then
                     INC_ROOTS+=( "$d" )
-                else
-                    echo "WARN: Index $IDX_NAME does not contain $d -- ignored"
+                #else
+                #    echo "WARN: Index $IDX_NAME does not contain $d -- ignored"
                 fi
             else
                 echo "WARN: $d does not exist -- ignored"

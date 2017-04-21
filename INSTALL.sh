@@ -129,6 +129,12 @@ add_to_crontab()
 add_to_init_file()
 {
     typeset file="$1"
+
+    if [ ! -e "$file" ]; then
+        echo "SKIPPED: File does not exist: $file"
+        return
+    fi
+
     if grep "\\.quick_change_dir" "$file" >/dev/null 2>&1; then
         echo "SKIPPED: The file .quick_change_dir seems to be already sourced from $file"
     else
@@ -183,6 +189,7 @@ fi
 add_to_crontab
 
 add_to_init_file "$HOME/.bashrc"
+add_to_init_file "$HOME/.kshrc"
 
 # Add to .kshrc if available?
 
