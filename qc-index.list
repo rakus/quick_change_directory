@@ -24,12 +24,18 @@
 #
 
 
-# create index of $HOME that ignores all hidden directories and directories named 'CVS'
+# create index of $HOME that ignores all hidden directories and directories
+# named 'CVS'
 home.index $HOME -- '.*' CVS
 
 # create extension index of $HOME only containing hidden directories.
 # Ignores some 'useless' hidden dirs.
 home.hidden.index.ext -f '*/.*' $HOME -- .metadata .settings .git .svn .hg '.jazz*' .bzr .qc .cp .cache CVS
+
+# create a extension index of the global file system. Exclude $HOME, as this
+# is already contained in home.index. Also exclude /media as it may contain 
+# only temporarily available file systems (like a CD or a USB drive).
+#global.index.ext / -- $HOME /media
 
 # create a extension index of the log directrories of a WebSphere Application Server
 #was-log.index.ext /opt/IBM/WebSphere/AppServer/profiles/*/logs
