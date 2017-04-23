@@ -99,7 +99,20 @@ function __qc_select
             ;;
     esac
 
+    # filter out not existing dirs
+    # ZSH: Arrays start with 1
+    typeset i
+    typeset orgCnt=${#dl[*]}
+    for (( i=0; i<=$orgCnt; i++ )); do  
+        # remove color codes for check
+        [ ! -d "$(echo "${dl[$i]}"| sed -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]//g")" ] && unset dl[$i]
+    done
+    dl=( "${dl[@]}" )
+
     typeset cnt=${#dl[*]}
+    if [ $orgCnt -ne $cnt ]; then
+        echo >&2 "qc: Removed $(( $orgCnt - $cnt )) non existing directories from result"
+    fi
 
     if [[ $cnt -eq 0 ]]; then
         echo >&2 "qc: $@: No matching directory found"
@@ -128,7 +141,7 @@ function __qc_select
         # choosen dir.
         dl=( "${dl[@]/#$HOME/\~}" )
         # ZSH: dl=( "${dl[@]/#$HOME/~}" )
-        # ZSH: On ZSH the following select only display subset (term lines)
+        # ZSH: On ZSH the following select only display subset (term-height lines)
         export LINES=0
         select dir in "${dl[@]}" ; do
             # replace ~ with $HOME and remove color codes
