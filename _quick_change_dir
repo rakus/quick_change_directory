@@ -519,6 +519,17 @@ function __qc_complete
     #qc_debug "prev >>$prev<<"
     #qc_debug "CL >>$COMP_LINE<<"
 
+    if echo "$prev" | grep " -[^ ]*u" >/dev/null 2>&1 ; then
+        COMPREPLY=( $( compgen -o dirnames -- $cur) )
+        return 0
+    fi
+    if echo "$prev" | grep " -[^ ]*S" >/dev/null 2>&1 ; then
+        return 0
+    fi
+    if echo "$prev" | grep " -[^ ]*l" >/dev/null 2>&1 ; then
+        return 0
+    fi
+
     typeset ic
     typeset sedIC
     if echo "$prev" | grep " -[^ ]*i" >/dev/null 2>&1 ; then
