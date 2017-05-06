@@ -25,7 +25,7 @@ If only one name matches, the directory is changed immediately.
 If multiple entries matches, a list of possible target directories is
 displayed. Choose one by number and the directory is changed.
 
-Example: `qc Project/ser`
+Example: `qc Project/Ser`
 
 This searches for a directory path that ends with `.../Project/Ser*`. It would
 match something like:
