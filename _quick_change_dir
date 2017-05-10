@@ -30,39 +30,57 @@ QC_DSTORE_INDEX=$QC_DIR/index.dstore
 # Create regex from qc argument
 # Used from qc and completion
 # $*: The pattern to create a regex
-function __qc_make_regex
+function __qc_glob2regex
 {
-    #qc_debug "Pattern 0 >>$(printf "'%s' " "$@")<<"
+    typeset glob regex w
 
-    printf "%s\t" "$@" | awk -F$'\t' '{
-    sub(/^\/\/*/, "", $1);
-    for (i=1; i<NF; i++) {
-        x=$i;
-        sub(/^\//, "", x);
-        gsub(/\*/, "+", x);
-        if (x ~ /\+$/ ) {
-            r = r x "/";
-        }
-        else if (x ~ /[^\/]$/ ) {
-            r = r x "+/";
-        }
-        else {
-            r = r x;
-        }
-    }
-    gsub(/\./, "\\.", r);
-    sub(/\/\/*$/, "$", r);
-    sub(/^(\+\+*\/)+/, "", r);
-    gsub(/\+\+\+*\//, "\\(.*/\\)*", r);
-    gsub(/\+\+\+*/, ".*", r);
-    gsub(/\+/, "[^/]*", r);
-    gsub(/\/\/\/*/, "/\\(.*/\\)*", r);
-    gsub(/\?/, "[^/]", r);
-    sub(/^~\//, ENVIRON["HOME"] "/", r);
-    sub(/^\.\//, ENVIRON["PWD"] "/", r);
-    sub(/^\/\/*/, "", r);
-    print r;
-    }'
+    for w in "$@"; do
+        case "$w" in
+            */) # don't append '*' if word ends with '/'
+                w="${w:0:-1}";;
+            *\*) # don't append '*' if it already ends with '*'
+                : ;;
+            *)   w="$w*" ;;
+        esac
+        glob="$glob/$w"
+    done
+
+    while [ -n "$glob" ]; do
+
+        case "$glob" in
+            \*\**) # '**' -> '.*'
+                regex="$regex.*"
+                glob="$(echo "$glob" | sed "s/^\\*\\**//")"
+                ;;
+            //*) # '//' -> '/.*/'
+                regex="$regex/\\(.*/\\)*"
+                glob="$(echo "$glob" | sed "s%^///*%%")"
+                ;;
+            \**) # '*' -> '[^/]*'
+                regex="$regex[^/]*"
+                glob="${glob:1}"
+                ;;
+            \?*) # '?' -> '[^/]'
+                regex="$regex[^/]"
+                glob="${glob:1}"
+                ;;
+            \\\?*) # copy escaped char
+                regex="$regex?"
+                glob="${glob:2}"
+                ;;
+            \\*) # copy escaped char
+                regex="$regex${glob:0:2}"
+                glob="${glob:2}"
+                ;;
+            *)
+                regex="$regex${glob:0:1}"
+                glob="${glob:1}"
+                ;;
+        esac
+    done
+    #remove leading '/'
+    regex="${regex:1}$"
+    echo "$regex"
 }
 
 # Select directories found in ~/.qc/*.index.
@@ -94,7 +112,7 @@ function __qc_select
             dl=( $( (grep -h -i -- "^$pattern[^ ]* " $QC_DSTORE_INDEX||([ $? = 2 ] && echo >&2 "$NO_DSTORE_IDX_MSG")) | cut "-d " -f2- | sort | uniq) )
             ;;
         *)
-            pattern=$(__qc_make_regex "$@")
+            pattern=$(__qc_glob2regex "$@")
             dl=( $( (grep --color=always -h $grepOpt -- "/$pattern" $QC_DIR/*.index $QC_DSTORE_INDEX $extIdx || ([ $? = 2 ] && echo >&2 "$NO_IDX_MSG"))|sed "s/^:[^ ]* //"|sort|uniq) )
             ;;
     esac
@@ -298,13 +316,16 @@ function __qc_internalUpdateIndex
     echo "Stored $(wc -l < $INDEX_FILE) directory names."
 }
 
-if ! ls $QC_DIR/*.index >/dev/null 2>&1; then
-    echo "QuickChangeDirectory: No index files found .. creating ..."
-    __qc_updateIndex
+if [ ! $__QC_TEST__ ]; then
+    if ! ls $QC_DIR/*.index >/dev/null 2>&1; then
+        echo "QuickChangeDirectory: No index files found .. creating ..."
+        __qc_updateIndex
+    fi
+    if [ ! -e $QC_DSTORE_INDEX ]; then
+        touch $QC_DSTORE_INDEX
+    fi
 fi
-if [ ! -e $QC_DSTORE_INDEX ]; then
-    touch $QC_DSTORE_INDEX
-fi
+
 
 
 # cleanup ~/.qc/index.dstore
@@ -583,7 +604,7 @@ function __qc_complete
             #qc_debug "cur >>$cur<<"
             cur=$(echo "$cur" | sed "s%^/%%")   # remove leading '/'
             # curRE: Regular expression to find dir in index
-            typeset curRE=$(__qc_make_regex "${parts[@]}")
+            typeset curRE=$(__qc_glob2regex "${parts[@]}")
             typeset curRE=$(echo "$curRE" | sed "s%\([^*]\)\$$%\1/[^/]*$%")
             # cleanRE: RE to delete unneeded part from result
             typeset cleanRE=$(echo "$curRE" | sed "s%\[^/\]\*.$%%")

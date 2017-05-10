@@ -1,0 +1,34 @@
+
+__QC_TEST__=true
+
+which resize >/dev/null 2>&1 && eval "$(resize)"
+if [ -n "$COLUMNS" ]; then
+    OK_COL=$((COLUMNS-6))
+    ERR_COL=$((COLUMNS-9))
+    WARN_COL=$(($COLUMNS-11))
+else
+    OK_COL=74
+    ERR_COL=71
+    WARN_COL=69
+fi
+
+OK_SUFFIX="\033[${OK_COL}G[\033[01;32mOK\033[0m]"
+ERROR_SUFFIX="\033[${ERR_COL}G[\033[01;31mERROR\033[0m]"
+WARN_SUFFIX="\033[${WARN_COL}G[\033[33mWARNING\033[0m]"
+
+OK()
+{
+    printf "%b\n" "$OK_SUFFIX"
+}
+
+ERROR()
+{
+    printf "%b\n" "$ERROR_SUFFIX"
+}
+
+WARN()
+{
+    printf "%b\n" "$WARN_SUFFIX"
+}
+
+# vim:ft=sh

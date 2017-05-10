@@ -94,42 +94,31 @@ Select the directory to change to by number. Enter 'q' to abort.
 
 ### Details on Expression
 
-1. The expression is case-sensitive. Use qc -i ... to switch to
-   case-insensitive matching.
+The expression is case-sensitive. Use qc -i ... to switch to case-insensitive
+matching.
 
-2. The character '+' is equivalent to '*'. The '+' doesn't need escaping on
-   the command line.
+Every parameter, that does not end with a '/' gets a '*' appended before it
+is joined with the next word with a '/'.
+So:
+* `Hello World`  -> `Hello*/World*`
+* `Hello/ World` -> `Hello/World*`
+* `Hello/World`  -> `Hello/World*`
+* `Hello/World/` -> `Hello/World`
 
-3. Every parameter, that does not end with a '/' gets a '*' appended before it
-   is joined with the next word with a '/'.
-   So:
-   * `Hallo World`  -> `Hallo*/World*`
-   * `Hallo/ World` -> `Hallo/World*`
-   * `Hallo/World`  -> `Hallo/World*`
-   * `Hallo/World/` -> `Hallo/World`
+Supported Wildcards:
 
-4) The single wildcard '*' matches all but a '/'.
+|Wildcard| Description | Regular Expression |
+| ------ | ----------- | ------------------ |
+| `*` | Zero or more characters excluding '/' | `[^/]*` |
+| `?` | A single character excluding '/' | `[^/]` |
+| `**` | Zero or more characters (INcluding '/') | `.*` |
+| `//` | Zero or more intermediate directories | `\(.*/\)*` |
 
-5) The wildcard combination '**/' matches zero or more directory names.
-   So: `Hello/**/World`  matches `Hello/World`, `Hello/my/World`,
-   `Hello/small/blue/World` ...
-
-6) A double slash ('//') is equivalent to '/**/'.
-
-7) A double asterisk _not_ followd by '/' matches zero or more characters
-   (including '/')
-
-Note: More than two consecutive '*' are handled as '**'. The same is true for
+Note: More than two consecutive '\*' are handled as '**'. The same is true for
 '/'. So:
 * `***`    is equivalent to `**`
 * `*****`  is equivalent to `**`
 * `/////`  is equivalent to `//`
-
-
-### Command line completion
-
-Bash command line completion is supported for 'qc'. Just use <TAB> as you
-would do for the cd commands.
 
 ### Multiple ways
 
@@ -142,11 +131,16 @@ Examples to change to that directory:
     qc C Y M A
     qc MyPr Adm
     qc MyProject/Ad
-    qc Customer//Admin    # "Admin" somewhere below "Customer"
-    qc YoYo/+/Admin       # '+' matches on subdirs
-    qc Customer/++/Admin  # '++' matches multiple subdirs
-    qc YoYo + Admin
-    qc Cust ++ Admin
+    qc Customer//Admin      # "Admin" somewhere below "Customer"
+    qc 'YoYo/*/Admin'       # '*' matches on subdirs
+    qc 'Customer/**/Admin'  # '**' matches multiple subdirs
+    qc YoYo '*' Admin
+    qc Cust '**' Admin
+
+### Command line completion
+
+Bash command line completion is supported for 'qc'. Just use <TAB> as you
+would do for the cd commands.
 
 ### Other qc option:
 
