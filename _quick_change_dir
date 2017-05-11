@@ -72,6 +72,10 @@ function __qc_glob2regex
                 regex="$regex${glob:0:2}"
                 glob="${glob:2}"
                 ;;
+            .*)
+                regex="$regex\\."
+                glob="${glob:1}"
+                ;;
             *)
                 regex="$regex${glob:0:1}"
                 glob="${glob:1}"

@@ -61,6 +61,8 @@ mkdir -p testDirectory/Customer/YoYoDyne/docs
 mkdir -p testDirectory/Customer/YoYoDyne/src
 mkdir -p testDirectory/Customer/YoYo/MyProject/Admin
 mkdir -p testDirectory/Customer/ACME/Admin
+mkdir -p testDirectory/A_B
+mkdir -p testDirectory/A.B
 
 echo "test.index ${script_dir}/testDirectory -- '.*'" > $QC_DIR/qc-index.list
 echo "hidden.index -f '*/.*' ${script_dir}/testDirectory" >> $QC_DIR/qc-index.list
@@ -72,7 +74,7 @@ startTest "index & qc"
 qc -u
 echo ""
 printf "test.index"
-if [ 11 -eq $(wc -l < ${script_dir}/testDirectory/.qc/test.index) ]; then
+if [ 13 -eq $(wc -l < ${script_dir}/testDirectory/.qc/test.index) ]; then
     OK
 else
     ERROR
@@ -97,6 +99,8 @@ doQC ${script_dir}/testDirectory/Customer/YoYo YoYo/
 doQC ${script_dir}/testDirectory/Customer/YoYo/MyProject 'My?roject'
 doQC ${script_dir}/testDirectory/Customer/YoYo/MyProject 'My*ject'
 doQC ${script_dir}/testDirectory/Customer/YoYoDyne/src 'Cus*//src'
+
+doQC ${script_dir}/testDirectory/A.B A.B
 
 doQC ${script_dir}/testDirectory/Customer '[cC]ustomer'
 
