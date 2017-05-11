@@ -65,13 +65,15 @@ mkdir -p testDirectory/A_B
 mkdir -p testDirectory/A.B
 
 echo "test.index ${script_dir}/testDirectory -- '.*'" > $QC_DIR/qc-index.list
-echo "hidden.index -f '*/.*' ${script_dir}/testDirectory" >> $QC_DIR/qc-index.list
+echo "hidden.index.ext -f '*/.*' ${script_dir}/testDirectory" >> $QC_DIR/qc-index.list
 cp ../qc-build-index.sh ../qc-index-proc.sh $QC_DIR
-dstore :label testDirectory/Customer/ACME/Admin 
 
 startTest "index & qc"
 
 qc -u
+
+dstore :label testDirectory/Customer/ACME/Admin 
+
 echo ""
 printf "test.index"
 if [ 13 -eq $(wc -l < ${script_dir}/testDirectory/.qc/test.index) ]; then
@@ -80,8 +82,16 @@ else
     ERROR
     TEST_STATUS=1
 fi
-printf "hidden.index"
-if [ 3 -eq $(wc -l < ${script_dir}/testDirectory/.qc/hidden.index) ]; then
+printf "hidden.index.ext"
+if [ 3 -eq $(wc -l < ${script_dir}/testDirectory/.qc/hidden.index.ext) ]; then
+    OK
+else
+    ERROR
+    TEST_STATUS=1
+fi
+
+printf "index.dstore"
+if [ 1 -eq $(wc -l < ${script_dir}/testDirectory/.qc/index.dstore) ]; then
     OK
 else
     ERROR
@@ -113,6 +123,7 @@ doQC ${script_dir}/testDirectory/.config/localhost -ei LOCALHOST
 
 doQCselect ${script_dir}/testDirectory/Customer/YoYoDyne 1 YoYo
 doQCselect ${script_dir}/testDirectory/Customer/YoYo 2 YoYo
+
 
 cd "${script_dir}"
 rm -rf testDirectory

@@ -37,7 +37,7 @@ function __qc_glob2regex
     for w in "$@"; do
         case "$w" in
             */) # don't append '*' if word ends with '/'
-                w="${w:0:-1}";;
+                w="${w%?}";;
             *\*) # don't append '*' if it already ends with '*'
                 : ;;
             *)   w="$w*" ;;
@@ -402,10 +402,10 @@ function __dstore_clean
 function __qc_fqname
 {
     if [ -d "$1" ]; then
-        echo "$(builtin cd -- "$1" && pwd)"
+        echo "$(cd -- "$1" && pwd)"
         [ $? -ne 0 ] && return 1
     else
-        echo "$(builtin cd "$(dirname -- "$1")" && echo -n "$(pwd)" && echo "/$(basename -- "$1")")"
+        echo "$(cd "$(dirname -- "$1")" && echo -n "$(pwd)" && echo "/$(basename -- "$1")")"
     fi
 }
 
