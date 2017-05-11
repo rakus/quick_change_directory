@@ -484,9 +484,10 @@ function dstore
                     echo >&2 "Invalid label '$lbl'. Must not contain whitespaces."
                     return 1
                 fi
-                grep -vi "^$lbl " $QC_DSTORE_INDEX > $QC_DSTORE_INDEX.tmp
-                mv $QC_DSTORE_INDEX.tmp $QC_DSTORE_INDEX
-                if [ "$delete" != "true" ]; then
+                if [ "$delete" = "true" ]; then
+                    grep -vi "^$lbl " $QC_DSTORE_INDEX > $QC_DSTORE_INDEX.tmp
+                    mv $QC_DSTORE_INDEX.tmp $QC_DSTORE_INDEX
+                else
                     typeset dir
                     if [ $# -lt 1 ]; then
                         dir=$(__qc_fqname ".")
@@ -495,6 +496,8 @@ function dstore
                         shift
                     fi
                     if [ -d "$dir" ]; then
+                        grep -vi "^$lbl " $QC_DSTORE_INDEX > $QC_DSTORE_INDEX.tmp
+                        mv $QC_DSTORE_INDEX.tmp $QC_DSTORE_INDEX
                         echo "$lbl $dir" >> $QC_DSTORE_INDEX
                     else
                         echo >&2 "Error: Not a directory: $dir"
