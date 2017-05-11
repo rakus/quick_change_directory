@@ -1,6 +1,15 @@
 
 __QC_TEST__=true
 
+if [ -z "$script_dir" ]; then
+    echo ""
+    echo "ERROR: required variable \$script_dir\" is not set"
+    echo ""
+    exit 2
+fi
+
+
+
 which resize >/dev/null 2>&1 && eval "$(resize)"
 if [ -n "$COLUMNS" ]; then
     OK_COL=$((COLUMNS-6))
@@ -26,6 +35,7 @@ OK()
 ERROR()
 {
     printf "%b\n" "$ERROR_SUFFIX"
+    TEST_STATUS=1
 }
 
 WARN()
@@ -34,6 +44,7 @@ WARN()
 }
 
 TEST_OBJEKT=
+TEST_STATUS=0
 startTest()
 {
     TEST_OBJEKT="$*"
@@ -46,7 +57,7 @@ endTest()
     typeset rc=$1
     echo ""
     echo "------------------------------------------------------------"
-    if [ $rc -eq 0 ]; then
+    if [ $TEST_STATUS -eq 0 ]; then
         echo "  Test \"$TEST_OBJEKT\" SUCCESSFUL"
     else
         echo "  Test \"$TEST_OBJEKT\" ERROR"
@@ -60,6 +71,7 @@ endTest()
 
 onExit()
 {
+    [ -d "${script_dir}/testDirectory" ] && rm -rf "${script_dir}/testDirectory"
     if [ -n "$TEST_OBJEKT" ]; then
         echo >&2 ""
         echo >&2 " Something wrong. Missing call of 'endTest'."
@@ -69,6 +81,41 @@ onExit()
 }
 
 trap "onExit" EXIT
+
+# IF BUILD_TEST_DIRS is set ....
+if [ $BUILD_TEST_DIRS ]; then
+
+    echo "Setting up Test directory..."
+
+    [ -d "$script_dir/testDirectory" ] && rm -rf "$script_dir/testDirectory"
+
+    mkdir -p testDirectory/.qc
+    export QC_DIR=${script_dir}/testDirectory/.qc
+
+    mkdir -p testDirectory/.config/localhost
+    mkdir -p testDirectory/Customer/YoYoDyne/Admin
+    mkdir -p testDirectory/Customer/YoYoDyne/docs
+    mkdir -p testDirectory/Customer/YoYoDyne/src
+    mkdir -p testDirectory/Customer/YoYo/MyProject/Admin
+    mkdir -p testDirectory/Customer/ACME/Admin
+    mkdir -p testDirectory/A_B
+    mkdir -p testDirectory/A.B
+
+    echo "test.index ${script_dir}/testDirectory -- '.*'" > $QC_DIR/qc-index.list
+    echo "hidden.index.ext -f '*/.*' ${script_dir}/testDirectory" >> $QC_DIR/qc-index.list
+    cp ../qc-build-index.sh ../qc-index-proc.sh $QC_DIR
+fi
+
+. ${script_dir}/../_quick_change_dir
+
+
+
+
+
+
+
+
+
 
 
     # vim:ft=sh

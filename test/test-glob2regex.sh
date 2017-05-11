@@ -14,7 +14,6 @@ script_name="$(basename "$0")"
 script_file="$script_dir/$script_name"
 
 . ${script_dir}/defines.shinc
-. ${script_dir}/../_quick_change_dir
 
 TEST_STATUS=0
 
@@ -27,10 +26,9 @@ g2re()
 
 
     if [ "$actual" = "$expected" ]; then
-        printf "%b\n" "$OK_SUFFIX"
+        OK
     else
-        TEST_STATUS=1
-        printf "%b\n" "$ERROR_SUFFIX"
+        ERROR
         echo "   Expected: >>$expected<<"
         echo "   Actual:   >>$actual<<"
     fi

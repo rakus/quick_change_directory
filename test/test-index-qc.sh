@@ -13,13 +13,9 @@ script_dir=$(cd "$(dirname $0)" 2>/dev/null; pwd)
 script_name="$(basename "$0")"
 script_file="$script_dir/$script_name"
 
-[ -d "$script_dir/testDirectory" ] && rm -rf "$script_dir/testDirectory"
 
-mkdir -p testDirectory/.qc
-export QC_DIR=${script_dir}/testDirectory/.qc
-
+BUILD_TEST_DIRS=true
 . ${script_dir}/defines.shinc
-. ${script_dir}/../_quick_change_dir
 
 TEST_STATUS=0
 
@@ -51,22 +47,8 @@ doQCselect()
     else
         ERROR
         echo   "Actual: $PWD"
-        TEST_STATUS=1
     fi
 }
-
-mkdir -p testDirectory/.config/localhost
-mkdir -p testDirectory/Customer/YoYoDyne/Admin
-mkdir -p testDirectory/Customer/YoYoDyne/docs
-mkdir -p testDirectory/Customer/YoYoDyne/src
-mkdir -p testDirectory/Customer/YoYo/MyProject/Admin
-mkdir -p testDirectory/Customer/ACME/Admin
-mkdir -p testDirectory/A_B
-mkdir -p testDirectory/A.B
-
-echo "test.index ${script_dir}/testDirectory -- '.*'" > $QC_DIR/qc-index.list
-echo "hidden.index.ext -f '*/.*' ${script_dir}/testDirectory" >> $QC_DIR/qc-index.list
-cp ../qc-build-index.sh ../qc-index-proc.sh $QC_DIR
 
 startTest "index & qc"
 
@@ -80,14 +62,12 @@ if [ 13 -eq $(wc -l < ${script_dir}/testDirectory/.qc/test.index) ]; then
     OK
 else
     ERROR
-    TEST_STATUS=1
 fi
 printf "hidden.index.ext"
 if [ 3 -eq $(wc -l < ${script_dir}/testDirectory/.qc/hidden.index.ext) ]; then
     OK
 else
     ERROR
-    TEST_STATUS=1
 fi
 
 printf "index.dstore"
@@ -95,7 +75,6 @@ if [ 1 -eq $(wc -l < ${script_dir}/testDirectory/.qc/index.dstore) ]; then
     OK
 else
     ERROR
-    TEST_STATUS=1
 fi
 
 echo ""
