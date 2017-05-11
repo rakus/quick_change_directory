@@ -138,9 +138,7 @@ done
 #echo "IGNORE: ${IGNORE_DIRS[@]}"
 #echo "FILTER: ${FILTER[@]}"
 
-if [ -z "$QC_DIR" ]; then
-    QC_DIR="$HOME/.qc"
-fi
+[ -z "$QC_DIR" ] && QC_DIR="$HOME/.qc"
 [ ! -d "$QC_DIR" ] && mkdir $QC_DIR
 
 INDEX_FILE=$QC_DIR/$IDX_NAME

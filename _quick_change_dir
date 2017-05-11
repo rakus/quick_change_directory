@@ -15,7 +15,7 @@
 #
 
 # Directory for qc index files
-QC_DIR=$HOME/.qc
+[ -z "$QC_DIR" ] && QC_DIR=$HOME/.qc
 
 # Manual index file storing directory names and bookmarked directories. This
 # file is managed using the command 'dstore'.
@@ -285,8 +285,8 @@ function __qc_updateIndex
 {
     if [ -e $QC_DIR/qc-build-index.sh ]; then
         echo "Updating index ..."
-        typeset ARGS
         typeset -a ARGS
+        typeset d
         for d in "$@"; do
             d="$(readlink -f "$d")"
             ARGS+=( "-i" "$d")
@@ -348,6 +348,7 @@ function __dstore_clean
 
     typeset IFS=$'\n'
     typeset labels=""
+    typeset d
     > $QC_DSTORE_INDEX.tmp
     while read d; do
         case $d in
@@ -414,7 +415,7 @@ function dstore
     [ ! -e "$QC_DSTORE_INDEX" ] && touch $QC_DSTORE_INDEX
 
     typeset delete
-    typeset OPTIND
+    typeset OPTIND o
 
     while getopts ":elcd" o "$@"; do
         case $o in

@@ -16,6 +16,8 @@ OK_SUFFIX="\033[${OK_COL}G[\033[01;32mOK\033[0m]"
 ERROR_SUFFIX="\033[${ERR_COL}G[\033[01;31mERROR\033[0m]"
 WARN_SUFFIX="\033[${WARN_COL}G[\033[33mWARNING\033[0m]"
 
+
+
 OK()
 {
     printf "%b\n" "$OK_SUFFIX"
@@ -31,4 +33,42 @@ WARN()
     printf "%b\n" "$WARN_SUFFIX"
 }
 
-# vim:ft=sh
+TEST_OBJEKT=
+startTest()
+{
+    TEST_OBJEKT="$*"
+    echo "------------------------------------------------------------"
+    echo "Testing $TEST_OBJEKT"
+}
+
+endTest()
+{
+    typeset rc=$1
+    echo ""
+    echo "------------------------------------------------------------"
+    if [ $rc -eq 0 ]; then
+        echo "  Test \"$TEST_OBJEKT\" SUCCESSFUL"
+    else
+        echo "  Test \"$TEST_OBJEKT\" ERROR"
+    fi
+    echo "------------------------------------------------------------"
+
+    TEST_OBJEKT=
+
+    exit $rc
+}
+
+onExit()
+{
+    if [ -n "$TEST_OBJEKT" ]; then
+        echo >&2 ""
+        echo >&2 " Something wrong. Missing call of 'endTest'."
+        echo >&2 ""
+        exit 2
+    fi
+}
+
+trap "onExit" EXIT
+
+
+    # vim:ft=sh
