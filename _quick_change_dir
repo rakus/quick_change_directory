@@ -30,7 +30,7 @@ QC_DSTORE_INDEX=$QC_DIR/index.dstore
 # Create regex from qc argument
 # Used from qc and completion
 # $*: The pattern to create a regex
-function __qc_glob2regex
+function __qc_args2regex
 {
     typeset glob regex w
 
@@ -116,7 +116,7 @@ function __qc_select
             dl=( $( (grep -h -i -- "^$pattern[^ ]* " $QC_DSTORE_INDEX||([ $? = 2 ] && echo >&2 "$NO_DSTORE_IDX_MSG")) | cut "-d " -f2- | sort | uniq) )
             ;;
         *)
-            pattern=$(__qc_glob2regex "$@")
+            pattern=$(__qc_args2regex "$@")
             dl=( $( (grep --color=always -h $grepOpt -- "/$pattern" $QC_DIR/*.index $QC_DSTORE_INDEX $extIdx || ([ $? = 2 ] && echo >&2 "$NO_IDX_MSG"))|sed "s/^:[^ ]* //"|sort|uniq) )
             ;;
     esac
@@ -612,7 +612,7 @@ function __qc_complete
             #qc_debug "cur >>$cur<<"
             cur=$(echo "$cur" | sed "s%^/%%")   # remove leading '/'
             # curRE: Regular expression to find dir in index
-            typeset curRE=$(__qc_glob2regex "${parts[@]}")
+            typeset curRE=$(__qc_args2regex "${parts[@]}")
             typeset curRE=$(echo "$curRE" | sed "s%\([^*]\)\$$%\1/[^/]*$%")
             # cleanRE: RE to delete unneeded part from result
             typeset cleanRE=$(echo "$curRE" | sed "s%\[^/\]\*.$%%")

@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# FILE: test-glob2regex.sh
+# FILE: test-args2regex.sh
 #
 # ABSTRACT: 
 #
@@ -22,7 +22,7 @@ g2re()
     expected="$1"
     shift
     printf "$* -> $expected"
-    actual="$(__qc_glob2regex "$@")"
+    actual="$(__qc_args2regex "$@")"
 
 
     if [ "$actual" = "$expected" ]; then
@@ -36,7 +36,7 @@ g2re()
 
 #---------[ TESTS ]------------------------------------------------------------
 
-startTest "__qc_glob2regex"
+startTest "__qc_args2regex"
 
 g2re "[^/]*$" "*"
 g2re "[^/]*$" "*/"
@@ -73,4 +73,4 @@ endTest $TEST_STATUS
 
 exit $TEST_STATUS
 
-#---------[ END OF FILE test-glob2regex.sh ]-----------------------------------
+#---------[ END OF FILE test-args2regex.sh ]-----------------------------------
