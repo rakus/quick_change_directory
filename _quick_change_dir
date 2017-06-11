@@ -121,20 +121,7 @@ function __qc_select
             ;;
     esac
 
-    # filter out not existing dirs
-    # ZSH: Arrays start with 1
-    typeset i
-    typeset orgCnt=${#dl[*]}
-    for (( i=0; i<=$orgCnt; i++ )); do  
-        # remove color codes for check
-        [ ! -d "$(echo "${dl[$i]}"| sed -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]//g")" ] && unset dl[$i]
-    done
-    dl=( "${dl[@]}" )
-
     typeset cnt=${#dl[*]}
-    if [ $orgCnt -ne $cnt ]; then
-        echo >&2 "qc: Removed $(( $orgCnt - $cnt )) non existing directories from result"
-    fi
 
     if [ $cnt -eq 0 ]; then
         echo >&2 "qc: $@: No matching directory found"
@@ -156,6 +143,31 @@ function __qc_select
                 *) echo >&2
                     return;;
             esac
+        fi
+
+        # filter out none existing dirs
+        typeset i
+        typeset orgCnt=$cnt
+        # ZSH: Arrays start with 1
+        for (( i=0; i<=$orgCnt; i++ )); do
+            echo >&2 -en "\rFiltering none existing directories: $i/$orgCnt"
+            # remove color codes for check
+            [ ! -d "$(echo "${dl[$i]}"| sed -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]//g")" ] && unset dl[$i]
+        done
+        dl=( "${dl[@]}" )
+        echo >&2 -en "\r\e[K"
+
+        cnt=${#dl[*]}
+        if [ $orgCnt -ne $cnt ]; then
+            echo >&2 "qc: Removed $(( $orgCnt - $cnt )) non existing directories from result"
+        fi
+        if [ $cnt -eq 0 ]; then
+            echo >&2 "qc: $@: No matching directory found"
+            return
+        elif [ $cnt -eq 1 ]; then
+            # echo and remove color codes
+            echo "$(echo "${dl[@]}" | sed -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]//g")"
+            return
         fi
 
         typeset COLUMNS=0
