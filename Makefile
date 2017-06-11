@@ -4,14 +4,14 @@
 
 ZIP_CONTENT = README.md INSTALL.sh _quick_change_dir qc-build-index.sh qc-index-proc.sh qc-index.list
 
-.PHONY: zip html clean test
+.PHONY: zip html clean test help
 
-test:
+test:   ## Run tests
 	test/run.sh
 
-zip: quick_change_dir.zip
+zip: quick_change_dir.zip   ## Build zip file
 
-html: README.html
+html: README.html           ## Build README.html
 
 quick_change_dir.zip: $(ZIP_CONTENT)
 	zip $@ $^
@@ -20,5 +20,8 @@ quick_change_dir.zip: $(ZIP_CONTENT)
 README.html: README.md
 	marked --gfm --tables $< > $@
 
-clean:
+clean:                     ## Cleanup by removing README.html and zip file
 	rm -f quick_change_dir.zip README.html
+
+help:
+	@cat $(MAKEFILE_LIST) | grep -E '^[a-zA-Z_-]+:.*?## .*$$' | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%s\033[0m\n    %s\n", $$1, $$2}'
