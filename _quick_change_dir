@@ -209,13 +209,19 @@ function qc
     typeset OPTIND
     typeset o
 
-    while getopts ":ieuSl" o "$@"; do
+    while getopts ":ieuUSl" o "$@"; do
         case $o in
             i) grepOpt="-i"
                 ;;
             e) searchExtIdx="true"
                 ;;
             u)
+                # ZSH: Only shift by OPTIND?
+                shift $((OPTIND-1))
+                __qc_updateIndex -E "$@"
+                return 0
+                ;;
+            U)
                 # ZSH: Only shift by OPTIND?
                 shift $((OPTIND-1))
                 __qc_updateIndex "$@"
@@ -259,6 +265,8 @@ function qc
                 echo >&2 "      Updates index. If dirs are given only that directories are updated,"
                 echo >&2 "      This uses the external command '~/.qc/qc-build-index.sh', if it"
                 echo >&2 "      is available. Else the internal update is used."
+                echo >&2 "  qc -U [dir...]"
+                echo >&2 "      Like '-u', but also updates extended indexes."
                 echo >&2 "  qc -l"
                 echo >&2 "      List labeled dirs."
                 echo >&2 "  qc -S"
@@ -304,8 +312,12 @@ function __qc_updateIndex
         typeset -a ARGS
         typeset d
         for d in "$@"; do
-            d="$(readlink -f "$d")"
-            ARGS+=( "-i" "$d")
+            if [ "$d" = "-E" ]; then
+                ARGS+=( "-E" )
+            else
+                d="$(readlink -f "$d")"
+                ARGS+=( "-i" "$d")
+            fi
         done
         $QC_DIR/qc-build-index.sh "${ARGS[@]}"
     else

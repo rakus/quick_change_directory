@@ -33,7 +33,9 @@ LST="$QC_DIR/qc-index.list"
 
 usage()
 {
-    echo >&2 "USAGE: $script_dir [-i dir] [index...]"
+    echo >&2 "USAGE: $script_dir [-E] [-i dir] [index...]"
+    echo >&2 ""
+    echo >&2 "   -E      Don't update extension index(es)."
     echo >&2 ""
     echo >&2 "   -i dir  Incremental update the given dir in the affected index(es)."
     echo >&2 "           Indexes that does not contain the dir are not touched."
@@ -74,12 +76,15 @@ contained()
 #---------[ MAIN ]-------------------------------------------------------------
 
 typeset -a INC_UPD
-while getopts ":i:" o "$@"; do
+while getopts ":Ei:" o "$@"; do
     case $o in
         i)
             d=$OPTARG
             d="${d%"${d##*[!/]}"}"
             INC_UPD+=( -i "$d" )
+            ;;
+        E)
+            ignExt=true
             ;;
         *)
             [ "${!OPTIND}" != "--help" ] && echo >&2 "can't parse: ${!OPTIND}" && echo >&2 ""
@@ -104,6 +109,12 @@ for ln  in $(cat "$LST"); do
     if [ $? -ne 0 ]; then
         echo >&2 "Error parsing: $ln"
         exit 1
+    fi
+
+    if [ $ignExt ]; then
+        if [[ "${ARGS[0]}" = *.ext ]]; then
+            continue
+        fi
     fi
 
     if [ $# -gt 0 ]; then

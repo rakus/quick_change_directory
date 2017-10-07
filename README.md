@@ -146,7 +146,8 @@ would do for the cd commands.
 
 * `-i` Search is case-insensitive (and slower). Only when searching by name.
 * `-e` Also search extended index files.
-* `-u` Update the indexes.
+* `-u` Update the normal indexes.
+* `-U` Update the normal and extended indexes.
 * `-l` List labeled directories.
 * `-S` Print statistics of index files
 
