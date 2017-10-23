@@ -35,6 +35,7 @@ function __qc_args2regex
     typeset glob regex w
 
     for w in "$@"; do
+        w="${w//+/*}"
         case "$w" in
             */) # don't append '*' if word ends with '/'
                 w="${w%?}";;
@@ -45,9 +46,19 @@ function __qc_args2regex
         glob="$glob/$w"
     done
 
+    # Remove
+    # - leading slashes
+    # - than leading asterixes followed by slashes
+    # - than trailing slashes
+    glob="$(echo "$glob" | sed 's%^//*%%;s%^\*\**//*%%;s%//*$%%')"
+
     while [ -n "$glob" ]; do
 
         case "$glob" in
+            \*\*/*) # '**' -> '.*'
+                regex="$regex\(.*/\)*"
+                glob="${glob:3}"
+                ;;
             \*\**) # '**' -> '.*'
                 regex="$regex.*"
                 glob="$(echo "$glob" | sed "s/^\\*\\**//")"
@@ -83,7 +94,8 @@ function __qc_args2regex
         esac
     done
     #remove leading '/'
-    regex="${regex:1}$"
+    #regex="${regex:1}$"
+    regex="${regex}$"
     echo "$regex"
 }
 
