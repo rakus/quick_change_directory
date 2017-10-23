@@ -35,7 +35,7 @@ function __qc_args2regex
     typeset glob regex w
 
     for w in "$@"; do
-        w="${w//+/*}"
+        # w="${w//+/*}"
         case "$w" in
             */) # don't append '*' if word ends with '/'
                 w="${w%?}";;
