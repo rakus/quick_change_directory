@@ -65,6 +65,32 @@ g2re "a[^/]b$" 'a?b/'
 g2re "a?b$" 'a\?b/'
 g2re "a\.b$" 'a.b/'
 
+g2re  'Admin[^/]*$'                             "Admin"
+g2re  "T[^/]*/\(.*/\)*Admin[^/]*\$"             "T" "//" "Admin"
+
+g2re  "Admin[^/]*\$"                            "/Admin"
+g2re  "Admin[^/]*\$"                            "//Admin"
+g2re  "Admin[^/]*\$"                            "/////Admin"
+g2re  "Admin\$"                                 "Admin/"
+g2re  "Admin\$"                                 "Admin//"
+g2re  "Admin\$"                                 "Admin/////"
+g2re  "T[^/]*/Admin[^/]*\$"                     "T" "Admin"
+g2re  "X[^/]*/T[^/]*/Admin[^/]*\$"              "X" "T" "Admin"
+g2re  "A[^/]*/B[^/]*/C[^/]*/Admin[^/]*\$"       "A" "B" "C" "Admin"
+g2re  "X[^/]*/\(.*/\)*Admin[^/]*\$"             "X" "//Admin"
+g2re  "X[^/]*/\(.*/\)*Admin[^/]*\$"             "X" "///////Admin"
+g2re  "X[^/]*/\(.*/\)*Admin[^/]*\$"             "X" "///////" "Admin"
+g2re  "T[^/]*/[^/]*Admin[^/]*\$"                "T" "*Admin"
+g2re  "T[^/]*/.*Admin[^/]*\$"                   "T" "**Admin"
+g2re  "T[^/]*/\(.*/\)*Admin[^/]*\$"             "T" "**" "Admin"
+
+g2re  "X/\(.*/\)*Admin[^/]*\$"                  "X//Admin"
+g2re  "T/[^/]*Admin[^/]*\$"                     "T/*Admin"
+g2re  "T/.*Admin[^/]*$"                         "T/**Admin"
+g2re  "T/\(.*/\)*Admin[^/]*\$"                  "T/**/Admin"
+g2re  "Admin[^/]*\$"                            "**/Admin"
+g2re  "Admin[^/]*\$"                            "*/Admin"
+g2re  "Admin[^/]*\$"                            "*******/Admin"
 
 #------------------------------------------------------------------------------
 endTest $TEST_STATUS
