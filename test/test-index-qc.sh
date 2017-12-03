@@ -52,7 +52,7 @@ doQCselect()
 
 startTest "index & qc"
 
-qc -u
+qc -U
 
 dstore :label testDirectory/Customer/ACME/Admin 
 
