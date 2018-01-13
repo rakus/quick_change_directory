@@ -19,9 +19,8 @@
 
 set -u
 
-script_dir=$(cd "$(dirname $0)" 2>/dev/null; pwd)
+script_dir=$(cd "$(dirname "$0")" 2>/dev/null; pwd)
 script_name="$(basename "$0")"
-script_file="$script_dir/$script_name"
 
 
 usage()
@@ -75,9 +74,8 @@ simu_msg()
 
 run_cmd()
 {
-    typeset RC
     if [ $EXECUTE ]; then
-        $@
+        "$@"
         return $?
     else
         echo "$@"
@@ -141,7 +139,7 @@ add_to_init_file()
         echo "Adding .quick_change_dir to $file..."
         # to complex for run_cmd (because of redir)
         if [ $EXECUTE ]; then
-            echo "[ -e \"\$HOME/.quick_change_dir\" ] && . \$HOME/.quick_change_dir" >> $file
+            echo "[ -e \"\$HOME/.quick_change_dir\" ] && . \$HOME/.quick_change_dir" >> "$file"
         else
             echo "echo \"[ -e \"\$HOME/.quick_change_dir\" ] && . \$HOME/.quick_change_dir\" >> $file"
         fi

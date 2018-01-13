@@ -61,10 +61,12 @@ function __qc_args2regex
                 ;;
             \*\**) # '**' -> '.*'
                 regex="$regex.*"
+                # shellcheck disable=SC2001
                 glob="$(echo "$glob" | sed "s/^\\*\\**//")"
                 ;;
             //*) # '//' -> '/.*/'
                 regex="$regex/\\(.*/\\)*"
+                # shellcheck disable=SC2001
                 glob="$(echo "$glob" | sed "s%^///*%%")"
                 ;;
             \**) # '*' -> '[^/]*'
@@ -110,8 +112,8 @@ function __qc_select
     typeset searchExtIdx="$1"
     shift
 
-    if [ $searchExtIdx ]; then
-        if ls $QC_DIR/*.index.ext >/dev/null 2>&1; then
+    if [ "$searchExtIdx" ]; then
+        if ls "$QC_DIR"/*.index.ext >/dev/null 2>&1; then
             extIdx="$QC_DIR/*.index.ext"
         fi
     fi
@@ -125,26 +127,27 @@ function __qc_select
             pattern=$1
             [ $# -gt 1 ] && echo >&2 "WARNING: Extra arguments ignored"
             # grep: -h: Suppress the prefixing of file names on output.
-            dl=( $( (grep -h -i -- "^$pattern[^ ]* " $QC_DSTORE_INDEX||([ $? = 2 ] && echo >&2 "$NO_DSTORE_IDX_MSG")) | cut "-d " -f2- | sort | uniq) )
+            dl=( $( (grep -h -i -- "^$pattern[^ ]* " "$QC_DSTORE_INDEX" ||([ $? = 2 ] && echo >&2 "$NO_DSTORE_IDX_MSG")) | cut "-d " -f2- | sort | uniq) )
             ;;
         *)
             pattern=$(__qc_args2regex "$@")
-            dl=( $( (grep --color=always -h $grepOpt -- "/$pattern" $QC_DIR/*.index $QC_DSTORE_INDEX $extIdx || ([ $? = 2 ] && echo >&2 "$NO_IDX_MSG"))|sed "s/^:[^ ]* //"|sort|uniq) )
+            # shellcheck disable=SC2086
+            dl=( $( (grep --color=always -h $grepOpt -- "/$pattern" "$QC_DIR"/*.index "$QC_DSTORE_INDEX" $extIdx || ([ $? = 2 ] && echo >&2 "$NO_IDX_MSG"))|sed "s/^:[^ ]* //"|sort|uniq) )
             ;;
     esac
 
     typeset cnt=${#dl[*]}
 
-    if [ $cnt -eq 0 ]; then
-        echo >&2 "qc: $@: No matching directory found"
-    elif [ $cnt -eq 1 ]; then
+    if [ "$cnt" -eq 0 ]; then
+        echo >&2 "qc: $*: No matching directory found"
+    elif [ "$cnt" -eq 1 ]; then
         # echo and remove color codes
         echo "${dl[@]}" | sed -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]//g"
     else
         # If selection list needs more than terminal hight lines
         # ask user, if he/she really want's to see it.
-        typeset limit=$(($LINES -1))
-        if [ $cnt -gt $limit ]; then
+        typeset limit=$((LINES -1))
+        if [ "$cnt" -gt $limit ]; then
 
             echo >&2 -n "Display all $cnt possibilities? (y or n) "
             read -N1 yn
@@ -161,7 +164,7 @@ function __qc_select
         typeset i
         typeset orgCnt=$cnt
         # ZSH: Arrays start with 1
-        for (( i=0; i<=$orgCnt; i++ )); do
+        for (( i=0; i<=orgCnt; i++ )); do
             echo >&2 -en "\rFiltering none existing directories: $i/$orgCnt"
             # remove color codes for check
             [ ! -d "$(echo "${dl[$i]}"| sed -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]//g")" ] && unset dl[$i]
@@ -170,15 +173,15 @@ function __qc_select
         echo >&2 -en "\r\e[K"
 
         cnt=${#dl[*]}
-        if [ $orgCnt -ne $cnt ]; then
-            echo >&2 "qc: Removed $(( $orgCnt - $cnt )) non existing directories from result"
+        if [ "$orgCnt" -ne "$cnt" ]; then
+            echo >&2 "qc: Removed $((orgCnt - cnt)) non existing directories from result"
         fi
-        if [ $cnt -eq 0 ]; then
-            echo >&2 "qc: $@: No matching directory found"
+        if [ "$cnt" -eq 0 ]; then
+            echo >&2 "qc: $*: No matching directory found"
             return
-        elif [ $cnt -eq 1 ]; then
+        elif [ "$cnt" -eq 1 ]; then
             # echo and remove color codes
-            echo "$(echo "${dl[@]}" | sed -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]//g")"
+            echo "${dl[@]}" | sed -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]//g"
             return
         fi
 
@@ -201,7 +204,7 @@ function __qc_select
 function qc
 {
     # The command used for changing directories
-    if [ $BASH_VERSION ]; then
+    if [ "$BASH_VERSION" ]; then
         typeset CD_CMD="builtin cd"
     else
         typeset CD_CMD="cd"
@@ -244,20 +247,22 @@ function qc
                 for fn in $QC_DIR/*.index $QC_DIR/*.index.ext; do
                     if [ -e "$fn" ]; then
                         echo "$fn"
-                        echo "   Last Upd: $(stat -c "%y" $fn)"
+                        echo "   Last Upd: $(stat -c "%y" "$fn")"
+                        # shellcheck disable=SC2046,SC2002
                         printf "   Entries:  %'d (%'d bytes)\n" $(cat "$fn" | wc -lc)
                     fi
                 done
                 if [ -e "$QC_DSTORE_INDEX" ]; then
                     echo "$QC_DSTORE_INDEX"
-                    echo "   Last Upd: $(stat -c "%y" $QC_DSTORE_INDEX)"
+                    echo "   Last Upd: $(stat -c "%y" "$QC_DSTORE_INDEX")"
+                    # shellcheck disable=SC2046,SC2002
                     printf "   Entries:  %'d (%'d bytes)\n" $(cat "$QC_DSTORE_INDEX" | wc -lc)
-                    echo "   Labeled entries:  $(grep -c "^:" $QC_DSTORE_INDEX)"
+                    echo "   Labeled entries:  $(grep -c "^:" "$QC_DSTORE_INDEX")"
                 fi
                 return 0
                 ;;
             l)
-                grep '^:[^ ]* ' $QC_DSTORE_INDEX
+                grep '^:[^ ]* ' "$QC_DSTORE_INDEX"
                 return 0
                 ;;
             *)
@@ -319,7 +324,7 @@ function qc
 # Update/create the index.
 function __qc_updateIndex
 {
-    if [ -e $QC_DIR/qc-build-index.sh ]; then
+    if [ -e "$QC_DIR"/qc-build-index.sh ]; then
         echo "Updating index ..."
         typeset -a ARGS
         typeset d
@@ -331,7 +336,7 @@ function __qc_updateIndex
                 ARGS+=( "-i" "$d")
             fi
         done
-        $QC_DIR/qc-build-index.sh "${ARGS[@]}"
+        "$QC_DIR"/qc-build-index.sh "${ARGS[@]}"
     else
         echo "Updating index (internal update)..."
         __qc_internalUpdateIndex "$@"
@@ -340,29 +345,29 @@ function __qc_updateIndex
 
 function __qc_internalUpdateIndex
 {
-    [ ! $QC_DIR ] && QC_DIR="$HOME/.qc"
+    [ ! "$QC_DIR" ] && QC_DIR="$HOME/.qc"
     if [ ! -d "$QC_DIR" ]; then
-        mkdir $QC_DIR
+        mkdir "$QC_DIR"
         [ $? -ne 0 ] && return 1
     fi
 
     typeset INDEX_FILE=$QC_DIR/home.index
-    typeset NEW_INDEX=$(mktemp ${INDEX_FILE}.XXXX)
+    typeset NEW_INDEX=$(mktemp "${INDEX_FILE}.XXXX")
 
-    find "${HOME}" -xdev -type d \( -name '.*' -o -name CVS \) -prune -o -xtype d -print >> $NEW_INDEX
+    find "${HOME}" -xdev -type d \( -name '.*' -o -name CVS \) -prune -o -xtype d -print >> "$NEW_INDEX"
 
-    mv -f $NEW_INDEX $INDEX_FILE
+    mv -f "$NEW_INDEX" "$INDEX_FILE"
 
-    echo "Stored $(wc -l < $INDEX_FILE) directory names."
+    echo "Stored $(wc -l < "$INDEX_FILE") directory names."
 }
 
-if [ ! $__QC_TEST__ ]; then
-    if ! ls $QC_DIR/*.index >/dev/null 2>&1; then
+if [ ! "$__QC_TEST__" ]; then
+    if ! ls "$QC_DIR"/*.index >/dev/null 2>&1; then
         echo "QuickChangeDirectory: No index files found .. creating ..."
         __qc_updateIndex
     fi
-    if [ ! -e $QC_DSTORE_INDEX ]; then
-        touch $QC_DSTORE_INDEX
+    if [ ! -e "$QC_DSTORE_INDEX" ]; then
+        touch "$QC_DSTORE_INDEX"
     fi
 fi
 
@@ -374,8 +379,8 @@ function __dstore_clean
     # if action is 'warn' just warn about none-existing dirs
     typeset action=$1
     # delete duplicates
-    LC_ALL=C sort $QC_DSTORE_INDEX | uniq > $QC_DSTORE_INDEX.tmp
-    mv -f $QC_DSTORE_INDEX.tmp $QC_DSTORE_INDEX
+    LC_ALL=C sort "$QC_DSTORE_INDEX" | uniq > "$QC_DSTORE_INDEX.tmp"
+    mv -f "$QC_DSTORE_INDEX.tmp" "$QC_DSTORE_INDEX"
 
     # get other index files
     typeset -a otherIdx
@@ -389,7 +394,7 @@ function __dstore_clean
     typeset IFS=$'\n'
     typeset labels=""
     typeset d
-    > $QC_DSTORE_INDEX.tmp
+    > "$QC_DSTORE_INDEX.tmp"
     while read d; do
         case $d in
             :*)
@@ -398,14 +403,14 @@ function __dstore_clean
                 dir=$(echo "$d" | cut "-d " -f2-)
 
                 if [ -d "$dir" ]; then
-                    echo "$d" >> $QC_DSTORE_INDEX.tmp
+                    echo "$d" >> "$QC_DSTORE_INDEX.tmp"
                     if echo "$labels" | grep -i  " $lbl " >/dev/null 2>&1; then
                         echo >&2 "Warning: Duplicate label: '$lbl'"
                     fi
                     labels="$labels $lbl "
                 else
                     if [ "$action" = "warn" ]; then
-                        echo "$d" >> $QC_DSTORE_INDEX.tmp
+                        echo "$d" >> "$QC_DSTORE_INDEX.tmp"
                         echo >&2 "WARNING $d: Does not exist (anymore). Use 'dstore -c' to clean up."
                     else
                         echo >&2 "Removed $d: Does not exist (anymore)."
@@ -415,15 +420,15 @@ function __dstore_clean
             ?*)
                 # ignore dirs already in another index file
                 if grep "^${d}$" "${otherIdx[@]}" >/dev/null 2>&1; then
-                    echo >&2 "Removed $d: Already in "$(grep -l "^${d}$" "${otherIdx[@]}")
+                    echo >&2 "Removed $d: Already in $(grep -l "^${d}$" "${otherIdx[@]}")"
                     continue
                 fi
                 # remove non-existing dirs
                 if [ -d "$d" ]; then
-                    echo "$d" >> $QC_DSTORE_INDEX.tmp
+                    echo "$d" >> "$QC_DSTORE_INDEX.tmp"
                 else
                     if [ "$action" = "warn" ]; then
-                        echo "$d" >> $QC_DSTORE_INDEX.tmp
+                        echo "$d" >> "$QC_DSTORE_INDEX.tmp"
                         echo >&2 "WARNING $d: Does not exist (anymore). Use 'dstore -c' to clean up."
                     else
                         echo >&2 "Removed $d: Does not exist (anymore)."
@@ -431,17 +436,17 @@ function __dstore_clean
                 fi
                 ;;
         esac
-    done < $QC_DSTORE_INDEX
-    mv -f $QC_DSTORE_INDEX.tmp $QC_DSTORE_INDEX
+    done < "$QC_DSTORE_INDEX"
+    mv -f "$QC_DSTORE_INDEX.tmp" "$QC_DSTORE_INDEX"
 }
 
 function __qc_fqname
 {
     if [ -d "$1" ]; then
-        echo "$(cd -- "$1" && pwd)"
+        (cd -- "$1" && pwd)
         [ $? -ne 0 ] && return 1
     else
-        echo "$(cd "$(dirname -- "$1")" && echo -n "$(pwd)" && echo "/$(basename -- "$1")")"
+        (cd "$(dirname -- "$1")" && echo -n "$(pwd)" && echo "/$(basename -- "$1")")
     fi
 }
 
@@ -451,8 +456,8 @@ function __qc_fqname
 function dstore
 {
     # create ~/.qc/index.dstore if it does not exist.
-    [ ! -d "$QC_DIR" ] && mkdir $QC_DIR
-    [ ! -e "$QC_DSTORE_INDEX" ] && touch $QC_DSTORE_INDEX
+    [ ! -d "$QC_DIR" ] && mkdir "$QC_DIR"
+    [ ! -e "$QC_DSTORE_INDEX" ] && touch "$QC_DSTORE_INDEX"
 
     typeset delete
     typeset OPTIND o
@@ -460,12 +465,12 @@ function dstore
     while getopts ":elcd" o "$@"; do
         case $o in
             e)
-                ${EDITOR:-vi} $QC_DSTORE_INDEX
+                ${EDITOR:-vi} "$QC_DSTORE_INDEX"
                 __dstore_clean warn
                 return
                 ;;
             l)
-                cat $QC_DSTORE_INDEX
+                cat "$QC_DSTORE_INDEX"
                 return
                 ;;
             c) __dstore_clean
@@ -510,7 +515,7 @@ function dstore
         set -- '.'
     fi
 
-    /bin/cp -f $QC_DSTORE_INDEX $QC_DSTORE_INDEX.org
+    /bin/cp -f "$QC_DSTORE_INDEX" "$QC_DSTORE_INDEX.org"
     while [ $# -gt 0 ]; do
         case $1 in
             :*)
@@ -521,8 +526,8 @@ function dstore
                     return 1
                 fi
                 if [ "$delete" = "true" ]; then
-                    grep -vi "^$lbl " $QC_DSTORE_INDEX > $QC_DSTORE_INDEX.tmp
-                    mv $QC_DSTORE_INDEX.tmp $QC_DSTORE_INDEX
+                    grep -vi "^$lbl " "$QC_DSTORE_INDEX" > "$QC_DSTORE_INDEX.tmp"
+                    mv "$QC_DSTORE_INDEX.tmp" "$QC_DSTORE_INDEX"
                 else
                     typeset dir
                     if [ $# -lt 1 ]; then
@@ -532,9 +537,9 @@ function dstore
                         shift
                     fi
                     if [ -d "$dir" ]; then
-                        grep -vi "^$lbl " $QC_DSTORE_INDEX > $QC_DSTORE_INDEX.tmp
-                        mv $QC_DSTORE_INDEX.tmp $QC_DSTORE_INDEX
-                        echo "$lbl $dir" >> $QC_DSTORE_INDEX
+                        grep -vi "^$lbl " "$QC_DSTORE_INDEX" > "$QC_DSTORE_INDEX.tmp"
+                        mv "$QC_DSTORE_INDEX.tmp" "$QC_DSTORE_INDEX"
+                        echo "$lbl $dir" >> "$QC_DSTORE_INDEX"
                     else
                         echo >&2 "Error: Not a directory: $dir"
                     fi
@@ -544,11 +549,11 @@ function dstore
                 dir=$(__qc_fqname "$1")
                 shift
                 if [ "$delete" = "true" ]; then
-                    grep -v "^${dir}$" $QC_DSTORE_INDEX > $QC_DSTORE_INDEX.tmp
-                    mv $QC_DSTORE_INDEX.tmp $QC_DSTORE_INDEX
+                    grep -v "^${dir}$" "$QC_DSTORE_INDEX" > "$QC_DSTORE_INDEX.tmp"
+                    mv "$QC_DSTORE_INDEX.tmp" "$QC_DSTORE_INDEX"
                 else
                     if [ -d "$dir" ]; then
-                        echo $dir >> $QC_DSTORE_INDEX
+                        echo "$dir" >> "$QC_DSTORE_INDEX"
                     else
                         echo >&2 "Error: Not a directory: $dir"
                     fi
@@ -556,8 +561,8 @@ function dstore
                 ;;
         esac
     done
-    diff $QC_DSTORE_INDEX.org $QC_DSTORE_INDEX | grep -- "^[<>]" | sed "s/^</Removed:/;s/^>/Added:  /"
-    rm $QC_DSTORE_INDEX.org
+    diff "$QC_DSTORE_INDEX.org" "$QC_DSTORE_INDEX" | grep -- "^[<>]" | sed "s/^</Removed:/;s/^>/Added:  /"
+    rm "$QC_DSTORE_INDEX.org"
     __dstore_clean warn
 }
 
@@ -574,9 +579,10 @@ function __qc_complete
     #qc_debug "_qc_complet ============================"
     typeset cur prev opts
     COMPREPLY=()
-    if [ ${BASH_VERSION:0:1} -ge 4 ]; then
+    if [ "${BASH_VERSION:0:1}" -ge 4 ]; then
         _get_comp_words_by_ref -n : cur
     else
+        # shellcheck disable=SC2001,SC2086
         cur=$(echo ${COMP_LINE:0:$COMP_POINT}|sed "s/^.* //")
     fi
     prev="${COMP_WORDS[*]}"
@@ -585,7 +591,7 @@ function __qc_complete
     #qc_debug "CL >>$COMP_LINE<<"
 
     if echo "$prev" | grep " -[^ ]*u" >/dev/null 2>&1 ; then
-        COMPREPLY=( $( compgen -o dirnames -- $cur) )
+        COMPREPLY=( $( compgen -o dirnames -- "$cur") )
         return 0
     fi
     if echo "$prev" | grep " -[^ ]*S" >/dev/null 2>&1 ; then
@@ -603,7 +609,7 @@ function __qc_complete
     fi
     typeset extIdx
     if echo "$prev" | grep " -[^ ]*e" >/dev/null 2>&1 ; then
-        if ls $QC_DIR/*.index.ext >/dev/null 2>&1; then
+        if ls "$QC_DIR"/*.index.ext >/dev/null 2>&1; then
             extIdx="$QC_DIR/*.index.ext"
         fi
     fi
@@ -631,13 +637,13 @@ function __qc_complete
             ;;
         ':'*)
             #qc_debug "LABEL"
-            opts=$(grep "^${cur}[^ ]* " $QC_DSTORE_INDEX | cut "-d " -f1 | sort | uniq)
+            opts=$(grep "^${cur}[^ ]* " "$QC_DSTORE_INDEX" | cut "-d " -f1 | sort | uniq)
             #qc_debug "$opts"
             COMPREPLY=( $(compgen "-S " -W "${opts[*]}" -- "$cur" ))
             typeset i
             for ((i=0; i < ${#COMPREPLY[@]}; i++)); do
                 COMPREPLY[$i]=$(printf "%q" "${COMPREPLY[$i]:1}")
-                if [ ${BASH_VERSION:0:1} -lt 4 ]; then
+                if [ "${BASH_VERSION:0:1}" -lt 4 ]; then
                     COMPREPLY[$i]="${COMPREPLY[$i]} "
                 fi
             done
@@ -646,20 +652,24 @@ function __qc_complete
         ?*)
             cur=$(eval echo "$cur" 2>/dev/null || eval echo "$cur'" 2>/dev/null || eval echo "$cur\"" 2>/dev/null || "")
             #qc_debug "cur >>$cur<<"
+            # shellcheck disable=SC2001
             cur=$(echo "$cur" | sed "s%^/%%")   # remove leading '/'
             # curRE: Regular expression to find dir in index
             typeset curRE=$(__qc_args2regex "${parts[@]}")
+            # shellcheck disable=SC2001
             typeset curRE=$(echo "$curRE" | sed "s%\([^*]\)\$$%\1/[^/]*$%")
             # cleanRE: RE to delete unneeded part from result
+            # shellcheck disable=SC2001
             typeset cleanRE=$(echo "$curRE" | sed "s%\[^/\]\*.$%%")
             #qc_debug "curRE >>$curRE<<"
             #qc_debug "cleanRE >>$cleanRE<<"
             typeset IFS=$'\n'
-            opts=($(grep --no-filename $ic -o -- "/$curRE" $QC_DIR/*.index $QC_DSTORE_INDEX $extIdx | sort | uniq  | sed "s|^.*/${cleanRE}|/${cur}|$sedIC" | cut -c2-))
+            # shellcheck disable=SC2086
+            opts=($(grep --no-filename $ic -o -- "/$curRE" "$QC_DIR"/*.index "$QC_DSTORE_INDEX" $extIdx | sort | uniq  | sed "s|^.*/${cleanRE}|/${cur}|$sedIC" | cut -c2-))
             #qc_debug "OPTS >>${opts[*]}<<"
             COMPREPLY=( $(compgen -o nospace -S/ -W "${opts[*]}" -- "$cur" ))
             #COMPREPLY=( "${opts[@]}")
-            if [ ${BASH_VERSION:0:1} -ge 4 ]; then
+            if [ "${BASH_VERSION:0:1}" -ge 4 ]; then
                 compopt -o nospace
             fi
             #qc_debug "COMPREPLY >>${COMPREPLY[*]}<<"
@@ -675,7 +685,7 @@ function __qc_complete
 
     return 0
 }
-if [ ${BASH_VERSION:0:1} -ge 4 ]; then
+if [ "${BASH_VERSION:0:1}" -ge 4 ]; then
     complete  -F __qc_complete qc
 else
     complete -o nospace -F __qc_complete qc

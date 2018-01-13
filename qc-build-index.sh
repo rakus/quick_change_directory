@@ -23,9 +23,8 @@
 # CREATED: 2017-03-02
 #
 
-script_dir=$(cd "$(dirname $0)" 2>/dev/null; pwd)
+script_dir=$(cd "$(dirname "$0")" 2>/dev/null; pwd)
 script_name="$(basename "$0")"
-script_file="$script_dir/$script_name"
 
 [ -z "$QC_DIR" ] && QC_DIR=$HOME/.qc
 
@@ -33,7 +32,7 @@ LST="$QC_DIR/qc-index.list"
 
 usage()
 {
-    echo >&2 "USAGE: $script_dir [-E] [-i dir] [index...]"
+    echo >&2 "USAGE: $script_name [-E] [-i dir] [index...]"
     echo >&2 ""
     echo >&2 "   -E      Don't update extension index(es)."
     echo >&2 ""
@@ -99,6 +98,7 @@ export QC_LIST_UPD=true
 
 oifs="$IFS"
 IFS=$'\n'
+# shellcheck disable=SC2013
 for ln  in $(cat "$LST"); do
     ln=$(trim_str "$ln")
     if [[ "$ln" = \#* ]] || [ -z "$ln" ]; then
@@ -135,7 +135,8 @@ for ln  in $(cat "$LST"); do
     # ZSH: Arrays are 1-based
     echo "Updating ${ARGS[0]}..."
     #(set -x;$script_dir/qc-index-proc.sh "${ARGS[@]}")
-    $script_dir/qc-index-proc.sh "${ARGS[@]}"
+    "$script_dir/qc-index-proc.sh" "${ARGS[@]}"
     [ $? -ne 0 ] && exit 1
 done
+IFS="$oifs"
 

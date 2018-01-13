@@ -9,9 +9,7 @@
 # AUTHOR: Ralf Schandl
 #
 
-script_dir=$(cd "$(dirname $0)" 2>/dev/null; pwd)
 script_name="$(basename "$0")"
-script_file="$script_dir/$script_name"
 
 usage()
 {
@@ -139,7 +137,7 @@ done
 #echo "FILTER: ${FILTER[@]}"
 
 [ -z "$QC_DIR" ] && QC_DIR="$HOME/.qc"
-[ ! -d "$QC_DIR" ] && mkdir $QC_DIR
+[ ! -d "$QC_DIR" ] && mkdir "$QC_DIR"
 
 INDEX_FILE=$QC_DIR/$IDX_NAME
 
@@ -158,11 +156,11 @@ if [ ${#INC_UPD[@]} -gt 0 ]; then
             fi
         done
         if [ ${#INC_ROOTS[@]} -eq 0 ]; then
-            if [ ! $QC_LIST_UPD ]; then
-                echo >&2 "ERROR: Index $IDX_NAME does not contain any of [ ${INC_UPD[@]} ]"
+            if [ ! "$QC_LIST_UPD" ]; then
+                echo >&2 "ERROR: Index $IDX_NAME does not contain any of [ ${INC_UPD[*]} ]"
                 exit 1
             else
-                echo >&2 "Skipping $IDX_NAME: does not contain any of [ ${INC_UPD[@]} ]"
+                echo >&2 "Skipping $IDX_NAME: does not contain any of [ ${INC_UPD[*]} ]"
                 exit 0
             fi
         fi
@@ -171,16 +169,16 @@ if [ ${#INC_UPD[@]} -gt 0 ]; then
     fi
 fi
 
-NEW_INDEX=$(mktemp ${INDEX_FILE}.XXXX)
+NEW_INDEX=$(mktemp "${INDEX_FILE}.XXXX")
 
 # if incremental update set new ROOTS and prefill index file
 if [ ${#INC_ROOTS[@]} -gt 0 ]; then
     ROOTS=( "${INC_ROOTS[@]}" )
     re=$(printf "%s|" "${ROOTS[@]}")
     re=${re:0:-1}
-    grep -Ev "^($re)(/|$)" $INDEX_FILE > $NEW_INDEX
+    grep -Ev "^($re)(/|$)" "$INDEX_FILE" > "$NEW_INDEX"
 fi
-inc_start=$(wc -l < $NEW_INDEX)
+inc_start=$(wc -l < "$NEW_INDEX")
 
 # Build the 'find' expression for ignored dirs.
 typeset -a ignDirs
@@ -188,20 +186,19 @@ if [ ${#IGNORE_DIRS[@]} -gt 0 ]; then
     ignDirs=( '(' )
     for ign in "${IGNORE_DIRS[@]}"; do
         if [ ${#ignDirs[@]} -gt 1 ]; then
-            ignDirs+=(-o)
+            ignDirs+=(-o )
         fi
         if [[ "$ign" =~ ^/.*$ ]]; then
-            ignDirs+=(-wholename)
+            ignDirs+=(-wholename "$ign")
         elif [[ "$ign" =~ ^\./.*$ ]]; then
-            ignDirs+=(-wholename)
-            ign="${ROOT}${ign:1}"
+            for R in "${ROOTS[@]}"; do
+                ignDirs+=(-wholename "${R}${ign:1}")
+            done
         elif [[ "$ign" =~ ^.*/.*$ ]]; then
-            ignDirs+=(-wholename)
-            ign="*$ign"
+            ignDirs+=(-wholename "*$ign")
         else
-            ignDirs+=(-name)
+            ignDirs+=(-name "$ign")
         fi
-        ignDirs+=( "$ign" )
     done
     ignDirs+=( ")" )
 else
@@ -224,18 +221,18 @@ if [ ${#FILTER[@]} -gt 0 ]; then
 fi
 
 # find all directories excluding those configured
-find "${ROOTS[@]}" -xdev -type d "${ignDirs[@]}" -prune -o -xtype d "${filter[@]}" -print >> $NEW_INDEX
+find "${ROOTS[@]}" -xdev -type d "${ignDirs[@]}" -prune -o -xtype d "${filter[@]}" -print >> "$NEW_INDEX"
 # Don't check exit code.
 # A "permission denied" in some subdir would kill the index
 
 # replace .qc/index with new content
-mv -f $NEW_INDEX $INDEX_FILE
+mv -f "$NEW_INDEX" "$INDEX_FILE"
 
-dir_count=$(wc -l < $INDEX_FILE)
+dir_count=$(wc -l < "$INDEX_FILE")
 
 UPD=''
 if [ ${#INC_ROOTS[@]} -gt 0 ]; then
-    dir_diff=$(($dir_count - $inc_start))
+    dir_diff=$((dir_count - inc_start))
     UPD=" (Updated: $dir_diff)"
 fi
 
