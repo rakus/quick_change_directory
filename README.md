@@ -73,7 +73,7 @@ is equivalent to
 
 Example: `qc :apachelog`
 
-This searches for a entry that is labeled with ":apachelog". 
+This searches for a entry that is labeled with ":apachelog".
 
 Labels are explained in [Manual Index](#manual-index).
 
@@ -165,14 +165,14 @@ All index files are held in the directory `~/.qc`.
 
 ### Normal and Extension Indexes
 
-This indexes are normal text files with one directory name per line. 
+This indexes are normal text files with one directory name per line.
 
 Normal indexes have the file extension `.index` and are always searched by qc.
 
 Extension indexes have the file extension `.index.ext` and are only searched when
 qc is called with the option `-e`.
 
-The indexes are defined in the file `~/.qc/qc-index.list`. 
+The indexes are defined in the file `~/.qc/qc-index.list`.
 
 Example:
 
@@ -182,11 +182,13 @@ This defines the index "home.index" (file: `~/.qc/home.index`), that contains
 all directories below `$HOME`, but excludes `.*` (= hidden dirs) and directories
 named `CVS`.
 
+The comments in the file `qc-index.list` contains more details and examples.
+
 The file `qc-index.list` is processed using the script `qc-build-index.sh`.
 
 **Update Performance**
 
-My home directory contains ~100000 directories and my HD is a SSD. 
+My home directory contains ~100000 directories and my HD is a SSD.
 I have two indexes defined (see file qc-index.list).
 
 After dropping the file caches the first update takes about 19 seconds.
@@ -253,8 +255,8 @@ This is easy. Just do:
 
     . ./_quick_change_dir
 
-As no index exist, this will create the directory `~/.qc` and create a index of
-all directories in your home directory (excluding hidden dirs). 
+As no index exist, this will create the directory `~/.qc` and create a default
+index of all directories in your home directory (excluding hidden dirs).
 
 ### Manual Installation
 
@@ -273,16 +275,16 @@ all directories in your home directory (excluding hidden dirs).
 
 5. Optional: Extend your local crontab, so the directory index is updated every 10 minutes.
    The update will typically just take a few seconds (on my machine with SSD).
-   
+
    Run `crontab -e` and add the following line at the end of the file:
-   
+
    `*/10 * * * * ${HOME}/.qc/qc-build-index.sh >${HOME}/.qc/qc-build-index.log 2>&1`
 
    Every execution will write its output to `~/.qc/qc-build-index.log`. This log file
    is always overwritten, so it only contains the log of the last execution.
 
 6. Now source `.quick_change_dir` by executing `. $HOME/.quick_change_dir` or just start a new shell.
-   During the first sourcing of the script, the indexes are created. 
+   During the first sourcing of the script, the indexes are created.
 
 ### Installation Script
 
@@ -297,7 +299,7 @@ To really run the installation execute `./INSTALL.sh YES`.
 
 Then source `.quick_change_dir` by executing `. $HOME/.quick_change_dir` or
 just start a new shell.
-During the first sourcing of the script, the indexes are created. 
+During the first sourcing of the script, the indexes are created.
 
 
 ## Portability
