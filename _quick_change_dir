@@ -266,8 +266,9 @@ function qc
                 return 0
                 ;;
             *)
-                # ZSH doesn't know bash indirection
-                [ "${!OPTIND}" != "--help" ] && echo >&2 "can't parse: ${!OPTIND}" && echo >&2 ""
+                if [[ "$*" != *--help* ]]; then
+                    echo >&2 "Invalid option '$OPTARG'" && echo >&2 ""
+                fi
                 echo >&2 "Quick Change -- index based directory changer"
                 echo >&2 ""
                 echo >&2 "Usage:"
@@ -479,7 +480,9 @@ function dstore
             d) delete=true
                 ;;
             *)
-                [ "${!OPTIND}" != "--help" ] && echo >&2 "can't parse: ${!OPTIND}" && echo >&2 ""
+                if [[ "$*" != *--help* ]]; then
+                    echo >&2 "Invalid option '$OPTARG'" && echo >&2 ""
+                fi
                 echo >&2 "Manually manage content of $QC_DSTORE_INDEX for usage with 'qc'."
                 echo >&2 ""
                 echo >&2 "Usage:"
