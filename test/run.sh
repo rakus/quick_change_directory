@@ -2,25 +2,24 @@
 #
 # FILE: run.sh
 #
-# ABSTRACT: 
+# ABSTRACT: run qc tests
 #
 # AUTHOR: Ralf Schandl
 #
 # CREATED: 2017-05-10
 #
 
-script_dir=$(cd "$(dirname $0)" 2>/dev/null; pwd)
-script_name="$(basename "$0")"
-script_file="$script_dir/$script_name"
+script_dir=$(cd "$(dirname "$0")" 2>/dev/null; pwd)
 
 cd "$script_dir"
 
-for shell in bash ksh; do
+for shell in ksh bash; do
     if which $shell >/dev/null 2>&1; then
         for fn in test-*.sh; do
             echo "Running $shell $fn"
-            $shell ./$fn
+            $shell "./$fn"
             if [ $? -ne 0 ]; then
+                echo >&2 "$shell: Test FAILED"
                 exit 1
             fi
         done
@@ -28,5 +27,7 @@ for shell in bash ksh; do
         echo "Shell $shell not found -- skipping tests"
     fi
 done
+echo
+echo "ALL test successful"
 
 #---------[ END OF FILE run.sh ]-----------------------------------------------

@@ -139,10 +139,13 @@ function __qc_select
     typeset cnt=${#dl[*]}
 
     if [ "$cnt" -eq 0 ]; then
+        typeset IFS=' '
         echo >&2 "qc: $*: No matching directory found"
+        return 1
     elif [ "$cnt" -eq 1 ]; then
         # echo and remove color codes
         echo "${dl[@]}" | sed -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]//g"
+        return 0
     else
         # If selection list needs more than terminal hight lines
         # ask user, if he/she really want's to see it.

@@ -2,18 +2,16 @@
 #
 # FILE: test-args2regex.sh
 #
-# ABSTRACT: 
+# ABSTRACT: test qc regular expression creation
 #
 # AUTHOR: Ralf Schandl
 #
 # CREATED: 2017-05-10
 #
 
-script_dir=$(cd "$(dirname $0)" 2>/dev/null; pwd)
-script_name="$(basename "$0")"
-script_file="$script_dir/$script_name"
+script_dir=$(cd "$(dirname "$0")" 2>/dev/null; pwd)
 
-. ${script_dir}/defines.shinc
+. "${script_dir}/defines.shinc"
 
 TEST_STATUS=0
 
@@ -21,7 +19,7 @@ g2re()
 {
     expected="$1"
     shift
-    printf "$* -> $expected"
+    printf "%s" "$* -> $expected"
     actual="$(__qc_args2regex "$@")"
 
 

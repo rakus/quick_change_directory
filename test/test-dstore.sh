@@ -2,25 +2,23 @@
 #
 # FILE: test-dstore.sh
 #
-# ABSTRACT: 
+# ABSTRACT: test dstore
 #
 # AUTHOR: Ralf Schandl
 #
 # CREATED: 2017-05-11
 #
 
-script_dir=$(cd "$(dirname $0)" 2>/dev/null; pwd)
-script_name="$(basename "$0")"
-script_file="$script_dir/$script_name"
+script_dir=$(cd "$(dirname "$0")" 2>/dev/null; pwd)
 
 BUILD_TEST_DIRS=true
-. ${script_dir}/defines.shinc
+. "${script_dir}/defines.shinc"
 
 
 checkSize()
 {
     printf "   Dstore size"
-    if [ $1 -eq $(dstore -l | wc -l) ]; then
+    if [ "$1" -eq "$(dstore -l | wc -l)" ]; then
         OK
     else
         ERROR
@@ -29,8 +27,8 @@ checkSize()
 
 labelExists()
 {
-    printf "   Check lable \"$1\""
-    if grep "$1 " $QC_DSTORE_INDEX >/dev/null 2>&1; then
+    printf "   Check lable \"%s\"" "$1"
+    if grep "$1 " "$QC_DSTORE_INDEX" >/dev/null 2>&1; then
         OK
     else
         ERROR
@@ -39,8 +37,8 @@ labelExists()
 
 labelGone()
 {
-    printf "   Check no lable \"$1\""
-    if ! grep "$1 " $QC_DSTORE_INDEX >/dev/null 2>&1; then
+    printf "   Check no lable \"%s\"" "$1"
+    if ! grep "$1 " "$QC_DSTORE_INDEX" >/dev/null 2>&1; then
         OK
     else
         ERROR
@@ -49,8 +47,8 @@ labelGone()
 
 entryExists()
 {
-    printf "   Check for entry \"$1\""
-    if grep "$1" $QC_DSTORE_INDEX >/dev/null 2>&1; then
+    printf "   Check for entry \"%s\"" "$1"
+    if grep "$1" "$QC_DSTORE_INDEX" >/dev/null 2>&1; then
         OK
     else
         ERROR
@@ -67,7 +65,7 @@ entryExists()
 #    mkdir -p testDirectory/Customer/YoYo/MyProject/Admin
 #    mkdir -p testDirectory/Customer/ACME/Admin
 
-cd ${script_dir}/testDirectory
+cd "${script_dir}/testDirectory"
 touch .qc/home.index
 
 startTest "dstore"
@@ -95,7 +93,7 @@ entryExists "^:A .*Customer/ACME"
 checkSize 3
 
 echo "Check cleanup"
-echo "NIX" >> $QC_DSTORE_INDEX
+echo "NIX" >> "$QC_DSTORE_INDEX"
 checkSize 4
 dstore -c
 checkSize 3
