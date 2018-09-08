@@ -3,6 +3,8 @@
 #
 # A index line is build like this:
 #
+# <index-name> [filter...] <root-dir...>[ -- <ignore...>]
+#
 # 1) The name of the index. Must be a valid plain file name that ends with
 #    '.index' or '.index.ext'. The index will be created in the directory
 #    '~/.qc'.
@@ -33,7 +35,7 @@ home.index $HOME -- '.*' CVS
 home.hidden.index.ext -f '*/.*' $HOME -- .metadata .settings .git .svn .hg '.jazz*' .bzr .qc .cp .cache CVS
 
 # create a extension index of the global file system. Exclude $HOME, as this
-# is already contained in home.index. Also exclude /media as it may contain 
+# is already contained in home.index. Also exclude /media as it may contain
 # only temporarily available file systems (like a CD or a USB drive).
 #global.index.ext / -- $HOME /media
 
