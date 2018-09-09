@@ -6,8 +6,9 @@
 Quick Change Directory or short "qc" is tool to quickly navigate through a
 directory tree.
 
-The base of this is a index file of the entire directory tree.
-Qc then searches this index to find the directory to change to.
+It creates a index file with all directories from a directory tree and
+then searches this index to find the directory to change to. The creation of the
+index is configurable and multiple indexes can be created.
 
 Qc supports three ways to search for a directory to change to.
 
@@ -149,7 +150,8 @@ would do for the cd commands.
 * `-u` Update the normal indexes.
 * `-U` Update the normal and extended indexes.
 * `-l` List labeled directories.
-* `-S` Print statistics of index files
+* `-S` Print statistics of index files.
+* `--help` Shows help.
 
 Note:
 * calling 'qc' without parameter acts like calling 'cd' without parameter
