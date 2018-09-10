@@ -176,7 +176,7 @@ if [ ${#INC_ROOTS[@]} -gt 0 ]; then
     ROOTS=( "${INC_ROOTS[@]}" )
     re=$(printf "%s|" "${ROOTS[@]}")
     re=${re:0:-1}
-    grep -Ev "^($re)(/|$)" "$INDEX_FILE" > "$NEW_INDEX"
+    grep -aEv "^($re)(/|$)" "$INDEX_FILE" > "$NEW_INDEX"
 fi
 inc_start=$(wc -l < "$NEW_INDEX")
 

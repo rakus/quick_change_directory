@@ -95,7 +95,7 @@ Select the directory to change to by number. Enter 'q' to abort.
 
 ### Details on Expression
 
-The expression is case-sensitive. Use qc -i ... to switch to case-insensitive
+The expression is case-sensitive. Use `qc -i ...` to switch to case-insensitive
 matching.
 
 Every parameter, that does not end with a '/' gets a '*' appended before it
@@ -120,6 +120,9 @@ Note: More than two consecutive '\*' are handled as '**'. The same is true for
 * `***`    is equivalent to `**`
 * `*****`  is equivalent to `**`
 * `/////`  is equivalent to `//`
+
+BTW: If a directory name contains non-text bytes, qc can't find this
+directory. This is due to the way `grep` handles binary data.
 
 ### Multiple ways
 

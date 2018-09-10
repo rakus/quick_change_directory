@@ -127,12 +127,12 @@ function __qc_select
             pattern=$1
             [ $# -gt 1 ] && echo >&2 "WARNING: Extra arguments ignored"
             # grep: -h: Suppress the prefixing of file names on output.
-            dl=( $( (grep -h -i -- "^$pattern[^ ]* " "$QC_DSTORE_INDEX" ||([ $? = 2 ] && echo >&2 "$NO_DSTORE_IDX_MSG")) | cut "-d " -f2- | sort | uniq) )
+            dl=( $( (grep -ahi -- "^$pattern[^ ]* " "$QC_DSTORE_INDEX" ||([ $? = 2 ] && echo >&2 "$NO_DSTORE_IDX_MSG")) | cut "-d " -f2- | sort | uniq) )
             ;;
         *)
             pattern=$(__qc_args2regex "$@")
             # shellcheck disable=SC2086
-            dl=( $( (grep --color=always -h $grepOpt -- "/$pattern" "$QC_DIR"/*.index "$QC_DSTORE_INDEX" $extIdx || ([ $? = 2 ] && echo >&2 "$NO_IDX_MSG"))|sed "s/^:[^ ]* //"|sort|uniq) )
+            dl=( $( (grep --color=always -ah $grepOpt -- "/$pattern" "$QC_DIR"/*.index "$QC_DSTORE_INDEX" $extIdx || ([ $? = 2 ] && echo >&2 "$NO_IDX_MSG"))|sed "s/^:[^ ]* //"|sort|uniq) )
             ;;
     esac
 
@@ -408,7 +408,7 @@ function __dstore_clean
 
                 if [ -d "$dir" ]; then
                     echo "$d" >> "$QC_DSTORE_INDEX.tmp"
-                    if echo "$labels" | grep -i  " $lbl " >/dev/null 2>&1; then
+                    if echo "$labels" | grep -ai  " $lbl " >/dev/null 2>&1; then
                         echo >&2 "Warning: Duplicate label: '$lbl'"
                     fi
                     labels="$labels $lbl "
@@ -423,8 +423,8 @@ function __dstore_clean
                 ;;
             ?*)
                 # ignore dirs already in another index file
-                if grep "^${d}$" "${otherIdx[@]}" >/dev/null 2>&1; then
-                    echo >&2 "Removed $d: Already in $(grep -l "^${d}$" "${otherIdx[@]}")"
+                if grep -a "^${d}$" "${otherIdx[@]}" >/dev/null 2>&1; then
+                    echo >&2 "Removed $d: Already in $(grep -al "^${d}$" "${otherIdx[@]}")"
                     continue
                 fi
                 # remove non-existing dirs
@@ -532,7 +532,7 @@ function dstore
                     return 1
                 fi
                 if [ "$delete" = "true" ]; then
-                    grep -vi "^$lbl " "$QC_DSTORE_INDEX" > "$QC_DSTORE_INDEX.tmp"
+                    grep -avi "^$lbl " "$QC_DSTORE_INDEX" > "$QC_DSTORE_INDEX.tmp"
                     mv "$QC_DSTORE_INDEX.tmp" "$QC_DSTORE_INDEX"
                 else
                     typeset dir
@@ -543,7 +543,7 @@ function dstore
                         shift
                     fi
                     if [ -d "$dir" ]; then
-                        grep -vi "^$lbl " "$QC_DSTORE_INDEX" > "$QC_DSTORE_INDEX.tmp"
+                        grep -avi "^$lbl " "$QC_DSTORE_INDEX" > "$QC_DSTORE_INDEX.tmp"
                         mv "$QC_DSTORE_INDEX.tmp" "$QC_DSTORE_INDEX"
                         echo "$lbl $dir" >> "$QC_DSTORE_INDEX"
                     else
@@ -555,7 +555,7 @@ function dstore
                 dir=$(__qc_fqname "$1")
                 shift
                 if [ "$delete" = "true" ]; then
-                    grep -v "^${dir}$" "$QC_DSTORE_INDEX" > "$QC_DSTORE_INDEX.tmp"
+                    grep -av "^${dir}$" "$QC_DSTORE_INDEX" > "$QC_DSTORE_INDEX.tmp"
                     mv "$QC_DSTORE_INDEX.tmp" "$QC_DSTORE_INDEX"
                 else
                     if [ -d "$dir" ]; then
@@ -567,7 +567,7 @@ function dstore
                 ;;
         esac
     done
-    diff "$QC_DSTORE_INDEX.org" "$QC_DSTORE_INDEX" | grep -- "^[<>]" | sed "s/^</Removed:/;s/^>/Added:  /"
+    diff "$QC_DSTORE_INDEX.org" "$QC_DSTORE_INDEX" | grep -a -- "^[<>]" | sed "s/^</Removed:/;s/^>/Added:  /"
     rm "$QC_DSTORE_INDEX.org"
     __dstore_clean warn
 }
@@ -643,7 +643,7 @@ function __qc_complete
             ;;
         ':'*)
             #qc_debug "LABEL"
-            opts=$(grep "^${cur}[^ ]* " "$QC_DSTORE_INDEX" | cut "-d " -f1 | sort | uniq)
+            opts=$(grep -a "^${cur}[^ ]* " "$QC_DSTORE_INDEX" | cut "-d " -f1 | sort | uniq)
             #qc_debug "$opts"
             COMPREPLY=( $(compgen "-S " -W "${opts[*]}" -- "$cur" ))
             typeset i
@@ -671,7 +671,7 @@ function __qc_complete
             #qc_debug "cleanRE >>$cleanRE<<"
             typeset IFS=$'\n'
             # shellcheck disable=SC2086
-            opts=($(grep --no-filename $ic -o -- "/$curRE" "$QC_DIR"/*.index "$QC_DSTORE_INDEX" $extIdx | sort | uniq  | sed "s|^.*/${cleanRE}|/${cur}|$sedIC" | cut -c2-))
+            opts=($(grep -a --no-filename $ic -o -- "/$curRE" "$QC_DIR"/*.index "$QC_DSTORE_INDEX" $extIdx | sort | uniq  | sed "s|^.*/${cleanRE}|/${cur}|$sedIC" | cut -c2-))
             #qc_debug "OPTS >>${opts[*]}<<"
             COMPREPLY=( $(compgen -o nospace -S/ -W "${opts[*]}" -- "$cur" ))
             #COMPREPLY=( "${opts[@]}")
