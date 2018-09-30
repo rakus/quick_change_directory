@@ -10,7 +10,7 @@ It creates a index file with all directories from a directory tree and
 then searches this index to find the directory to change to. The creation of the
 index is configurable and multiple indexes can be created.
 
-Qc supports three ways to search for a directory to change to.
+## Searching and changing directories
 
 ### Search by (part of the) directory name
 
@@ -24,7 +24,14 @@ This searches for a directory named `Pro*`. It would match something like:
 
 If only one name matches, the directory is changed immediately.
 If multiple entries matches, a list of possible target directories is
-displayed. Choose one by number and the directory is changed.
+displayed. Choose one by number and the directory is changed or enter `q`
+to quit.
+
+    ~ > qc Pro
+    1) ~/Documents/Customer/Project
+    2) ~/Documents/Customer/YoYo/Protocols
+    3) ~/Documents/private/Profile
+    #?
 
 Example: `qc Project/Ser`
 
@@ -76,22 +83,10 @@ Example: `qc :apachelog`
 
 This searches for a entry that is labeled with ":apachelog".
 
-Labels are explained in [Manual Index](#manual-index).
+Qc works with an additional command named `dstore` (like "directory store") that
+is able to create a label (aka  bookmark) for a directory.
 
-
-### Multiple matches
-
-If multiple directories matches, a selection list is displayed:
-
-    $ qc Admin
-    1) /home/john/Documents/Customer/YoYo/Admin
-    2) /home/john/Documents/Customer/ACME/Project1/Admin
-    3) /home/john/Documents/Customer/ACME/Project2/Admin
-    4) /home/john/Documents/shared/Servers/Admin
-    #?
-
-Select the directory to change to by number. Enter 'q' to abort.
-
+Dstore and labels are explained in the section [Manual Index](#manual-index).
 
 ### Details on Expression
 
@@ -108,7 +103,7 @@ So:
 
 Supported Wildcards:
 
-|Wildcard| Description | Regular Expression |
+|Wildcard| Matches | Regular Expression |
 | ------ | ----------- | ------------------ |
 | `*` | Zero or more characters excluding '/' | `[^/]*` |
 | `?` | A single character excluding '/' | `[^/]` |
@@ -145,6 +140,11 @@ Examples to change to that directory:
 
 Bash command line completion is supported for 'qc'. Just use <TAB> as you
 would do for the cd commands.
+
+Like:
+
+    > qc  Documents//Y<TAB>
+    > qc  Documents//YoYo/
 
 ### Other qc option:
 
@@ -196,8 +196,8 @@ The file `qc-index.list` is processed using the script `qc-build-index.sh`.
 My home directory contains ~100000 directories and my HD is a SSD.
 I have two indexes defined (see file qc-index.list).
 
-After dropping the file caches the first update takes about 19 seconds.
-Subsequent updates are much faster, they take about 2.5 seconds.
+After dropping the file caches the first update takes about 20-30 seconds.
+Subsequent updates are much faster, they take about 3 seconds.
 
 BTW: Due to ignored dirs (like .git, .metadata, ...) only half of the existing
 directories are stored in the indexes.
@@ -239,6 +239,22 @@ Other usage of `dstore`:
 |`dstore -e` | Opens `index.dstore` in a editor (default vi). |
 |`dstore -c` | Cleans up by removing none-existing or duplicate entries or entries already contained in another index file. It also warns about duplicate labels. |
 
+### Information about the existing indexes
+
+Just call `qc` with the option `-S`.
+
+    > qc -S
+    /home/rks/.qc/home.index
+       Last Upd: 2018-09-30 09:10:03.057322543 +0200
+       Entries:  36.401 (3.857.193 bytes)
+    /home/rks/.qc/home.hidden.index.ext
+       Last Upd: 2018-09-30 09:10:05.165314319 +0200
+       Entries:  18.171 (1.503.203 bytes)
+    /home/rks/.qc/index.dstore
+       Last Upd: 2018-09-30 09:01:35.034456049 +0200
+       Entries:  10 (302 bytes)
+       Labeled entries:  8
+
 
 ## Installation
 
@@ -248,7 +264,7 @@ The following files are distributed:
 | ---- | ----------- | ---------------- |
 | `README.md` | The file you are just reading. | Not installed |
 | `INSTALL.sh` | The installation script. | Not installed |
-| `_quick_change_dir` | The script to be sourced by .bashrc. | `~/.quick_change_dir` |
+| `_quick_change_dir` | The script to be sourced by .bashrc (or .kshrc). | `~/.quick_change_dir` |
 | `qc-build-index.sh` | Processes `qc-index.list` to create index files. | `~/.qc/qc-build-index.sh` |
 | `qc-index-proc.sh` | Called by `qc-build-index.sh` to creates a index file. | `~/.qc/qc-index-proc.sh` |
 | `qc-index.list` | Defines indexes to create. | `~/.qc/qc-index.list` |
