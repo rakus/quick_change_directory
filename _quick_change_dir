@@ -152,7 +152,7 @@ function __qc_select
         typeset limit=$((LINES -1))
         if [ "$cnt" -gt $limit ]; then
 
-            echo >&2 -n "Display all $cnt possibilities? (y or n) "
+            echo >&2 -n "Display all $cnt directories? (y or n) "
             read -N1 yn
             # ZSH: read -k yn
             case $yn in
