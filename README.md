@@ -93,8 +93,8 @@ Dstore and labels are explained in the section [Manual Index](#manual-index).
 The expression is case-sensitive. Use `qc -i ...` to switch to case-insensitive
 matching.
 
-Every parameter, that does not end with a '/' gets a '*' appended before it
-is joined with the next word with a '/'.
+Every parameter, that does not end with a `/` gets a `*` appended before it
+is joined with the next word with a `/`.
 So:
 * `Hello World`  -> `Hello*/World*`
 * `Hello/ World` -> `Hello/World*`
@@ -103,15 +103,15 @@ So:
 
 Supported Wildcards:
 
-|Wildcard| Matches | Regular Expression |
-| ------ | ----------- | ------------------ |
-| `*` | Zero or more characters excluding '/' | `[^/]*` |
-| `?` | A single character excluding '/' | `[^/]` |
-| `**` | Zero or more characters (INcluding '/') | `.*` |
-| `//` | Zero or more intermediate directories | `\(.*/\)*` |
+|Wildcard| Matches                                 | Regular Expression |
+| ------ | --------------------------------------- | ------------------ |
+| `*`    | Zero or more characters excluding '/'   | `[^/]*`            |
+| `?`    | A single character excluding '/'        | `[^/]`             |
+| `**`   | Zero or more characters (including '/') | `.*`               |
+| `//`   | Zero or more intermediate directories   | `\(.*/\)*`         |
 
-Note: More than two consecutive '\*' are handled as '**'. The same is true for
-'/'. So:
+Note: More than two consecutive `*` are handled as `**`. The same is true for
+`/`. So:
 * `***`    is equivalent to `**`
 * `*****`  is equivalent to `**`
 * `/////`  is equivalent to `//`
@@ -157,8 +157,8 @@ Like:
 * `--help` Shows help.
 
 Note:
-* calling 'qc' without parameter acts like calling 'cd' without parameter
-* calling 'qc -' acts like calling 'cd -'
+* calling `qc` without parameter acts like calling `cd` without parameter
+* calling `qc -` acts like calling `cd -`
 
 
 ## Indexes
@@ -168,13 +168,13 @@ automatically (via script), the third one is for manual management.
 
 All index files are held in the directory `~/.qc`.
 
-### Normal and Extension Indexes
+### Normal and Extended Indexes
 
 This indexes are normal text files with one directory name per line.
 
 Normal indexes have the file extension `.index` and are always searched by qc.
 
-Extension indexes have the file extension `.index.ext` and are only searched when
+Extended indexes have the file extension `.index.ext` and are only searched when
 qc is called with the option `-e`.
 
 The indexes are defined in the file `~/.qc/qc-index.list`.
@@ -220,24 +220,24 @@ Example:
 
 The content of `index.dstore` is managed with the command `dstore`.
 
-| Command | Description |
-| --- | --- |
-|`dstore` | Adds the current dir to index. |
-|`dstore dirname` | Adds the named dir to index. |
-|`dstore -d` | Removes the current dir from index. |
-|`dstore -d dirname` | Removes the named dir from index. |
-|`dstore :lbl` | Adds the current dir with the label ':lbl' to index. |
-|`dstore :lbl dirname` | Adds the named dir with the label ':lbl' to index. |
-|`dstore -d :lbl` | Removes the entry labeled with ':lbl' from index. |
+| Command              | Description                                          |
+| -------------------- | ---------------------------------------------------- |
+|`dstore`              | Adds the current dir to index.                       |
+|`dstore dirname`      | Adds the named dir to index.                         |
+|`dstore -d`           | Removes the current dir from index.                  |
+|`dstore -d dirname`   | Removes the named dir from index.                    |
+|`dstore :lbl`         | Adds the current dir with the label ':lbl' to index. |
+|`dstore :lbl dirname` | Adds the named dir with the label ':lbl' to index.   |
+|`dstore -d :lbl`      | Removes the entry labeled with ':lbl' from index.    |
 
 Other usage of `dstore`:
 
-| Command | Description |
-| --- | --- |
-|`dstore --help` | Shows help. |
-|`dstore -l` | Lists content. |
-|`dstore -e` | Opens `index.dstore` in a editor (default vi). |
-|`dstore -c` | Cleans up by removing none-existing or duplicate entries or entries already contained in another index file. It also warns about duplicate labels. |
+| Command        | Description                                    |
+| -------------- | ---------------------------------------------- |
+|`dstore --help` | Shows help.                                    |
+|`dstore -l`     | Lists content.                                 |
+|`dstore -e`     | Opens `index.dstore` in a editor (default vi). |
+|`dstore -c`     | Cleans up by removing none-existing or duplicate entries or entries already contained in another index file. It also warns about duplicate labels. |
 
 ### Information about the existing indexes
 
@@ -260,14 +260,14 @@ Just call `qc` with the option `-S`.
 
 The following files are distributed:
 
-| File | Description | Install Location |
-| ---- | ----------- | ---------------- |
-| `README.md` | The file you are just reading. | Not installed |
-| `INSTALL.sh` | The installation script. | Not installed |
-| `_quick_change_dir` | The script to be sourced by .bashrc (or .kshrc). | `~/.quick_change_dir` |
-| `qc-build-index.sh` | Processes `qc-index.list` to create index files. | `~/.qc/qc-build-index.sh` |
-| `qc-index-proc.sh` | Called by `qc-build-index.sh` to creates a index file. | `~/.qc/qc-index-proc.sh` |
-| `qc-index.list` | Defines indexes to create. | `~/.qc/qc-index.list` |
+| File                | Description                                            | Install Location          |
+| ------------------- | ------------------------------------------------------ | ------------------------- |
+| `README.md`         | The file you are just reading.                         | Not installed             |
+| `INSTALL.sh`        | The installation script.                               | Not installed             |
+| `_quick_change_dir` | The script to be sourced by .bashrc (or .kshrc).       | `~/.quick_change_dir`     |
+| `qc-build-index.sh` | Processes `qc-index.list` to create index files.       | `~/.qc/qc-build-index.sh` |
+| `qc-index-proc.sh`  | Called by `qc-build-index.sh` to creates a index file. | `~/.qc/qc-index-proc.sh`  |
+| `qc-index.list`     | Defines indexes to create.                             | `~/.qc/qc-index.list`     |
 
 
 ### I don't want to install -- just test it
