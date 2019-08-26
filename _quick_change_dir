@@ -471,7 +471,7 @@ function dstore
     while getopts ":elcd" o "$@"; do
         case $o in
             e)
-                ${EDITOR:-vi} "$QC_DSTORE_INDEX"
+                ${VISUAL:-${EDITOR:-vi}} "$QC_DSTORE_INDEX"
                 __dstore_clean warn
                 return
                 ;;
@@ -506,7 +506,7 @@ function dstore
                 echo >&2 "  dstore -d :lbl"
                 echo >&2 "      remove directory labeled with ':lbl' from index"
                 echo >&2 "  dstore [-e | -l | -c]"
-                echo >&2 "      '-e'  edit directory index (using ${EDITOR:-vi})"
+                echo >&2 "      '-e'  edit directory index (using ${VISUAL:-${EDITOR:-vi}})"
                 echo >&2 "      '-l'  list directory index"
                 echo >&2 "      '-c'  clean up duplicate/none-existing entries"
                 echo >&2 ""

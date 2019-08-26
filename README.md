@@ -239,6 +239,9 @@ Other usage of `dstore`:
 |`dstore -e`     | Opens `index.dstore` in a editor (default vi). |
 |`dstore -c`     | Cleans up by removing none-existing or duplicate entries or entries already contained in another index file. It also warns about duplicate labels. |
 
+The editor used for `dstore -e` is either the value of `$VISUAL` or the value
+of `$EDITOR` or defaults to `vi`.
+
 ### Information about the existing indexes
 
 Just call `qc` with the option `-S`.
