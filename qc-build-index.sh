@@ -23,7 +23,7 @@
 # CREATED: 2017-03-02
 #
 
-script_dir=$(cd "$(dirname "$0")" 2>/dev/null; pwd)
+script_dir=$(cd "$(dirname "$0")" 2>/dev/null && pwd)
 script_name="$(basename "$0")"
 
 [ -z "$QC_DIR" ] && QC_DIR=$HOME/.qc
@@ -105,8 +105,7 @@ for ln  in $(cat "$LST"); do
         continue
     fi
     #echo "LN: $ln"
-    eval "ARGS=( $ln )"
-    if [ $? -ne 0 ]; then
+    if ! eval "ARGS=( $ln )"; then
         echo >&2 "Error parsing: $ln"
         exit 1
     fi
@@ -135,8 +134,9 @@ for ln  in $(cat "$LST"); do
     # ZSH: Arrays are 1-based
     echo "Updating ${ARGS[0]}..."
     #(set -x;$script_dir/qc-index-proc.sh "${ARGS[@]}")
-    "$script_dir/qc-index-proc.sh" "${ARGS[@]}"
-    [ $? -ne 0 ] && exit 1
+    if ! "$script_dir/qc-index-proc.sh" "${ARGS[@]}"; then
+        exit 1
+    fi
 done
 IFS="$oifs"
 

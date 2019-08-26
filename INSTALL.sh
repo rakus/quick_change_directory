@@ -19,7 +19,7 @@
 
 set -u
 
-script_dir=$(cd "$(dirname "$0")" 2>/dev/null; pwd)
+script_dir=$(cd "$(dirname "$0")" 2>/dev/null && pwd)
 script_name="$(basename "$0")"
 
 
@@ -95,13 +95,15 @@ copy_file()
 
     if [ -e "$tgt" ] && [ ! $HARD ]; then
         echo "Saving existing $tgt to $tgt.install-prev"
-        run_cmd mv -f "$tgt" "$tgt.install-prev"
-        [ $? -ne 0 ] && exit 1
+        if ! run_cmd mv -f "$tgt" "$tgt.install-prev"; then
+            exit 1
+        fi
     fi
 
     echo "Copying $src to $tgt..."
-    run_cmd cp -f "$src" "$tgt"
-    [ $? -ne 0 ] && exit 1
+    if ! run_cmd cp -f "$src" "$tgt"; then
+        exit 1
+    fi
     if [[ "$tgt" == *.sh ]]; then
         run_cmd chmod +x "$tgt"
     fi
@@ -150,15 +152,17 @@ add_to_init_file()
 
 [ ! $EXECUTE ] && simu_msg
 
-cd "$script_dir"
-[ $? -ne 0 ] && exit 1
+if ! cd "$script_dir"; then
+    exit 1
+fi
 
 TGT="$HOME/.qc"
 
 # Create ~/.qc
 if [ ! -d "$TGT" ]; then
-    run_cmd mkdir "$TGT"
-    [ $? -ne 0 ] && exit 1
+    if ! run_cmd mkdir "$TGT"; then
+        exit
+    fi
 fi
 
 copy_file qc-index-proc.sh "$TGT/qc-index-proc.sh"
