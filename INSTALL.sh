@@ -112,7 +112,8 @@ copy_file()
 add_to_crontab()
 {
     if crontab -l | grep "qc-build-index.sh" >/dev/null 2>&1; then
-        echo "SKIPPED: Crontab entry seems to exist"
+        echo "SKIPPED: Crontab entry seems to exist:"
+        crontab -l | grep "qc-build-index.sh" | sed "s/^/    /"
     else
         CRE="*/10 * * * * \${HOME}/.qc/qc-build-index.sh >\${HOME}/.qc/qc-build-index.log 2>&1"
         echo "Installing crontab entry:"
@@ -136,14 +137,15 @@ add_to_init_file()
     fi
 
     if grep "\\.quick_change_dir" "$file" >/dev/null 2>&1; then
-        echo "SKIPPED: The file .quick_change_dir seems to be already sourced from $file"
+        echo "SKIPPED: The file .quick_change_dir seems to be already sourced from $file:"
+        grep "\\.quick_change_dir" "$file" | sed "s/^/    /"
     else
         echo "Adding .quick_change_dir to $file..."
         # to complex for run_cmd (because of redir)
         if [ $EXECUTE ]; then
-            echo "[ -e \"\$HOME/.quick_change_dir\" ] && . \$HOME/.quick_change_dir" >> "$file"
+            echo "[ -f \"\$HOME/.quick_change_dir\" ] && . \$HOME/.quick_change_dir" >> "$file"
         else
-            echo "echo \"[ -e \"\$HOME/.quick_change_dir\" ] && . \$HOME/.quick_change_dir\" >> $file"
+            echo "echo \"[ -f \"\$HOME/.quick_change_dir\" ] && . \$HOME/.quick_change_dir\" >> $file"
         fi
     fi
 }
