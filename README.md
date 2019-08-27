@@ -193,11 +193,11 @@ The file `qc-index.list` is processed using the script `qc-build-index.sh`.
 
 **Update Performance**
 
-My home directory contains ~100000 directories and my HD is a SSD.
+My home directory contains ~140000 directories and my HD is a SSD.
 I have two indexes defined (see file qc-index.list).
 
-After dropping the file caches the first update takes about 20-30 seconds.
-Subsequent updates are much faster, they take about 3 seconds.
+After dropping the file caches the first update takes about 30-40 seconds.
+Subsequent updates are much faster, they take about 5 seconds.
 
 BTW: Due to ignored dirs (like .git, .metadata, ...) only half of the existing
 directories are stored in the indexes.
@@ -295,7 +295,7 @@ index of all directories in your home directory (excluding hidden dirs).
 
 4. Add the following line to your `.bashrc` (or `.kshrc`):
 
-   `[ -e "$HOME/.quick_change_dir" ] && . $HOME/.quick_change_dir`
+   `[ -f "$HOME/.quick_change_dir" ] && . $HOME/.quick_change_dir`
 
 5. Optional: Extend your local crontab, so the directory index is updated every 10 minutes.
    The update will typically just take a few seconds (on my machine with SSD).
