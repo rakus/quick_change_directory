@@ -1,0 +1,215 @@
+#!/bin/bash
+#
+# FILE: INSTALL
+#
+# ABSTRACT: Install files to $HOME and $HOME/bin
+#
+# AUTHOR: Ralf Schandl
+#
+
+script_dir="$(cd "$(dirname "$0")" && pwd)"
+script_name="$(basename "$0")"
+
+cd "$script_dir" || exit 1
+
+ts=$(date "+%Y-%m-%dT%H.%M.%S")
+bin_target_dir="$HOME/.qc"
+rc_target_dir="$HOME"
+
+execute()
+{
+    if [ "$execute" == "true" ]; then
+        "$@"
+    else
+        echo "$@"
+    fi
+}
+
+do_install()
+{
+    local fqfn="$1"
+    local tgt="$2"
+
+    if [ -e "$tgt" ]; then
+        if [ "$mode" = "symlink" ] && [ -L "$tgt" ]; then
+            tgtln="$(realpath "$tgt")"
+            if [ "$fqfn" = "$tgtln" ]; then
+                echo "Up-to-date: $tgt"
+                return 0
+            fi
+        fi
+        case "$exit_handling" in
+            backup)
+                # create backup copy
+                echo "Backing up existing file: $tgt"
+                execute mv "$tgt" "$tgt.$ts"
+                ;;
+            overwrite)
+                # do nothing
+                ;;
+            *)
+                echo >&2 "ERROR: File exists: $tgt"
+                echo >&2 "       Use either '-b' or '-f'."
+                echo >&2 ""
+                usage
+                exit 1
+                ;;
+        esac
+    fi
+
+    if [ "$mode" == "copy" ]; then
+        echo "Copying $fqfn -> $tgt"
+        execute cp -f "$fqfn" "$tgt"
+    else
+        echo "Linking $tgt -> $fqfn"
+        execute ln -fs "$fqfn" "$tgt"
+    fi
+}
+
+install_rcfile()
+{
+    typeset fn="$1"
+    typeset tgt_dir="$2"
+    typeset bn="${fn#_}"
+    typeset fqfn="$(realpath "$fn")"
+    typeset tgt="$tgt_dir/.$bn"
+
+    do_install "$fqfn" "$tgt"
+
+}
+
+install_file()
+{
+    typeset fn="$1"
+    typeset tgt_dir="$2"
+    typeset fqfn="$(realpath "$fn")"
+    typeset tgt="$tgt_dir/$fn"
+
+    do_install "$fqfn" "$tgt"
+}
+
+add_to_crontab()
+{
+    if crontab -l | grep "qc-build-index.sh" >/dev/null 2>&1; then
+        echo "SKIPPED: Crontab entry seems to exist:"
+        crontab -l | grep "qc-build-index.sh" | sed "s/^/    /"
+    else
+        CRE="*/10 * * * * \${HOME}/.qc/qc-build-index.sh >\${HOME}/.qc/qc-build-index.log 2>&1"
+        echo "Installing crontab entry:"
+        echo "    $CRE"
+        # to complex for run_cmd
+        if [ "$execute" = "true" ]; then
+            (crontab -l 2>/dev/null; echo "$CRE") | crontab -
+        else
+            echo "(crontab -l 2>/dev/null; echo \"$CRE\") | crontab -"
+        fi
+    fi
+}
+
+add_to_init_file()
+{
+    typeset file="$1"
+
+    if [ ! -e "$file" ]; then
+        echo "SKIPPED: File does not exist: $file"
+        return
+    fi
+
+    if grep "\\.quick_change_dir" "$file" >/dev/null 2>&1; then
+        echo "SKIPPED: The file .quick_change_dir seems to be already sourced from $file:"
+        grep "\\.quick_change_dir" "$file" | sed "s/^/    /"
+    else
+        echo "Adding .quick_change_dir to $file..."
+        # to complex for run_cmd (because of redir)
+        if [ "$execute" = "true" ]; then
+            echo "[ -f \"\$HOME/.quick_change_dir\" ] && . \$HOME/.quick_change_dir" >> "$file"
+        else
+            echo "echo \"[ -f \"\$HOME/.quick_change_dir\" ] && . \$HOME/.quick_change_dir\" >> $file"
+        fi
+    fi
+}
+
+usage()
+{
+    echo >&2 "Usage: $script_name [-nfb] <copy|symlink>"
+    echo >&2 "   -n  Just print what would be done."
+    echo >&2 "   -f  force - overwrite existing files"
+    echo >&2 "   -b  backup - backup existing files (with time stamp)"
+    exit 1
+}
+
+#---------[ MAIN ]-------------------------------------------------------------
+
+execute="true"
+exit_handling=""
+while getopts "nfb" o "$@"; do
+    case $o in
+        n) execute="false"
+            ;;
+        f) exit_handling="overwrite"
+            ;;
+        b) exit_handling="backup"
+            ;;
+        *)
+            usage
+            ;;
+    esac
+done
+shift $((OPTIND-1))
+
+if [ $# -ne 1 ]; then
+    echo >&2 "ERROR: one argument needed"
+    usage
+    exit 1
+fi
+
+case "$1" in
+    copy) mode="copy"
+        ;;
+    symlink) mode="symlink"
+        ;;
+    *) echo >&2 "Unknown mode: $1"
+        usage
+        ;;
+esac
+
+
+if [ ! -d "$bin_target_dir" ]; then
+    execute mkdir -p "$bin_target_dir"
+fi
+
+for fn in _*[!~]; do
+    if [ -f "$fn" ]; then
+        install_rcfile "$fn" "$rc_target_dir"
+    fi
+done
+
+for fn in [!_]*[!~]; do
+    case "$fn" in
+        INSTALL*) : ;;
+        Makefile*) : ;;
+        README*) : ;;
+        qc-index.list) : ;;
+        *)
+            if [ ! -d "$fn" ]; then
+                install_file "$fn" "$bin_target_dir"
+            fi
+            ;;
+    esac
+done
+
+if [ -e "$bin_target_dir/qc-index.list" ]; then
+    echo "Copying qc-index.list -> $bin_target_dir/qc-index.list.new"
+    execute cp -f qc-index.list "$bin_target_dir/qc-index.list.new"
+else
+    echo "Copying qc-index.list -> $bin_target_dir/qc-index.list"
+    execute cp qc-index.list "$bin_target_dir/qc-index.list"
+fi
+
+add_to_crontab
+
+add_to_init_file "$HOME/.bashrc"
+add_to_init_file "$HOME/.kshrc"
+
+
+

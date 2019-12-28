@@ -266,7 +266,7 @@ The following files are distributed:
 | File                | Description                                            | Install Location          |
 | ------------------- | ------------------------------------------------------ | ------------------------- |
 | `README.md`         | The file you are just reading.                         | Not installed             |
-| `INSTALL.sh`        | The installation script.                               | Not installed             |
+| `INSTALL`           | The installation script.                               | Not installed             |
 | `_quick_change_dir` | The script to be sourced by .bashrc (or .kshrc).       | `~/.quick_change_dir`     |
 | `qc-build-index.sh` | Processes `qc-index.list` to create index files.       | `~/.qc/qc-build-index.sh` |
 | `qc-index-proc.sh`  | Called by `qc-build-index.sh` to creates a index file. | `~/.qc/qc-index-proc.sh`  |
@@ -312,14 +312,29 @@ index of all directories in your home directory (excluding hidden dirs).
 
 ### Installation Script
 
-The installation script `INSTALL.sh` automates the steps described in the
+The installation script `INSTALL` automates the steps described in the
 section "Manual Installation" above. This includes the change to your local
 crontab and updates to .bashrc and .kshrc (if available).
 
-If the script is called without parameter, it will run in "simulation mode" and
-only print what would be done.
+If the script is called with out parameter it shows some help.
 
-To really run the installation execute `./INSTALL.sh YES`.
+To copy the files install call:
+
+    ./INSTALL copy
+
+To create symbolic links to the files in the current directory call:
+
+    ./INSTALL symlink
+
+NOTE: You can add the option '-n', so the script will just print what would be
+done.
+
+If you installed it before, you will need either '-f' (to overwrite) or '-b' (to
+create backup files using the current time stamp).
+
+The file `qc-index.list` will always be copied. Even if `symlink` is used for
+install. The file is typically changed by the user. If the file is already
+installed, the new version is copied to `~/.qc/qc-index.list.new`.
 
 Then source `.quick_change_dir` by executing `. $HOME/.quick_change_dir` or
 just start a new shell.
