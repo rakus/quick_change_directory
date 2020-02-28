@@ -193,6 +193,20 @@ The comments in the file `qc-index.list` contains more details and examples.
 
 The file `qc-index.list` is processed using the script `qc-build-index.sh`.
 
+__Host-Local Indexes__
+
+Sometimes the home directory of a user is used on different host. Then also the
+QC configuration is shared. If a index should only be used on a special host,
+the index name can get the hosts name as extension.
+
+Examples (assuming hosts "pluto" and "mars"):
+
+    dev.index.pluto
+    dev.index.ext.pluto
+    dev.index.mars
+    dev.index.ext.mars
+
+
 **Update Performance**
 
 My home directory contains ~140000 directories and my HD is a SSD.

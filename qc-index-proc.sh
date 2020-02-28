@@ -72,10 +72,10 @@ fi
 IDX_NAME=$1
 shift
 case "$IDX_NAME" in
-    *.index) :
-        ;;
-    *.index.ext) :
-        ;;
+    *.index) : ;;
+    *.index.ext) : ;;
+    *.index.$HOSTNAME) : ;;
+    *.index.ext.$HOSTNAME) : ;;
     *)
         echo >&2 "ERROR: Index name invalid. Must end with '.index' or '.index.ext'"
         usage

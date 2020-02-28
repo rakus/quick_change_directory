@@ -111,10 +111,21 @@ for ln  in $(cat "$LST"); do
     fi
 
     if [ $ignExt ]; then
-        if [[ "${ARGS[0]}" = *.ext ]]; then
-            continue
-        fi
+        case "${ARGS[0]}" in
+            *.index.ext) continue ;;
+            *.index.ext.$HOSTNAME) continue ;;
+        esac
     fi
+
+    case "${ARGS[0]}" in
+        *.index) : ;;
+        *.index.ext) : ;;
+        *.index.$HOSTNAME) : ;;
+        *.index.ext.$HOSTNAME) : ;;
+        *) echo >&2 "Ignoring ${ARGS[0]}"
+            continue
+            ;;
+    esac
 
     if [ $# -gt 0 ]; then
         # ZSH: Arrays are 1-based

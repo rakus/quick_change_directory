@@ -6,8 +6,16 @@
 # <index-name> [filter...] <root-dir...>[ -- <ignore...>]
 #
 # 1) The name of the index. Must be a valid plain file name that ends with
-#    '.index' or '.index.ext'. The index will be created in the directory
-#    '~/.qc'.
+#    '.index' or '.index.ext'. Like:
+#       - 'home.index'
+#       - 'home.index.ext'
+#    If the index should be host-local the hostname can be appended. Example
+#    for a host named 'pluto':
+#       - 'home.index.pluto'
+#       - 'home.index.ext.pluto'
+#    BTW: It is also possible to use a variable in the index name:
+#       - 'home.index.$HOSTNAME'
+#    The index files will be created in the directory '~/.qc'.
 #
 # 2) OPTIONAL: One or more filter expressions '-f filter'. This is only
 #    needed if only directories with a certain name should be included
@@ -25,7 +33,6 @@
 # Empty lines and lines starting with '#' are ignored.
 #
 
-
 # create index of $HOME that ignores all hidden directories and directories
 # named 'CVS'
 home.index $HOME -- '.*' CVS
@@ -41,4 +48,14 @@ home.hidden.index.ext -f '*/.*' $HOME -- .metadata .settings .git .svn .hg '.jaz
 
 # create a extension index of the log directrories of a WebSphere Application Server
 #was-log.index.ext /opt/IBM/WebSphere/AppServer/profiles/*/logs
+
+# a host-local index, that is only created or searched when qc runs on a host
+# called "pluto".
+#dev.index.pluto /opt/dev-environment -- '.*'
+
+# a host-local index, that is created per host:
+# If the directory '/opt/dev-environment' does not exist a error message is
+# printed during index creation/update, but processing continues. In that case
+# a empty index file is created.
+#dev.index.$HOSTNAME /opt/dev-environment -- '.*'
 
