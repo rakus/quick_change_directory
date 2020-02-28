@@ -13,7 +13,7 @@ script_dir=$(cd "$(dirname "$0")" 2>/dev/null; pwd)
 
 cd "$script_dir"
 
-for shell in ksh bash; do
+for shell in bash; do
     if which $shell >/dev/null 2>&1; then
         for fn in test-*.sh; do
             echo "Running $shell $fn"

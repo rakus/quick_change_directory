@@ -98,8 +98,20 @@ doQC "${script_dir}"/testDirectory/Customer/YoYo -i yOyO/
 doQC "${script_dir}"/testDirectory/.config/localhost -e local
 doQC "${script_dir}"/testDirectory/.config/localhost -ei LOCALHOST
 
-doQCselect "${script_dir}"/testDirectory/Customer/YoYoDyne 1 YoYo
-doQCselect "${script_dir}"/testDirectory/Customer/YoYo 2 YoYo
+
+case "$(printf "%s\n" testDirectory/Customer/YoYo testDirectory/Customer/YoYoDyne | sort | head -n1)" in
+    testDirectory/Customer/YoYo)
+        yoyoIdx=1
+        yoyoDyneIdx=2
+        ;;
+    testDirectory/Customer/YoYoDyne)
+        yoyoDyneIdx=1
+        yoyoIdx=2
+        ;;
+esac
+
+doQCselect "${script_dir}"/testDirectory/Customer/YoYoDyne $yoyoDyneIdx YoYo
+doQCselect "${script_dir}"/testDirectory/Customer/YoYo $yoyoIdx YoYo
 
 # For ksh the '| cat' is needed. Don't know why.
 NOT_EXIST_OUT="$(qc xx yy zz 2>&1 | cat)"

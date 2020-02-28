@@ -10,6 +10,8 @@ It creates a index file with all directories from a directory tree and
 then searches this index to find the directory to change to. The creation of the
 index is configurable and multiple indexes can be created.
 
+Quick Change Directory requires BASH.
+
 ## Searching and changing directories
 
 ### Search by (part of the) directory name
@@ -267,7 +269,7 @@ The following files are distributed:
 | ------------------- | ------------------------------------------------------ | ------------------------- |
 | `README.md`         | The file you are just reading.                         | Not installed             |
 | `INSTALL`           | The installation script.                               | Not installed             |
-| `_quick_change_dir` | The script to be sourced by .bashrc (or .kshrc).       | `~/.quick_change_dir`     |
+| `_quick_change_dir` | The script to be sourced by .bashrc.                   | `~/.quick_change_dir`     |
 | `qc-build-index.sh` | Processes `qc-index.list` to create index files.       | `~/.qc/qc-build-index.sh` |
 | `qc-index-proc.sh`  | Called by `qc-build-index.sh` to creates a index file. | `~/.qc/qc-index-proc.sh`  |
 | `qc-index.list`     | Defines indexes to create.                             | `~/.qc/qc-index.list`     |
@@ -293,7 +295,7 @@ index of all directories in your home directory (excluding hidden dirs).
 
 3. Copy `_quick_change_dir` to `$HOME/.quick_change_dir`. Note the leading dot!
 
-4. Add the following line to your `.bashrc` (or `.kshrc`):
+4. Add the following line to your `.bashrc`:
 
    `[ -f "$HOME/.quick_change_dir" ] && . $HOME/.quick_change_dir`
 
@@ -314,7 +316,7 @@ index of all directories in your home directory (excluding hidden dirs).
 
 The installation script `INSTALL` automates the steps described in the
 section "Manual Installation" above. This includes the change to your local
-crontab and updates to .bashrc and .kshrc (if available).
+crontab and updates to .bashrc.
 
 If the script is called with out parameter it shows some help.
 
@@ -339,26 +341,6 @@ installed, the new version is copied to `~/.qc/qc-index.list.new`.
 Then source `.quick_change_dir` by executing `. $HOME/.quick_change_dir` or
 just start a new shell.
 During the first sourcing of the script, the indexes are created.
-
-
-## Portability
-
-### ksh93
-
-Should(!) run unchanged. The script `.quick_change_dir` and the supporting
-scripts `qc-build-index.sh` and `qc-index-proc.sh` were briefly tested with
-ksh93 version "93u+ 2012-08-01".
-
-Needs further testing.
-
-### zsh
-
-Running `.quick_change_dir` with zsh needs some porting:
-
-* zsh arrays are 1-based while bash/ksh uses 0-based arrays
-* In the context of `getopt`, shifting by `OPTIND` seems different.
-* Some language constructs used in bash/ksh do not work as expected. Like
-  `${@:2}`.
 
 
 [//]:  vim:ft=markdown:et:ts=4:spelllang=en_us:spell:tw=80
