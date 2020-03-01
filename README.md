@@ -150,7 +150,7 @@ Like:
 
 ### Other qc option:
 
-* `-i` Search is case-insensitive (and slower). Only when searching by name.
+* `-i` Search is case-insensitive. Only when searching by name.
 * `-e` Also search extended index files.
 * `-u` Update the normal indexes.
 * `-U` Update the normal and extended indexes.

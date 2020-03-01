@@ -152,7 +152,7 @@ function __qc_select
         *)
             # shellcheck disable=SC2207  # IFS is set to newline
             idxFiles=( $( __qc_get_indexes "$searchExtIdx" ) )
-            if [ ${#idxFiles[@]} == 0 ]; then
+            if [ ${#idxFiles[@]} = 0 ]; then
                 echo >&2 "qc: No index file found! Use 'qc -u' or 'dstore' to create it."
                 return 1
             fi
@@ -195,7 +195,7 @@ function __qc_select
             typeset orgCnt=$cnt
             # ZSH: Arrays start with 1
             for (( i=orgCnt-1; i>=0; i-- )); do
-                echo >&2 -en "\rFiltering none existing directories: $((orgCnt-i))/$orgCnt"
+                printf >&2 "\rFiltering none existing directories: %d/%d" $((orgCnt-i)) "$orgCnt"
                 # remove color codes for check
                 if [ ! -d "$(echo "${dl[$i]}"| sed -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]//g")" ]; then
                     if [ -n "$QC_DBG" ]; then
@@ -205,7 +205,7 @@ function __qc_select
                fi
             done
             dl=( "${dl[@]}" )
-            echo >&2 -en "\r\e[K"
+            printf >&2 "\r\e[K"
 
             cnt=${#dl[*]}
             if [ "$orgCnt" -ne "$cnt" ]; then
@@ -228,7 +228,7 @@ function __qc_select
         # ZSH: dl=( "${dl[@]/#$HOME/~}" )
         # ZSH: On ZSH the following select only display subset (term-height lines)
         local LINES=0
-        #export COLUMNS=1
+        local COLUMNS=1
         select dir in "${dl[@]}" ; do
             # replace ~ with $HOME and remove color codes
             echo "${dir/#\~/$HOME}" | sed -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]//g"
@@ -281,22 +281,15 @@ function qc
                 ;;
             S)
                 typeset fn
-                for fn in "$QC_DIR"/*.index "$QC_DIR"/*.index."$HOSTNAME" "$QC_DIR"/*.index.ext "$QC_DIR"/*.index.ext."$HOSTNAME"; do
-                    if [ -e "$fn" ]; then
-                        echo "$fn"
-                        echo "   Last Upd: $(stat -c "%y" "$fn")"
-                        # shellcheck disable=SC2183,SC2046  # wc produces two args
-                        printf "   Entries:  %'d (%'d bytes)\n" $(wc -lc <"$fn")
-
+                for fn in $(__qc_get_indexes "1"); do
+                    echo "$fn"
+                    echo "   Last Upd: $(stat -c "%y" "$fn")"
+                    # shellcheck disable=SC2183,SC2046  # wc produces two args
+                    printf "   Entries:  %'d (%'d bytes)\n" $(wc -lc <"$fn")
+                    if [ "$fn" = "$QC_DSTORE_INDEX" ]; then
+                        echo "   Labeled entries:  $(grep -c "^:" "$fn")"
                     fi
                 done
-                if [ -e "$QC_DSTORE_INDEX" ]; then
-                    echo "$QC_DSTORE_INDEX"
-                    echo "   Last Upd: $(stat -c "%y" "$QC_DSTORE_INDEX")"
-                    # shellcheck disable=SC2183,SC2046  # wc produces two args
-                    printf "   Entries:  %'d (%'d bytes)\n" $(wc -lc <"$QC_DSTORE_INDEX")
-                    echo "   Labeled entries:  $(grep -c "^:" "$QC_DSTORE_INDEX")"
-                fi
                 return 0
                 ;;
             l)
@@ -706,7 +699,7 @@ function __qc_complete
             typeset -a idxFiles
             # shellcheck disable=SC2207  # IFS is set to newline
             idxFiles=( $(__qc_get_indexes "$searchExtIdx") )
-            if [ ${#idxFiles[@]} == 0 ]; then
+            if [ ${#idxFiles[@]} = 0 ]; then
                 echo >&2  "qc: No index file found! Use 'qc -u' or 'dstore' to create it."
                 return 1
             fi
