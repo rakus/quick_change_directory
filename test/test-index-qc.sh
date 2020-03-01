@@ -9,17 +9,18 @@
 # CREATED: 2017-05-10
 #
 
-script_dir=$(cd "$(dirname "$0")" 2>/dev/null; pwd)
+script_dir="$(cd "$(dirname "$0")" && pwd)" || exit 1
 
 
-BUILD_TEST_DIRS=true
+export BUILD_TEST_DIRS=true
+# shellcheck source=./defines.shinc
 . "${script_dir}/defines.shinc"
 
 TEST_STATUS=0
 
 doQC()
 {
-    cd "${script_dir}"
+    cd "${script_dir}" || exit 1
     expected="$1"
     shift
     printf "qc %s" "$@"
@@ -34,12 +35,12 @@ doQC()
 
 doQCselect()
 {
-    cd "${script_dir}"
+    cd "${script_dir}" || exit 1
     expected="$1"
     num="$2"
     shift 2
     printf "qc %s" "$@"
-    qc "$@" <<< $num
+    qc "$@" <<< "$num"
     if [ "$PWD" = "$expected" ]; then
         OK
     else
@@ -134,7 +135,7 @@ else
     echo >&2 "---------------"
 fi
 
-cd "${script_dir}"
+cd "${script_dir}" || exit 1
 rm -rf testDirectory
 
 endTest $TEST_STATUS

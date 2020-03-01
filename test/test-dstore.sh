@@ -9,9 +9,10 @@
 # CREATED: 2017-05-11
 #
 
-script_dir=$(cd "$(dirname "$0")" 2>/dev/null; pwd)
+script_dir="$(cd "$(dirname "$0")" && pwd)" || exit 1
 
 BUILD_TEST_DIRS=true
+# shellcheck source=./defines.shinc
 . "${script_dir}/defines.shinc"
 
 
@@ -65,7 +66,7 @@ entryExists()
 #    mkdir -p testDirectory/Customer/YoYo/MyProject/Admin
 #    mkdir -p testDirectory/Customer/ACME/Admin
 
-cd "${script_dir}/testDirectory"
+cd "${script_dir}/testDirectory" || exit 1
 touch .qc/home.index
 
 startTest "dstore"
@@ -105,7 +106,7 @@ entryExists "^.*HALLO"
 checkSize 4
 
 
-endTest
+endTest $TEST_STATUS
 
 
 #---------[ END OF FILE test-dstore.sh ]---------------------------------------

@@ -14,6 +14,7 @@ test:   ## Run tests
 
 check:  ## run shellcheck
 	shellcheck -sbash -fgcc _quick_change_dir *.sh
+	(cd test && shellcheck -sbash -fgcc *.sh *.shinc ../_quick_change_dir)
 
 zip: quick_change_dir.zip   ## Build zip file
 

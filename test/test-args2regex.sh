@@ -9,8 +9,9 @@
 # CREATED: 2017-05-10
 #
 
-script_dir=$(cd "$(dirname "$0")" 2>/dev/null; pwd)
+script_dir="$(cd "$(dirname "$0")" && pwd)" || exit 1
 
+# shellcheck source=./defines.shinc
 . "${script_dir}/defines.shinc"
 
 TEST_STATUS=0

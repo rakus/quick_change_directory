@@ -1,7 +1,8 @@
+# shellcheck shell=bash
 
-__QC_TEST__=true
+export __QC_TEST__=true
 
-if [ -z "$script_dir" ]; then
+if [ -z "${script_dir:-}" ]; then
     echo ""
     echo "ERROR: required variable \$script_dir\" is not set"
     echo ""
@@ -10,11 +11,11 @@ fi
 
 
 
-which resize >/dev/null 2>&1 && eval "$(resize)"
+command-v resize >/dev/null 2>&1 && eval "$(resize)"
 if [ -n "$COLUMNS" ]; then
     OK_COL=$((COLUMNS-6))
     ERR_COL=$((COLUMNS-9))
-    WARN_COL=$(($COLUMNS-11))
+    WARN_COL=$((COLUMNS-11))
 else
     OK_COL=74
     ERR_COL=71
@@ -66,24 +67,32 @@ endTest()
 
     TEST_OBJEKT=
 
-    exit $rc
+    exit "$rc"
 }
 
 onExit()
 {
-    [ -d "${script_dir}/testDirectory" ] && rm -rf "${script_dir}/testDirectory"
+    rc=$?
+    if [ $rc = 0 ]; then
+        [ -d "${script_dir}/testDirectory" ] && rm -rf "${script_dir}/testDirectory"
+    else
+        echo >&2 "Test FAILED"
+        echo >&2 "Testdirectors left intact: ${script_dir}/testDirectory"
+    fi
+
     if [ -n "$TEST_OBJEKT" ]; then
         echo >&2 ""
         echo >&2 " Something wrong. Missing call of 'endTest'."
         echo >&2 ""
         exit 2
     fi
+    exit $rc
 }
 
 trap "onExit" EXIT
 
 # IF BUILD_TEST_DIRS is set ....
-if [ $BUILD_TEST_DIRS ]; then
+if [ -n "$BUILD_TEST_DIRS" ]; then
 
     echo "Setting up Test directory..."
 
@@ -101,12 +110,13 @@ if [ $BUILD_TEST_DIRS ]; then
     mkdir -p testDirectory/A_B
     mkdir -p testDirectory/A.B
 
-    echo "test.index ${script_dir}/testDirectory -- '.*'" > $QC_DIR/qc-index.list
-    echo "hidden.index.ext -f '*testDirectory/.*' ${script_dir}/testDirectory" >> $QC_DIR/qc-index.list
-    cp ../qc-build-index.sh ../qc-index-proc.sh $QC_DIR
+    echo "test.index ${script_dir}/testDirectory -- '.*'" > "$QC_DIR/qc-index.list"
+    echo "hidden.index.ext -f '*testDirectory/.*' ${script_dir}/testDirectory" >> "$QC_DIR/qc-index.list"
+    cp ../qc-build-index.sh ../qc-index-proc.sh "$QC_DIR"
 fi
 
-. ${script_dir}/../_quick_change_dir
+# shellcheck source=./../_quick_change_dir
+. "${script_dir}/../_quick_change_dir"
 
 
 

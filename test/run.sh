@@ -9,16 +9,17 @@
 # CREATED: 2017-05-10
 #
 
-script_dir=$(cd "$(dirname "$0")" 2>/dev/null; pwd)
+script_dir="$(cd "$(dirname "$0")" && pwd)" || exit 1
 
-cd "$script_dir"
+cd "$script_dir" || exit 1
 
-for shell in bash; do
-    if which $shell >/dev/null 2>&1; then
+function run_tests
+{
+    shell="$1"
+    if command -v "$shell" >/dev/null 2>&1; then
         for fn in test-*.sh; do
             echo "Running $shell $fn"
-            $shell "./$fn"
-            if [ $? -ne 0 ]; then
+            if ! $shell "./$fn"; then
                 echo >&2 "$shell: Test FAILED"
                 exit 1
             fi
@@ -26,7 +27,12 @@ for shell in bash; do
     else
         echo "Shell $shell not found -- skipping tests"
     fi
-done
+}
+
+
+run_tests bash
+
+
 echo
 echo "ALL test successful"
 
