@@ -62,13 +62,11 @@ function __qc_args2regex
                 ;;
             \*\**) # '**' -> '.*'
                 regex="$regex.*"
-                # shellcheck disable=SC2001
-                glob="$(echo "$glob" | sed "s/^\\*\\**//")"
+                glob="${glob#"${glob%%[!*]*}"}"
                 ;;
             //*) # '//' -> '/.*/'
                 regex="$regex/\\(.*/\\)*"
-                # shellcheck disable=SC2001
-                glob="$(echo "$glob" | sed "s%^///*%%")"
+                glob="${glob#"${glob%%[!/]*}"}"
                 ;;
             \**) # '*' -> '[^/]*'
                 regex="${regex}[^/]*"
@@ -102,6 +100,30 @@ function __qc_args2regex
     echo "$regex"
 }
 
+# Determine index files. One file per line
+# If "$1" is not empty include extended indexes
+function __qc_get_indexes
+{
+    typeset IFS=$'\n'
+    ( shopt -s nullglob ; printf '%s\n' "$QC_DIR"/*.index "$QC_DIR"/*.index."$HOSTNAME" )
+    if [ -n "$1" ]; then
+        ( shopt -s nullglob ; printf '%s\n' "$QC_DIR"/*.index.ext "$QC_DIR"/*.index.ext."$HOSTNAME" )
+    fi
+    [ -e "$QC_DSTORE_INDEX" ] && echo "$QC_DSTORE_INDEX"
+}
+
+# KSH version
+# function __qc_get_indexes
+# {
+#     typeset IFS=$'\n'
+#     printf '%s\n' ~(N)"$QC_DIR"/*.index ~(N)"$QC_DIR"/*.index."$HOSTNAME"
+#     if [ -n "$1" ]; then
+#         printf '%s\n' ~(N)"$QC_DIR"/*.index.ext ~(N)"$QC_DIR"/*.index.ext."$HOSTNAME"
+#     fi
+#     [ -e "$QC_DSTORE_INDEX" ] && echo "$QC_DSTORE_INDEX"
+# }
+
+
 # Select directories found in ~/.qc/*.index.
 # $1: grep options (ignored for search by label)
 # $2: Search extended indexes? ("true" or "")
@@ -113,41 +135,29 @@ function __qc_select
     typeset searchExtIdx="$1"
     shift
 
-    if [ "$searchExtIdx" ]; then
-        if ls "$QC_DIR"/*.index.ext >/dev/null 2>&1; then
-            extIdx=( "$QC_DIR"/*.index.ext )
-        fi
-        if ls "$QC_DIR"/*.index.ext."$HOSTNAME" >/dev/null 2>&1; then
-            extIdx+=( "$QC_DIR"/*.index.ext."$HOSTNAME" )
-        fi
-    fi
-
     typeset IFS=$'\n'
-    typeset NO_IDX_MSG="qc: No index file found! Use 'qc -u' or 'dstore' to create it."
-    typeset NO_DSTORE_IDX_MSG="qc: Dstore index file not found! Use 'dstore' to create it."
     typeset -a dl idxFiles
     case $1 in
         :*)
             pattern=$1
             [ $# -gt 1 ] && echo >&2 "WARNING: Extra arguments ignored"
+            if [ ! -e "$QC_DSTORE_INDEX" ]; then
+                echo >&2 "qc: Dstore index file not found! Use 'dstore' to create it."
+                return 1
+            fi
             # grep: -h: Suppress the prefixing of file names on output.
-            # shellcheck disable=SC2207
-            dl=( $( (grep -ahi -- "^${pattern}[^ ]* " "$QC_DSTORE_INDEX" ||([ $? = 2 ] && echo >&2 "$NO_DSTORE_IDX_MSG")) | cut "-d " -f2- | sort | uniq) )
+            # shellcheck disable=SC2207  # IFS is set to newline
+            dl=( $(grep -ahi -- "^${pattern}[^ ]* " "$QC_DSTORE_INDEX" | cut "-d " -f2- | sort | uniq) )
             ;;
         *)
-            # shellcheck disable=2207
-            idxFiles=( $( shopt -s nullglob ; printf '%s\n' "$QC_DIR"/*.index "$QC_DIR"/*.index."$HOSTNAME" ) )
-            if [ "$searchExtIdx" ]; then
-                # shellcheck disable=2207
-                idxFiles+=( $( shopt -s nullglob ; printf '%s\n' "$QC_DIR"/*.index.ext "$QC_DIR"/*.index.ext."$HOSTNAME" ) )
-            fi
-            [ -e "$QC_DSTORE_INDEX" ] && idxFiles+=( "$QC_DSTORE_INDEX" )
+            # shellcheck disable=SC2207  # IFS is set to newline
+            idxFiles=( $( __qc_get_indexes "$searchExtIdx" ) )
             if [ ${#idxFiles[@]} == 0 ]; then
-                echo >&2 "$NO_IDX_MSG"
+                echo >&2 "qc: No index file found! Use 'qc -u' or 'dstore' to create it."
                 return 1
             fi
             pattern=$(__qc_args2regex "$@")
-            # shellcheck disable=SC2086,2207
+            # shellcheck disable=SC2207,SC2086  # IFS is set to newline
             dl=( $( grep --color=always -ah $grepOpt -- "/$pattern" "${idxFiles[@]}" |sed "s/^:[^ ]* //"|sort|uniq) )
             ;;
     esac
@@ -275,15 +285,16 @@ function qc
                     if [ -e "$fn" ]; then
                         echo "$fn"
                         echo "   Last Upd: $(stat -c "%y" "$fn")"
-                        # shellcheck disable=SC2183,SC2046,SC2002
-                        printf "   Entries:  %'d (%'d bytes)\n" $(cat "$fn" | wc -lc)
+                        # shellcheck disable=SC2183,SC2046  # wc produces two args
+                        printf "   Entries:  %'d (%'d bytes)\n" $(wc -lc <"$fn")
+
                     fi
                 done
                 if [ -e "$QC_DSTORE_INDEX" ]; then
                     echo "$QC_DSTORE_INDEX"
                     echo "   Last Upd: $(stat -c "%y" "$QC_DSTORE_INDEX")"
-                    # shellcheck disable=SC2183,SC2046,SC2002
-                    printf "   Entries:  %'d (%'d bytes)\n" $(cat "$QC_DSTORE_INDEX" | wc -lc)
+                    # shellcheck disable=SC2183,SC2046  # wc produces two args
+                    printf "   Entries:  %'d (%'d bytes)\n" $(wc -lc <"$QC_DSTORE_INDEX")
                     echo "   Labeled entries:  $(grep -c "^:" "$QC_DSTORE_INDEX")"
                 fi
                 return 0
@@ -397,7 +408,6 @@ if [ ! "$__QC_TEST__" ]; then
         touch "$QC_DSTORE_INDEX"
     fi
 fi
-
 
 
 # cleanup ~/.qc/index.dstore
@@ -638,11 +648,9 @@ function __qc_complete
         ic='-i'
         sedIC="i"
     fi
-    typeset extIdx
+    typeset searchExtIdx
     if echo "$prev" | grep " -[^ ]*e" >/dev/null 2>&1 ; then
-        if ls "$QC_DIR"/*.index.ext >/dev/null 2>&1; then
-            extIdx="$QC_DIR/*.index.ext"
-        fi
+        searchExtIdx="1"
     fi
     #qc_debug "CW >>${COMP_WORDS[@]}<<"
 
@@ -684,8 +692,7 @@ function __qc_complete
         ?*)
             cur=$(eval echo "$cur" 2>/dev/null || eval echo "$cur'" 2>/dev/null || eval echo "$cur\"" 2>/dev/null || "")
             #qc_debug "cur >>$cur<<"
-            # shellcheck disable=SC2001
-            cur=$(echo "$cur" | sed "s%^/%%")   # remove leading '/'
+            cur=${cur#/} # remove leading '/'
             # curRE: Regular expression to find dir in index
             typeset curRE=$(__qc_args2regex "${parts[@]}")
             # shellcheck disable=SC2001
@@ -696,8 +703,15 @@ function __qc_complete
             #qc_debug "curRE >>$curRE<<"
             #qc_debug "cleanRE >>$cleanRE<<"
             typeset IFS=$'\n'
-            # shellcheck disable=SC2086,SC2207
-            opts=($(grep -a --no-filename $ic -o -- "/$curRE" "$QC_DIR"/*.index "$QC_DSTORE_INDEX" $extIdx | sort | uniq  | sed "s|^.*/${cleanRE}|/${cur}|$sedIC" | cut -c2-))
+            typeset -a idxFiles
+            # shellcheck disable=SC2207  # IFS is set to newline
+            idxFiles=( $(__qc_get_indexes "$searchExtIdx") )
+            if [ ${#idxFiles[@]} == 0 ]; then
+                echo >&2  "qc: No index file found! Use 'qc -u' or 'dstore' to create it."
+                return 1
+            fi
+            # shellcheck disable=SC2086,SC2207  # IFS is set to newline
+            opts=($(grep -a --no-filename $ic -o -- "/$curRE" "${idxFiles[@]}" | sort | uniq  | sed "s|^.*/${cleanRE}|/${cur}|$sedIC" | cut -c2-))
             #qc_debug "OPTS >>${opts[*]}<<"
             # shellcheck disable=SC2207
             COMPREPLY=( $(compgen -o nospace -S/ -W "${opts[*]}" -- "$cur" ))
