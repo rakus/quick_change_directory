@@ -2,6 +2,8 @@
 
 export __QC_TEST__=true
 
+set -u
+
 if [ -z "${script_dir:-}" ]; then
     echo ""
     echo "ERROR: required variable \$script_dir\" is not set"
@@ -12,7 +14,7 @@ fi
 
 
 command-v resize >/dev/null 2>&1 && eval "$(resize)"
-if [ -n "$COLUMNS" ]; then
+if [ -n "${COLUMNS:-}" ]; then
     OK_COL=$((COLUMNS-6))
     ERR_COL=$((COLUMNS-9))
     WARN_COL=$((COLUMNS-11))
@@ -22,10 +24,19 @@ else
     WARN_COL=69
 fi
 
-OK_SUFFIX="\033[${OK_COL}G[\033[01;32mOK\033[0m]"
-ERROR_SUFFIX="\033[${ERR_COL}G[\033[01;31mERROR\033[0m]"
-WARN_SUFFIX="\033[${WARN_COL}G[\033[33mWARNING\033[0m]"
+if [ -t 1 ]; then
+    OK_SUFFIX="\033[${OK_COL}G[\033[01;32mOK\033[0m]"
+    ERROR_SUFFIX="\033[${ERR_COL}G[\033[01;31mERROR\033[0m]"
+    WARN_SUFFIX="\033[${WARN_COL}G[\033[33mWARNING\033[0m]"
+else
+    OK_SUFFIX="  --  OK"
+    ERROR_SUFFIX="  --  ERROR"
+    WARN_SUFFIX="  --  WARNING"
+fi
 
+if [ -z "${LINES:-}" ]; then
+    export LINES=25
+fi
 
 
 OK()
@@ -92,7 +103,7 @@ onExit()
 trap "onExit" EXIT
 
 # IF BUILD_TEST_DIRS is set ....
-if [ -n "$BUILD_TEST_DIRS" ]; then
+if [ -n "${BUILD_TEST_DIRS:-}" ]; then
 
     echo "Setting up Test directory..."
 
