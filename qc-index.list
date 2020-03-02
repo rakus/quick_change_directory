@@ -55,7 +55,6 @@ home.hidden.index.ext -f '*/.*' $HOME -- .metadata .settings .git .svn .hg '.jaz
 
 # a host-local index, that is created per host:
 # If the directory '/opt/dev-environment' does not exist a error message is
-# printed during index creation/update, but processing continues. In that case
-# a empty index file is created.
+# printed during index creation/update, but processing continues.
 #dev.index.$HOSTNAME /opt/dev-environment -- '.*'
 

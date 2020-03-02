@@ -225,17 +225,23 @@ find "${ROOTS[@]}" -xdev -type d "${ignDirs[@]}" -prune -o -xtype d "${filter[@]
 # Don't check exit code.
 # A "permission denied" in some subdir would kill the index
 
-# replace .qc/index with new content
-mv -f "$NEW_INDEX" "$INDEX_FILE"
+if [ -s "$NEW_INDEX" ]; then
+    # replace .qc/index with new content
+    mv -f "$NEW_INDEX" "$INDEX_FILE"
 
-dir_count=$(wc -l < "$INDEX_FILE")
+    dir_count=$(wc -l < "$INDEX_FILE")
 
-UPD=''
-if [ ${#INC_ROOTS[@]} -gt 0 ]; then
-    dir_diff=$((dir_count - inc_start))
-    UPD=" (Updated: $dir_diff)"
+    UPD=''
+    if [ ${#INC_ROOTS[@]} -gt 0 ]; then
+        dir_diff=$((dir_count - inc_start))
+        UPD=" (Updated: $dir_diff)"
+    fi
+
+    echo "Stored $dir_count directory names$UPD."
+else
+    rm -f "$NEW_INDEX"
+    echo "No directories found -- no index created."
 fi
 
-echo "Stored $dir_count directory names$UPD."
 
 #---------[ END OF FILE qc-index-proc.sh ]-------------------------------------
