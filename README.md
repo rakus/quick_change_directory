@@ -285,7 +285,6 @@ The following files are distributed:
 | `INSTALL`           | The installation script.                               | Not installed             |
 | `_quick_change_dir` | The script to be sourced by .bashrc.                   | `~/.quick_change_dir`     |
 | `qc-build-index.sh` | Processes `qc-index.list` to create index files.       | `~/.qc/qc-build-index.sh` |
-| `qc-index-proc.sh`  | Called by `qc-build-index.sh` to creates a index file. | `~/.qc/qc-index-proc.sh`  |
 | `qc-index.list`     | Defines indexes to create.                             | `~/.qc/qc-index.list`     |
 
 
@@ -304,7 +303,6 @@ index of all directories in your home directory (excluding hidden dirs).
 
 2. Copy the following files to `$HOME/.qc`:
   * `qc-build-index.sh`
-  * `qc-index-proc.sh`
   * `qc-index.list`
 
 3. Copy `_quick_change_dir` to `$HOME/.quick_change_dir`. Note the leading dot!

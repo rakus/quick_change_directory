@@ -358,7 +358,8 @@ function qc
 # Update/create the index.
 function __qc_updateIndex
 {
-    if [ -e "$QC_DIR"/qc-build-index.sh ]; then
+    typeset PATH="$QC_DIR:$PATH"
+    if command -v qc-build-index.sh &>/dev/null; then
         echo "Updating index ..."
         typeset -a ARGS
         typeset d
@@ -379,7 +380,7 @@ function __qc_updateIndex
 
 function __qc_internalUpdateIndex
 {
-    [ ! "$QC_DIR" ] && QC_DIR="$HOME/.qc"
+    [ -z "$QC_DIR" ] && QC_DIR="$HOME/.qc"
     if [ ! -d "$QC_DIR" ]; then
         mkdir "$QC_DIR" || return 1
     fi
@@ -394,7 +395,7 @@ function __qc_internalUpdateIndex
     echo "Stored $(wc -l < "$INDEX_FILE") directory names."
 }
 
-if [ ! "$__QC_TEST__" ]; then
+if [ -z "$__QC_TEST__" ]; then
     if ! ls "$QC_DIR"/*.index >/dev/null 2>&1; then
         echo "QuickChangeDirectory: No index files found .. creating ..."
         __qc_updateIndex

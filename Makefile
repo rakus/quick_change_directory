@@ -2,7 +2,7 @@
 # Makefile to build ZIP and README.html
 #
 
-ZIP_CONTENT = README.md INSTALL _quick_change_dir qc-build-index.sh qc-index-proc.sh qc-index.list
+ZIP_CONTENT = README.md INSTALL _quick_change_dir qc-build-index.sh qc-index.list
 
 .PHONY: zip html clean test check help
 

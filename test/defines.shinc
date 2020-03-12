@@ -123,20 +123,10 @@ if [ -n "${BUILD_TEST_DIRS:-}" ]; then
 
     echo "test.index ${script_dir}/testDirectory -- '.*'" > "$QC_DIR/qc-index.list"
     echo "hidden.index.ext -f '*testDirectory/.*' ${script_dir}/testDirectory" >> "$QC_DIR/qc-index.list"
-    cp ../qc-build-index.sh ../qc-index-proc.sh "$QC_DIR"
+    cp ../qc-build-index.sh "$QC_DIR"
 fi
 
 # shellcheck source=./../_quick_change_dir
 . "${script_dir}/../_quick_change_dir"
 
-
-
-
-
-
-
-
-
-
-
-    # vim:ft=sh
+# vim:ft=sh
