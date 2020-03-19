@@ -56,20 +56,45 @@ qc -U
 dstore :label testDirectory/Customer/ACME/Admin
 
 echo ""
-printf "test.index"
+printf "test.index exists"
+if [ -e  "${script_dir}/testDirectory/.qc/test.index" ]; then
+    OK
+else
+    ERROR
+    echo "Can't continue"
+    exit 1
+fi
+printf "test.index entry count"
 if [ 13 -eq "$(wc -l < "${script_dir}/testDirectory/.qc/test.index")" ]; then
     OK
 else
     ERROR
 fi
-printf "hidden.index.ext"
+
+printf "hidden.index.ext exists"
+if [ -e "${script_dir}/testDirectory/.qc/hidden.index.ext" ]; then
+    OK
+else
+    ERROR
+    echo "Can't continue"
+    exit 1
+fi
+printf "hidden.index.ext entry count"
 if [ 3 -eq "$(wc -l < "${script_dir}/testDirectory/.qc/hidden.index.ext")" ]; then
     OK
 else
     ERROR
 fi
 
-printf "index.dstore"
+printf "index.dstore exists"
+if [ -e  "${script_dir}/testDirectory/.qc/index.dstore" ]; then
+    OK
+else
+    ERROR
+    echo "Can't continue"
+    exit 1
+fi
+printf "index.dstore entry count"
 if [ 1 -eq "$(wc -l < "${script_dir}/testDirectory/.qc/index.dstore")" ]; then
     OK
 else
