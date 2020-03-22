@@ -214,7 +214,6 @@ build_index()
         ignDirs=( '-false' )
     fi
 
-
     typeset -a filter
     if [ ${#FILTER[@]} -gt 0 ]; then
         filter=( '(' )
@@ -254,7 +253,6 @@ build_index()
 }
 
 
-
 #---------[ MAIN ]-------------------------------------------------------------
 
 typeset -a INC_UPD
@@ -279,24 +277,26 @@ shift $((OPTIND-1))
 
 export QC_LIST_UPD=true
 
+shopt -s extglob
+
 oifs="$IFS"
 IFS=$'\n'
-typeset -i line=0
-# shellcheck disable=SC2013  # handled with IFS
-for ln  in $(cat "$LST"); do
-    ((line += 1))
-    ln=$(trim_str "$ln")
-    if [[ "$ln" = \#* ]] || [ -z "$ln" ]; then
+typeset -i lno=0
+while IFS= read -r line; do
+    ((lno += 1))
+    line=$(trim_str "$line")
+    if [[ "$line" = \#* ]] || [ -z "$line" ]; then
         continue
     fi
     # shellcheck disable=SC2016  # the '$(' MUST NOT be expanded
-    if [[ $ln == *'$('* ]] || [[ $ln == *'`'* ]]; then
-        echo >&2 "Line $line: ERROR: Possible command substitution: $ln"
+    if [[ $line == *'$('* ]] || [[ $line == *'`'* ]]; then
+        printf >&2 '%s[%d] ERROR: Possible command substitution: %s\n' "$LST" "$lno" "$line"
         continue
     fi
-    #echo "LN: $ln"
-    if ! eval "ARGS=( $ln )"; then
-        echo >&2 "Line $line: ERROR: Can't parse: $ln"
+    #echo "LN: $line"
+
+    if ! eval "ARGS=( $line )"; then
+        printf >&2 '%s[%d] ERROR: Cannot parse: %s\n' "$LST" "$lno" "$line"
         continue
     fi
 
@@ -312,7 +312,9 @@ for ln  in $(cat "$LST"); do
         *.index.ext) : ;;
         *.index.$HOSTNAME) : ;;
         *.index.ext.$HOSTNAME) : ;;
-        *) echo >&2 "Ignoring ${ARGS[0]}"
+        *.index.!(*.*)) continue ;; # ignore index with other host name
+        *.index.ext.!(*.*)) continue ;; # ignore index with other host name
+        *) printf >&2 '%s[%d] Ignoring index %s\n' "$LST" "$lno" "${ARGS[0]}"
             continue
             ;;
     esac
@@ -332,8 +334,8 @@ for ln  in $(cat "$LST"); do
 
     echo "Updating ${ARGS[0]}..."
     if ! build_index "${ARGS[@]}"; then
-        echo >&2 "Line $line: ERROR: Building index failed"
+        printf >&2 '%s[%d] ERROR: Building index failed.\n' "$LST" "$lno"
     fi
-done
+done < "$LST"
 IFS="$oifs"
 

@@ -23,7 +23,7 @@ doQC()
     cd "${script_dir}" || exit 1
     expected="$1"
     shift
-    printf "qc %s" "$@"
+    printf "qc %s" "$*"
     qc "$@"
     if [ "$PWD" = "$expected" ]; then
         OK
@@ -160,8 +160,30 @@ else
     echo >&2 "---------------"
 fi
 
+
+echo
+echo "Testing that command substitution in qc-index.list is ignores ..."
+echo "test-fail.index ${script_dir}/testDirectory -- '.*' \$(echo hallo)" >> "$QC_DIR/qc-index.list"
+
+printf "Command substitution ignored"
+if qc -u 2>&1 | grep "Possible command substitution" >/dev/null; then
+    OK
+else
+    ERROR
+fi
+
+
+printf "test-fail.index NOT created"
+if [ ! -e  "${script_dir}/testDirectory/.qc/test-fail.index" ]; then
+    OK
+else
+    ERROR
+fi
+
+
+
+
 cd "${script_dir}" || exit 1
-rm -rf testDirectory
 
 endTest $TEST_STATUS
 
