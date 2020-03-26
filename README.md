@@ -207,7 +207,7 @@ Examples (assuming hosts "pluto" and "mars"):
     dev.index.ext.mars
 
 
-**Update Performance**
+__Update Performance__
 
 My home directory contains ~140000 directories and my HD is a SSD.
 I have two indexes defined (see file qc-index.list).
@@ -279,13 +279,13 @@ Just call `qc` with the option `-S`.
 
 The following files are distributed:
 
-| File                | Description                                            | Install Location          |
-| ------------------- | ------------------------------------------------------ | ------------------------- |
-| `README.md`         | The file you are just reading.                         | Not installed             |
-| `INSTALL`           | The installation script.                               | Not installed             |
-| `_quick_change_dir` | The script to be sourced by .bashrc.                   | `~/.quick_change_dir`     |
-| `qc-build-index.sh` | Processes `qc-index.list` to create index files.       | `~/.qc/qc-build-index.sh` |
-| `qc-index.list`     | Defines indexes to create.                             | `~/.qc/qc-index.list`     |
+| File                | Description                                      | Install Location          |
+| ------------------- | ------------------------------------------------ | ------------------------- |
+| `README.md`         | The file you are just reading.                   | Not installed             |
+| `INSTALL`           | The installation script.                         | Not installed             |
+| `_quick_change_dir` | The script to be sourced by .bashrc.             | `~/.quick_change_dir`     |
+| `qc-build-index.sh` | Processes `qc-index.list` to create index files. | `~/.qc/qc-build-index.sh` |
+| `qc-index.list`     | Defines indexes to create.                       | `~/.qc/qc-index.list`     |
 
 
 ### I don't want to install -- just test it
