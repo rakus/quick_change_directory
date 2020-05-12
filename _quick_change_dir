@@ -108,7 +108,7 @@ function __qc_get_indexes
 {
     typeset IFS=$'\n'
     ( shopt -s nullglob ; printf '%s\n' "$QC_DIR"/*.index "$QC_DIR"/*.index."$HOSTNAME" )
-    if [ -n "$1" ]; then
+    if [ -n "${1:-}" ]; then
         ( shopt -s nullglob ; printf '%s\n' "$QC_DIR"/*.index.ext "$QC_DIR"/*.index.ext."$HOSTNAME" )
     fi
     [ -e "$QC_DSTORE_INDEX" ] && echo "$QC_DSTORE_INDEX"
@@ -119,7 +119,7 @@ function __qc_get_indexes
 # {
 #     typeset IFS=$'\n'
 #     printf '%s\n' ~(N)"$QC_DIR"/*.index ~(N)"$QC_DIR"/*.index."$HOSTNAME"
-#     if [ -n "$1" ]; then
+#     if [ -n "${1:-}" ]; then
 #         printf '%s\n' ~(N)"$QC_DIR"/*.index.ext ~(N)"$QC_DIR"/*.index.ext."$HOSTNAME"
 #     fi
 #     [ -e "$QC_DSTORE_INDEX" ] && echo "$QC_DSTORE_INDEX"
@@ -200,7 +200,7 @@ function __qc_select
                 printf >&2 "\rFiltering none existing directories: %d/%d" $((orgCnt-i)) "$orgCnt"
                 # remove color codes for check
                 if [ ! -d "$(echo "${dl[$i]}"| sed -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]//g")" ]; then
-                    if [ -n "$QC_DBG" ]; then
+                    if [ -n "${QC_DBG:-}" ]; then
                         echo >&2 "REMOVING: ${dl[$i]}"
                     fi
                    unset "dl[$i]"
@@ -243,7 +243,7 @@ function __qc_select
 function qc
 {
     # The command used for changing directories
-    if [ "$BASH_VERSION" ]; then
+    if [ "${BASH_VERSION:-}" ]; then
         typeset CD_CMD="builtin cd"
     else
         typeset CD_CMD="cd"
@@ -345,7 +345,7 @@ function qc
     case $1 in
         ?*)
             typeset tgt=$(__qc_select "$grepOpt" "$searchExtIdx" "$@")
-            if [ -n "$tgt" ]; then
+            if [ -n "${tgt:-}" ]; then
                 $CD_CMD "$tgt"
             else
                 return 1
@@ -380,7 +380,7 @@ function __qc_updateIndex
 
 function __qc_internalUpdateIndex
 {
-    [ -z "$QC_DIR" ] && QC_DIR="$HOME/.qc"
+    [ -z "${QC_DIR:-}" ] && QC_DIR="$HOME/.qc"
     if [ ! -d "$QC_DIR" ]; then
         mkdir "$QC_DIR" || return 1
     fi
@@ -395,7 +395,7 @@ function __qc_internalUpdateIndex
     echo "Stored $(wc -l < "$INDEX_FILE") directory names."
 }
 
-if [ -z "$__QC_TEST__" ]; then
+if [ -z "${__QC_TEST__:-}" ]; then
     if ! ls "$QC_DIR"/*.index >/dev/null 2>&1; then
         echo "QuickChangeDirectory: No index files found .. creating ..."
         __qc_updateIndex
@@ -602,7 +602,7 @@ function dstore
     __dstore_clean warn
 }
 
-if [ -z "$BASH_VERSION" ]; then
+if [ -z "${BASH_VERSION:-}" ]; then
     return
 fi
 #
