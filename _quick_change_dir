@@ -148,19 +148,17 @@ function __qc_select
                 return 1
             fi
             # grep: -h: Suppress the prefixing of file names on output.
-            # shellcheck disable=SC2207  # IFS is set to newline
-            dl=( $(grep -ahi -- "^${pattern}[^ ]* " "$QC_DSTORE_INDEX" | cut "-d " -f2- | sort | uniq) )
+            mapfile -d$'\n' -t dl < <(grep -ahi -- "^${pattern}[^ ]* " "$QC_DSTORE_INDEX" | cut "-d " -f2- | sort | uniq)
             ;;
         *)
-            # shellcheck disable=SC2207  # IFS is set to newline
-            idxFiles=( $( __qc_get_indexes "$searchExtIdx" ) )
+            mapfile -d$'\n' -t idxFiles < <( __qc_get_indexes "$searchExtIdx")
             if [ ${#idxFiles[@]} = 0 ]; then
                 echo >&2 "qc: No index file found! Use 'qc -u' or 'dstore' to create it."
                 return 1
             fi
             pattern=$(__qc_args2regex "$@")
-            # shellcheck disable=SC2207,SC2086  # IFS is set to newline
-            dl=( $( grep --color=always -ah $grepOpt -- "/$pattern" "${idxFiles[@]}" |sed "s/^:[^ ]* //"|sort|uniq) )
+            # shellcheck disable=SC2086  # grepOpt should split
+            mapfile -d$'\n' -t dl < <(grep --color=always -ah $grepOpt -- "/$pattern" "${idxFiles[@]}" |sed "s/^:[^ ]* //"|sort|uniq)
             ;;
     esac
 
@@ -627,8 +625,7 @@ function __qc_complete
     #qc_debug "CL >>$COMP_LINE<<"
 
     if echo "$prev" | grep " -[^ ]*u" >/dev/null 2>&1 ; then
-        # shellcheck disable=SC2207
-        COMPREPLY=( $( compgen -o dirnames -- "$cur") )
+        mapfile -d$'\n' -t COMPREPLY < <(compgen -o dirnames -- "$cur")
         return 0
     fi
     if echo "$prev" | grep " -[^ ]*S" >/dev/null 2>&1 ; then
@@ -674,8 +671,7 @@ function __qc_complete
             #qc_debug "LABEL"
             opts=$(grep -a "^${cur}[^ ]* " "$QC_DSTORE_INDEX" | cut "-d " -f1 | sort | uniq)
             #qc_debug "$opts"
-            # shellcheck disable=SC2207
-            COMPREPLY=( $(compgen "-S " -W "${opts[*]}" -- "$cur" ))
+            mapfile -d$'\n' -t COMPREPLY < <(compgen "-S " -W "${opts[*]}" -- "$cur")
             typeset i
             for ((i=0; i < ${#COMPREPLY[@]}; i++)); do
                 COMPREPLY[$i]=$(printf "%q" "${COMPREPLY[$i]:1}")
@@ -700,17 +696,14 @@ function __qc_complete
             #qc_debug "cleanRE >>$cleanRE<<"
             typeset IFS=$'\n'
             typeset -a idxFiles
-            # shellcheck disable=SC2207  # IFS is set to newline
-            idxFiles=( $(__qc_get_indexes "$searchExtIdx") )
+            mapfile -d$'\n' -t idxFiles < <(__qc_get_indexes "$searchExtIdx")
             if [ ${#idxFiles[@]} = 0 ]; then
                 echo >&2  "qc: No index file found! Use 'qc -u' or 'dstore' to create it."
                 return 1
             fi
-            # shellcheck disable=SC2086,SC2207  # IFS is set to newline
-            opts=($(grep -a --no-filename $ic -o -- "/$curRE" "${idxFiles[@]}" | sort | uniq  | sed "s|^.*/${cleanRE}|/${cur}|$sedIC" | cut -c2-))
+            mapfile -d$'\n' -t opts < <(grep -a --no-filename $ic -o -- "/$curRE" "${idxFiles[@]}" | sort | uniq  | sed "s|^.*/${cleanRE}|/${cur}|$sedIC" | cut -c2-)
             #qc_debug "OPTS >>${opts[*]}<<"
-            # shellcheck disable=SC2207
-            COMPREPLY=( $(compgen -o nospace -S/ -W "${opts[*]}" -- "$cur" ))
+            mapfile -d$'\n' -t COMPREPLY < <(compgen -o nospace -S/ -W "${opts[*]}" -- "$cur" )
             #COMPREPLY=( "${opts[@]}")
             if [ "${BASH_VERSION:0:1}" -ge 4 ]; then
                 compopt -o nospace
