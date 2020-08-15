@@ -2,7 +2,7 @@
 #
 # FILE: INSTALL
 #
-# ABSTRACT: Install files to $HOME and $HOME/bin
+# ABSTRACT: Install QC files and update crontab & .bashrc
 #
 # AUTHOR: Ralf Schandl
 #
@@ -21,7 +21,7 @@ execute()
     if [ "$execute" == "true" ]; then
         "$@"
     else
-        echo "$@"
+        echo "    $@"
     fi
 }
 
@@ -101,7 +101,7 @@ add_to_crontab()
         if [ "$execute" = "true" ]; then
             (crontab -l 2>/dev/null; echo "$CRE") | crontab -
         else
-            echo "(crontab -l 2>/dev/null; echo \"$CRE\") | crontab -"
+            echo "    (crontab -l 2>/dev/null; echo \"$CRE\") | crontab -"
         fi
     fi
 }
@@ -189,6 +189,7 @@ for fn in [!_]*[!~]; do
         INSTALL*) : ;;
         Makefile*) : ;;
         README*) : ;;
+        LICENSE*) : ;;
         qc-index.list) : ;;
         *)
             if [ ! -d "$fn" ]; then
