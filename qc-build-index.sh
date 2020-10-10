@@ -20,7 +20,7 @@
 # CREATED: 2017-03-02
 #
 
-#script_dir=$(cd "$(dirname "$0")" 2>/dev/null && pwd)
+script_dir="$(cd "$(dirname "$0")" && pwd)" || exit 1
 script_name="$(basename "$0")"
 
 [ -z "$QC_DIR" ] && QC_DIR=$HOME/.qc
@@ -254,6 +254,16 @@ build_index()
 
 
 #---------[ MAIN ]-------------------------------------------------------------
+
+if [ ! -d "$QC_DIR" ]; then
+    echo "qc-build-index.sh: First call -- initialization ...."
+    echo "Creating directory $QC_DIR"
+    mkdir "$QC_DIR" || exit 1
+fi
+if [ ! -e "$QC_DIR/qc-index.list" ]; then
+    echo "Copying default config file to $QC_DIR/qc-index.list"
+    cp "$script_dir/qc-index.list" "$QC_DIR/qc-index.list"
+fi
 
 typeset -a INC_UPD
 while getopts ":Ei:" o "$@"; do

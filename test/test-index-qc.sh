@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/ksh
 #
 # FILE: test-index-qc.sh
 #
@@ -10,7 +10,6 @@
 #
 
 script_dir="$(cd "$(dirname "$0")" && pwd)" || exit 1
-
 
 export BUILD_TEST_DIRS=true
 # shellcheck source=./defines.shinc
@@ -179,9 +178,6 @@ if [ ! -e  "${script_dir}/testDirectory/.qc/test-fail.index" ]; then
 else
     ERROR
 fi
-
-
-
 
 cd "${script_dir}" || exit 1
 

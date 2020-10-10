@@ -1,0 +1,210 @@
+#!/bin/bash
+#
+# FILE: dstore
+#
+# ABSTRACT:
+#
+# AUTHOR: Ralf Schandl
+#
+# CREATED: 2020-10-08
+#
+
+# Directory for qc index files
+[ -z "${QC_DIR:-}" ] && QC_DIR=$HOME/.qc
+
+# Manual index file storing directory names and bookmarked directories. This
+# file is managed using the command 'dstore'.
+QC_DSTORE_INDEX=$QC_DIR/index.dstore
+
+
+# cleanup ~/.qc/index.dstore
+function __dstore_clean
+{
+    # if action is 'warn' just warn about none-existing dirs
+    typeset action=${1:-}
+    # delete duplicates
+    LC_ALL=C sort "$QC_DSTORE_INDEX" | uniq > "$QC_DSTORE_INDEX.tmp"
+    mv -f "$QC_DSTORE_INDEX.tmp" "$QC_DSTORE_INDEX"
+
+    # get other index files
+    typeset -a otherIdx
+    otherIdx=( "$QC_DIR"/*.index )
+    if [ ${#otherIdx[@]} -eq 0 ]; then
+        otherIdx=( /dev/null )
+    elif [ ${#otherIdx[@]} -eq 1 ]; then
+        [ ! -e "${otherIdx[0]}" ] && otherIdx=( /dev/null )
+    fi
+
+    typeset IFS=$'\n'
+    typeset labels=""
+    typeset d
+    true > "$QC_DSTORE_INDEX.tmp"
+    while read -r d; do
+        case $d in
+            :*)
+                # remove non-existing dirs and warn on duplicate labels
+                lbl=$(echo "$d" | cut "-d " -f1)
+                dir=$(echo "$d" | cut "-d " -f2-)
+
+                if [ -d "$dir" ]; then
+                    echo "$d" >> "$QC_DSTORE_INDEX.tmp"
+                    if echo "$labels" | grep -ai  " $lbl " >/dev/null 2>&1; then
+                        echo >&2 "Warning: Duplicate label: '$lbl'"
+                    fi
+                    labels="$labels $lbl "
+                else
+                    if [ "$action" = "warn" ]; then
+                        echo "$d" >> "$QC_DSTORE_INDEX.tmp"
+                        echo >&2 "WARNING $d: Does not exist (anymore). Use 'dstore -c' to clean up."
+                    else
+                        echo >&2 "Removed $d: Does not exist (anymore)."
+                    fi
+                fi
+                ;;
+            ?*)
+                # ignore dirs already in another index file
+                if grep -a "^${d}$" "${otherIdx[@]}" >/dev/null 2>&1; then
+                    echo >&2 "Removed $d: Already in $(grep -al "^${d}$" "${otherIdx[@]}")"
+                    continue
+                fi
+                # remove non-existing dirs
+                if [ -d "$d" ]; then
+                    echo "$d" >> "$QC_DSTORE_INDEX.tmp"
+                else
+                    if [ "$action" = "warn" ]; then
+                        echo "$d" >> "$QC_DSTORE_INDEX.tmp"
+                        echo >&2 "WARNING $d: Does not exist (anymore). Use 'dstore -c' to clean up."
+                    else
+                        echo >&2 "Removed $d: Does not exist (anymore)."
+                    fi
+                fi
+                ;;
+        esac
+    done < "$QC_DSTORE_INDEX"
+    mv -f "$QC_DSTORE_INDEX.tmp" "$QC_DSTORE_INDEX"
+}
+
+function __qc_fqname
+{
+    if [ -d "$1" ]; then
+        if ! (cd -- "$1" && pwd); then
+            return 1
+        fi
+    else
+        (cd "$(dirname -- "$1")" && echo -n "$(pwd)" && echo "/$(basename -- "$1")")
+    fi
+}
+
+#---------[ MAIN ]-------------------------------------------------------------
+# create ~/.qc/index.dstore if it does not exist.
+[ ! -d "$QC_DIR" ] && mkdir "$QC_DIR"
+[ ! -e "$QC_DSTORE_INDEX" ] && touch "$QC_DSTORE_INDEX"
+
+typeset delete=''
+typeset OPTIND o
+
+while getopts ":elcd" o "$@"; do
+    case $o in
+        e)
+            ${VISUAL:-${EDITOR:-vi}} "$QC_DSTORE_INDEX"
+            __dstore_clean warn
+            exit
+            ;;
+        l)
+            cat "$QC_DSTORE_INDEX"
+            exit
+            ;;
+        c) __dstore_clean
+            exit
+            ;;
+        d) delete=true
+            ;;
+        *)
+            if [[ "$*" != *--help* ]]; then
+                echo >&2 "Invalid option '$OPTARG'" && echo >&2 ""
+            fi
+            echo >&2 "Manually manage content of $QC_DSTORE_INDEX for usage with 'qc'."
+            echo >&2 ""
+            echo >&2 "Usage:"
+            echo >&2 "  dstore"
+            echo >&2 "      store current directory"
+            echo >&2 "  dstore dirname"
+            echo >&2 "      store given directory"
+            echo >&2 "  dstore -d"
+            echo >&2 "      remove current directory from index"
+            echo >&2 "  dstore -d dirname"
+            echo >&2 "      remove given directory from index"
+            echo >&2 "  dstore :lbl"
+            echo >&2 "      store current directory with label ':lbl'"
+            echo >&2 "  dstore :lbl dirname"
+            echo >&2 "      store given directory with label ':lbl'"
+            echo >&2 "  dstore -d :lbl"
+            echo >&2 "      remove directory labeled with ':lbl' from index"
+            echo >&2 "  dstore [-e | -l | -c]"
+            echo >&2 "      '-e'  edit directory index (using ${VISUAL:-${EDITOR:-vi}})"
+            echo >&2 "      '-l'  list directory index"
+            echo >&2 "      '-c'  clean up duplicate/none-existing entries"
+            echo >&2 ""
+            echo >&2 "See also: qc --help"
+            echo >&2 ""
+            exit
+            ;;
+    esac
+done
+
+shift $((OPTIND-1))
+
+if [ $# -eq 0 ]; then
+    set -- '.'
+fi
+
+/bin/cp -f "$QC_DSTORE_INDEX" "$QC_DSTORE_INDEX.org"
+while [ $# -gt 0 ]; do
+    case $1 in
+        :*)
+            typeset lbl=$1
+            shift
+            if ! echo "$lbl" | grep "^[^[:space:]]*$" >/dev/null 2>&1; then
+                echo >&2 "Invalid label '$lbl'. Must not contain whitespaces."
+                exit 1
+            fi
+            if [ "$delete" = "true" ]; then
+                grep -avi "^$lbl " "$QC_DSTORE_INDEX" > "$QC_DSTORE_INDEX.tmp"
+                mv "$QC_DSTORE_INDEX.tmp" "$QC_DSTORE_INDEX"
+            else
+                typeset dir
+                if [ $# -lt 1 ]; then
+                    dir=$(__qc_fqname ".")
+                else
+                    dir=$(__qc_fqname "$1")
+                    shift
+                fi
+                if [ -d "$dir" ]; then
+                    grep -avi "^$lbl " "$QC_DSTORE_INDEX" > "$QC_DSTORE_INDEX.tmp"
+                    mv "$QC_DSTORE_INDEX.tmp" "$QC_DSTORE_INDEX"
+                    echo "$lbl $dir" >> "$QC_DSTORE_INDEX"
+                else
+                    echo >&2 "Error: Not a directory: $dir"
+                fi
+            fi
+            ;;
+        ?*)
+            dir=$(__qc_fqname "$1")
+            shift
+            if [ "$delete" = "true" ]; then
+                grep -av "^${dir}$" "$QC_DSTORE_INDEX" > "$QC_DSTORE_INDEX.tmp"
+                mv "$QC_DSTORE_INDEX.tmp" "$QC_DSTORE_INDEX"
+            else
+                if [ -d "$dir" ]; then
+                    echo "$dir" >> "$QC_DSTORE_INDEX"
+                else
+                    echo >&2 "Error: Not a directory: $dir"
+                fi
+            fi
+            ;;
+    esac
+done
+diff "$QC_DSTORE_INDEX.org" "$QC_DSTORE_INDEX" | grep -a -- "^[<>]" | sed "s/^</Removed:/;s/^>/Added:  /"
+rm "$QC_DSTORE_INDEX.org"
+__dstore_clean warn
+

@@ -11,8 +11,19 @@
 
 script_dir="$(cd "$(dirname "$0")" && pwd)" || exit 1
 
+tmp_arg2regex="${script_dir}/qc_args2regex.shinc"
+
 # shellcheck source=./defines.shinc
 . "${script_dir}/defines.shinc"
+
+sed -n '/^function args2regex/,/^}/p' ../qc-selector > "${tmp_arg2regex}"
+if [ ! -s "${tmp_arg2regex}" ]; then
+    echo >&2 "ERROR: Function args2regex not found in ../qc-selector"
+    exit 1
+fi
+
+# shellcheck disable=SC1090
+.   "${tmp_arg2regex}"
 
 TEST_STATUS=0
 
@@ -21,7 +32,7 @@ g2re()
     expected="$1"
     shift
     printf "%s" "$* -> $expected"
-    actual="$(__qc_args2regex "$@")"
+    actual="$(args2regex "$@")"
 
 
     if [ "$actual" = "$expected" ]; then
@@ -35,7 +46,7 @@ g2re()
 
 #---------[ TESTS ]------------------------------------------------------------
 
-startTest "__qc_args2regex"
+startTest "args2regex"
 
 g2re "[^/]*$" "*"
 g2re "[^/]*$" "*/"

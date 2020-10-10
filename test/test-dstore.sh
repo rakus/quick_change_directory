@@ -15,6 +15,7 @@ BUILD_TEST_DIRS=true
 # shellcheck source=./defines.shinc
 . "${script_dir}/defines.shinc"
 
+QC_DSTORE_INDEX=$QC_DIR/index.dstore
 
 checkSize()
 {

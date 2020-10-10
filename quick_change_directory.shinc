@@ -1,0 +1,74 @@
+#!/bin/echo "This file is to be sourced, not executed."
+#
+# FILE: quick_change_directory.shinc
+#
+# Provides the shell function 'qc' for index based quick change directory.
+# Qc searches a index file for a matching directory and then changes to it.
+# If multiple directories match, the user is presented a list to choose from.
+#
+# When sourcing this file, it checks for index files in '$HOME/.qc'. If none
+# is found a default index is created. This might take a while.
+#
+# See README.md for a full description.
+#
+# AUTHOR: Ralf Schandl
+#
+
+# Directory for qc index files
+[ -z "${QC_DIR:-}" ] && QC_DIR=$HOME/.qc
+
+# Manual index file. Stores directory names and bookmarked directories. This
+# file is managed using the command 'dstore'.
+QC_DSTORE_INDEX=$QC_DIR/index.dstore
+
+if [ -z "${__QC_TEST__:-}" ]; then
+    if ! ls "$QC_DIR"/*.index >/dev/null 2>&1; then
+        echo "QuickChangeDirectory: No index files found - creating ..."
+        qc-build-index.sh
+    fi
+    if [ ! -e "$QC_DSTORE_INDEX" ]; then
+        touch "$QC_DSTORE_INDEX"
+    fi
+fi
+
+function qc
+{
+    # no argument - cd to home
+    if [ $# -eq 0 ]; then
+        # shellcheck disable=SC2164 # we are returning on the next line
+        "cd"
+        return $?
+    elif [ "$1" = "-" ]; then
+        # shellcheck disable=SC2164 # we are returning on the next line
+        "cd" -
+        return $?
+    fi
+
+    local target=""
+    local exit_code=0
+
+    local IFS=$'\n'
+    for ln in $(qc-selector "$@"); do
+        if [[ "$ln" = QC:TARGET:* ]]; then
+            target="${ln#QC:TARGET:}"
+            break
+        elif [[ "$ln" = QC:EXIT:* ]]; then
+            exit_code="${ln#QC:EXIT:}"
+            break
+        else
+            echo "$ln"
+        fi
+    done
+    if [ "$exit_code" != 0 ]; then
+        return "$exit_code"
+    fi
+
+    if [ -n "$target" ]; then
+        # shellcheck disable=SC2164 # we are returning on the next line
+        "cd" "$target"
+        return $?
+    fi
+    return 0
+}
+
+# vim:ft=sh:et:ts=4:sw=4

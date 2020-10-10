@@ -1,0 +1,353 @@
+#!/bin/bash
+#
+# FILE: qc-selector
+#
+# ABSTRACT: Selects a directory by pattern from the index
+#
+# AUTHOR: Ralf Schandl
+#
+
+# Directory for qc index files
+[ -z "${QC_DIR:-}" ] && QC_DIR=$HOME/.qc
+
+# Manual index file storing directory names and bookmarked directories. This
+# file is managed using the command 'dstore'.
+QC_DSTORE_INDEX=$QC_DIR/index.dstore
+
+function do_exit
+{
+    rc=${1:-$?}
+    echo "QC:EXIT:$rc"
+    exit "$rc"
+}
+
+# Create regex from qc argument
+# Used from qc and completion
+# $*: The pattern to create a regex
+function args2regex
+{
+    typeset glob regex w
+    glob=''
+    regex=''
+
+    for w in "$@"; do
+        # w="${w//+/*}"
+        case "$w" in
+            */) # don't append '*' if word ends with '/'
+                w="${w%?}";;
+            *\*) # don't append '*' if it already ends with '*'
+                : ;;
+            *)   w="$w*" ;;
+        esac
+        glob="$glob/$w"
+    done
+
+    # Remove
+    # - leading slashes
+    # - than leading asterixes followed by slashes
+    # - than trailing slashes
+    glob="$(echo "$glob" | sed 's%^//*%%;s%^\*\**//*%%;s%//*$%%')"
+
+    while [ -n "$glob" ]; do
+
+        case "$glob" in
+            \*\*/*) # '**' -> '.*'
+                regex="$regex\(.*/\)*"
+                glob="${glob:3}"
+                ;;
+            \*\**) # '**' -> '.*'
+                regex="$regex.*"
+                glob="${glob#"${glob%%[!*]*}"}"
+                ;;
+            //*) # '//' -> '/.*/'
+                regex="$regex/\\(.*/\\)*"
+                glob="${glob#"${glob%%[!/]*}"}"
+                ;;
+            \**) # '*' -> '[^/]*'
+                regex="${regex}[^/]*"
+                glob="${glob:1}"
+                ;;
+            \?*) # '?' -> '[^/]'
+                regex="${regex}[^/]"
+                glob="${glob:1}"
+                ;;
+            \\\?*) # copy escaped char
+                regex="${regex}?"
+                glob="${glob:2}"
+                ;;
+            \\*) # copy escaped char
+                regex="$regex${glob:0:2}"
+                glob="${glob:2}"
+                ;;
+            .*)
+                regex="$regex\\."
+                glob="${glob:1}"
+                ;;
+            *)
+                regex="$regex${glob:0:1}"
+                glob="${glob:1}"
+                ;;
+        esac
+    done
+    #remove leading '/'
+    #regex="${regex:1}$"
+    regex="${regex}$"
+    echo "$regex"
+}
+
+# Determine index files. One file per line
+# If "$1" is not empty include extended indexes
+function get_indexes
+{
+    typeset IFS=$'\n'
+    ( shopt -s nullglob ; printf '%s\n' "$QC_DIR"/*.index "$QC_DIR"/*.index."$HOSTNAME" )
+    if [ -n "${1:-}" ]; then
+        ( shopt -s nullglob ; printf '%s\n' "$QC_DIR"/*.index.ext "$QC_DIR"/*.index.ext."$HOSTNAME" )
+    fi
+    [ -e "$QC_DSTORE_INDEX" ] && echo "$QC_DSTORE_INDEX"
+}
+
+# Select directories found in ~/.qc/*.index.
+# $1: grep options (ignored for search by label)
+# $2: Search extended indexes? ("true" or "")
+# $3-: text to search for. With leading ':' triggers search by label.
+function dir_select
+{
+    typeset grepOpt="$1"
+    shift
+    typeset searchExtIdx="$1"
+    shift
+
+    typeset IFS=$'\n'
+    typeset -a dl idxFiles
+    case $1 in
+        :*)
+            pattern=$1
+            [ $# -gt 1 ] && echo >&2 "WARNING: Extra arguments ignored"
+            if [ ! -e "$QC_DSTORE_INDEX" ]; then
+                echo >&2 "qc: Dstore index file not found! Use 'dstore' to create it."
+                return 1
+            fi
+            # grep: -h: Suppress the prefixing of file names on output.
+            mapfile -d$'\n' -t dl < <(grep -ahi -- "^${pattern}[^ ]* " "$QC_DSTORE_INDEX" | cut "-d " -f2- | sort | uniq)
+            ;;
+        *)
+            mapfile -d$'\n' -t idxFiles < <( get_indexes "$searchExtIdx")
+            if [ ${#idxFiles[@]} = 0 ]; then
+                echo >&2 "qc: No index file found! Use 'qc -u' or 'dstore' to create it."
+                return 1
+            fi
+            pattern=$(args2regex "$@")
+            # shellcheck disable=SC2086  # grepOpt should split
+            mapfile -d$'\n' -t dl < <(grep --color=always -ah $grepOpt -- "/$pattern" "${idxFiles[@]}" |sed "s/^:[^ ]* //"|sort|uniq)
+            ;;
+    esac
+
+    typeset cnt=${#dl[*]}
+
+    if [ "$cnt" -eq 0 ]; then
+        typeset IFS=' '
+        echo >&2 "qc: $*: No matching directory found"
+        return 1
+    elif [ "$cnt" -eq 1 ]; then
+        # echo and remove color codes
+        echo "${dl[@]}" | sed -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]//g"
+        return 0
+    else
+        # If selection list needs more than terminal hight lines
+        # ask user, if he/she really want's to see it.
+        typeset limit=$((LINES -1))
+        if [ -n "${LINES:-}" ] && [ "$cnt" -gt $limit ]; then
+
+            echo >&2 -n "Display all $cnt directories? (y or n) "
+            read -rN1 yn
+            case $yn in
+                y|Y) echo >&2
+                    ;;
+                *) echo >&2
+                    return
+                    ;;
+            esac
+        fi
+
+        if [ -z "${QC_SKIP_FILTER_EXISTING:-}" ]; then
+            # filter out none existing dirs
+            typeset i
+            typeset orgCnt=$cnt
+            for (( i=orgCnt-1; i>=0; i-- )); do
+                printf >&2 "\rFiltering none existing directories: %d/%d" $((orgCnt-i)) "$orgCnt"
+                # remove color codes for check
+                if [ ! -d "$(echo "${dl[$i]}"| sed -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]//g")" ]; then
+                    if [ -n "${QC_DBG:-}" ]; then
+                        echo >&2 "REMOVING: ${dl[$i]}"
+                    fi
+                   unset "dl[$i]"
+               fi
+            done
+            dl=( "${dl[@]}" )
+            printf >&2 "\r\e[K"
+
+            cnt=${#dl[*]}
+            if [ "$orgCnt" -ne "$cnt" ]; then
+                echo >&2 "qc: Removed $((orgCnt - cnt)) non existing directories from result"
+            fi
+        fi
+        if [ "$cnt" -eq 0 ]; then
+            echo >&2 "qc: $*: No matching directory found"
+            return
+        elif [ "$cnt" -eq 1 ]; then
+            # echo and remove color codes
+            echo "${dl[@]}" | sed -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]//g"
+            return
+        fi
+
+        typeset COLUMNS=0
+        # replace home directory with '~' for display and later re-add it on
+        # choosen dir.
+        dl=( "${dl[@]/#$HOME/\~}" )
+        local LINES=0
+        local COLUMNS=1
+        select dir in "${dl[@]}" ; do
+            # replace ~ with $HOME and remove color codes
+            echo "${dir/#\~/$HOME}" | sed -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]//g"
+            break
+        done
+    fi
+}
+
+
+# Update/create the index.
+function updateIndex
+{
+    typeset PATH="$QC_DIR:$PATH"
+    if command -v qc-build-index.sh &>/dev/null; then
+        echo "Updating index ..."
+        typeset -a ARGS
+        typeset d
+        for d in "$@"; do
+            if [ "$d" = "-E" ]; then
+                ARGS+=( "-E" )
+            else
+                d="$(readlink -f "$d")"
+                ARGS+=( "-i" "$d")
+            fi
+        done
+        qc-build-index.sh "${ARGS[@]}"
+    else
+        echo "Updating index (internal update)..."
+        internalUpdateIndex "$@"
+    fi
+}
+
+function internalUpdateIndex
+{
+    [ -z "${QC_DIR:-}" ] && QC_DIR="$HOME/.qc"
+    if [ ! -d "$QC_DIR" ]; then
+        mkdir "$QC_DIR" || return 1
+    fi
+
+    typeset INDEX_FILE=$QC_DIR/home.index
+    typeset NEW_INDEX=$(mktemp "${INDEX_FILE}.XXXX")
+
+    find "${HOME}" -xdev -type d \( -name '.*' -o -name CVS \) -prune -o -xtype d -print >> "$NEW_INDEX"
+
+    mv -f "$NEW_INDEX" "$INDEX_FILE"
+
+    echo "Stored $(wc -l < "$INDEX_FILE") directory names."
+}
+
+#---------[ MAIN ]-------------------------------------------------------------
+
+typeset grepOpt=""
+typeset searchExtIdx=""
+typeset OPTIND
+typeset o
+
+while getopts ":ieuUSl" o "$@"; do
+    case $o in
+        i) grepOpt="-i"
+            ;;
+        e) searchExtIdx="true"
+            ;;
+        u)
+            shift $((OPTIND-1))
+            updateIndex -E "$@"
+            do_exit 0
+            ;;
+        U)
+            shift $((OPTIND-1))
+            updateIndex "$@"
+            do_exit 0
+            ;;
+        S)
+            typeset fn
+            for fn in $(get_indexes "1"); do
+                echo "$fn"
+                echo "   Last Upd: $(stat -c "%y" "$fn")"
+                # shellcheck disable=SC2183,SC2046  # wc produces two args
+                printf "   Entries:  %'d (%'d bytes)\n" $(wc -lc <"$fn")
+                if [ "$fn" = "$QC_DSTORE_INDEX" ]; then
+                    echo "   Labeled entries:  $(grep -c "^:" "$fn")"
+                fi
+            done
+            do_exit 0
+            ;;
+        l)
+            grep --color=always '^:[^ ]* ' "$QC_DSTORE_INDEX"
+            do_exit 0
+            ;;
+        *)
+            rc=0
+            if [[ "$*" != *--help* ]]; then
+                echo >&2 "Invalid option '$OPTARG'" && echo >&2 ""
+                rc=1
+            fi
+            echo >&2 "Quick Change -- index based directory changer"
+            echo >&2 ""
+            echo >&2 "Usage:"
+            echo >&2 "  qc [-ie] <dir>"
+            echo >&2 "      Search for dir in index and cd to it."
+            echo >&2 "      -i  Search case-insensitive (slower)."
+            echo >&2 "      -e  Also search extended index."
+            echo >&2 "  qc :name"
+            echo >&2 "      Search for dir labeled with ':name' in index and cd to it."
+            echo >&2 "      Use the command 'dstore' to manage labeled directories."
+            echo >&2 "  qc -u [dir...]"
+            echo >&2 "      Updates index. If dirs are given only that directories are updated,"
+            echo >&2 "      This uses the external command '~/.qc/qc-build-index.sh', if it"
+            echo >&2 "      is available. Else the internal update is used."
+            echo >&2 "  qc -U [dir...]"
+            echo >&2 "      Like '-u', but also updates extended indexes."
+            echo >&2 "  qc -l"
+            echo >&2 "      List labeled dirs."
+            echo >&2 "  qc -S"
+            echo >&2 "      Print statistics of index."
+            echo >&2 "  qc -"
+            echo >&2 "      Act like 'cd -'."
+            echo >&2 ""
+            echo >&2 "Note: qc automatically adds wildcards"
+            echo >&2 "  'qc Documents/Adm' searches for '**/Documents/Adm*'"
+            echo >&2 "  'qc Doc Adm' searches for '**/Doc*/Adm*'"
+            echo >&2 ""
+            echo >&2 "See also: dstore --help"
+            echo >&2 ""
+            do_exit $rc
+            ;;
+    esac
+done
+
+shift $((OPTIND-1))
+
+case $1 in
+    ?*)
+        typeset tgt=$(dir_select "$grepOpt" "$searchExtIdx" "$@")
+        if [ -n "${tgt:-}" ]; then
+            echo "QC:TARGET:$tgt"
+        else
+            do_exit 1
+        fi
+        ;;
+esac
+
+
+# vim: ft=sh

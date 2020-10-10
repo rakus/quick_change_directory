@@ -88,7 +88,11 @@ onExit()
         [ -d "${script_dir}/testDirectory" ] && rm -rf "${script_dir}/testDirectory"
     else
         echo >&2 "Test FAILED"
-        echo >&2 "Testdirectors left intact: ${script_dir}/testDirectory"
+        echo >&2 "Testdirectory left intact: ${script_dir}/testDirectory"
+    fi
+
+    if [ -n "${tmp_arg2regex:-}" ] && [ -e "${tmp_arg2regex}" ]; then
+        rm -f "${tmp_arg2regex}"
     fi
 
     if [ -n "$TEST_OBJEKT" ]; then
@@ -126,7 +130,8 @@ if [ -n "${BUILD_TEST_DIRS:-}" ]; then
     cp ../qc-build-index.sh "$QC_DIR"
 fi
 
-# shellcheck source=./../_quick_change_dir
-. "${script_dir}/../_quick_change_dir"
+# shellcheck source=./../quick_change_directory.shinc
+. "${script_dir}/../quick_change_directory.shinc"
+export PATH="$PATH:$script_dir/.."
 
 # vim:ft=sh

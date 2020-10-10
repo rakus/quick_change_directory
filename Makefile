@@ -13,8 +13,11 @@ test:   ## Run tests
 	test/run.sh
 
 check:  ## run shellcheck
-	shellcheck -sbash -fgcc _quick_change_dir *.sh
-	(cd test && shellcheck -sbash -fgcc *.sh *.shinc ../_quick_change_dir)
+	shellcheck -fgcc qc-selector dstore  qc-build-index.sh
+	shellcheck -fgcc -sbash quick_change_directory.shinc
+	shellcheck -fgcc -sksh quick_change_directory.shinc
+	shellcheck -fgcc -sbash qc_complete.bash
+	(cd test && shellcheck -sbash -fgcc *.sh *.shinc ../quick_change_directory.shinc)
 
 zip: quick_change_dir.zip   ## Build zip file
 
