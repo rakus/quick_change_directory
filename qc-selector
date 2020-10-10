@@ -7,6 +7,8 @@
 # AUTHOR: Ralf Schandl
 #
 
+script_name="$(basename "$0")"
+
 # Directory for qc index files
 [ -z "${QC_DIR:-}" ] && QC_DIR=$HOME/.qc
 
@@ -17,7 +19,6 @@ QC_DSTORE_INDEX=$QC_DIR/index.dstore
 function do_exit
 {
     rc=${1:-$?}
-    echo "QC:EXIT:$rc"
     exit "$rc"
 }
 
@@ -256,7 +257,44 @@ function internalUpdateIndex
     echo "Stored $(wc -l < "$INDEX_FILE") directory names."
 }
 
+show_help()
+{
+    echo "Quick Change -- index based directory changer"
+    echo ""
+    echo "Usage:"
+    echo "  qc [-ie] <dir>"
+    echo "      Search for dir in index and cd to it."
+    echo "      -i  Search case-insensitive (slower)."
+    echo "      -e  Also search extended index."
+    echo "  qc :name"
+    echo "      Search for dir labeled with ':name' in index and cd to it."
+    echo "      Use the command 'dstore' to manage labeled directories."
+    echo "  qc -u [dir...]"
+    echo "      Updates index. If dirs are given only that directories are updated,"
+    echo "      This uses the external command 'qc-build-index.sh'."
+    echo "  qc -U [dir...]"
+    echo "      Like '-u', but also updates extended indexes."
+    echo "  qc -l"
+    echo "      List labeled dirs."
+    echo "  qc -S"
+    echo "      Print statistics of index."
+    echo "  qc -"
+    echo "      Act like 'cd -'."
+    echo ""
+    echo "Note: qc automatically adds wildcards"
+    echo "  'qc Documents/Adm' searches for '**/Documents/Adm*'"
+    echo "  'qc Doc Adm' searches for '**/Doc*/Adm*'"
+    echo ""
+    echo "See also: dstore --help"
+    echo ""
+}
+
 #---------[ MAIN ]-------------------------------------------------------------
+
+if [ -z "${qc_result_file:-}" ]; then
+    echo >&2 "$script_name: Only intended to be called by shell function 'qc'"
+    exit 1
+fi
 
 typeset grepOpt=""
 typeset searchExtIdx=""
@@ -300,38 +338,12 @@ while getopts ":ieuUSl" o "$@"; do
             rc=0
             if [[ "$*" != *--help* ]]; then
                 echo >&2 "Invalid option '$OPTARG'" && echo >&2 ""
-                rc=1
+                show_help >&2
+                exit 1
+            else
+                show_help
+                exit 0
             fi
-            echo >&2 "Quick Change -- index based directory changer"
-            echo >&2 ""
-            echo >&2 "Usage:"
-            echo >&2 "  qc [-ie] <dir>"
-            echo >&2 "      Search for dir in index and cd to it."
-            echo >&2 "      -i  Search case-insensitive (slower)."
-            echo >&2 "      -e  Also search extended index."
-            echo >&2 "  qc :name"
-            echo >&2 "      Search for dir labeled with ':name' in index and cd to it."
-            echo >&2 "      Use the command 'dstore' to manage labeled directories."
-            echo >&2 "  qc -u [dir...]"
-            echo >&2 "      Updates index. If dirs are given only that directories are updated,"
-            echo >&2 "      This uses the external command '~/.qc/qc-build-index.sh', if it"
-            echo >&2 "      is available. Else the internal update is used."
-            echo >&2 "  qc -U [dir...]"
-            echo >&2 "      Like '-u', but also updates extended indexes."
-            echo >&2 "  qc -l"
-            echo >&2 "      List labeled dirs."
-            echo >&2 "  qc -S"
-            echo >&2 "      Print statistics of index."
-            echo >&2 "  qc -"
-            echo >&2 "      Act like 'cd -'."
-            echo >&2 ""
-            echo >&2 "Note: qc automatically adds wildcards"
-            echo >&2 "  'qc Documents/Adm' searches for '**/Documents/Adm*'"
-            echo >&2 "  'qc Doc Adm' searches for '**/Doc*/Adm*'"
-            echo >&2 ""
-            echo >&2 "See also: dstore --help"
-            echo >&2 ""
-            do_exit $rc
             ;;
     esac
 done
@@ -342,7 +354,7 @@ case $1 in
     ?*)
         typeset tgt=$(dir_select "$grepOpt" "$searchExtIdx" "$@")
         if [ -n "${tgt:-}" ]; then
-            echo "QC:TARGET:$tgt"
+            echo "$tgt" > "$qc_result_file"
         else
             do_exit 1
         fi

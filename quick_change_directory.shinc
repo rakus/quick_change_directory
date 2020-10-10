@@ -1,4 +1,4 @@
-#!/bin/echo "This file is to be sourced, not executed."
+# shellcheck shell=bash
 #
 # FILE: quick_change_directory.shinc
 #
@@ -33,42 +33,35 @@ fi
 
 function qc
 {
-    # no argument - cd to home
     if [ $# -eq 0 ]; then
-        # shellcheck disable=SC2164 # we are returning on the next line
+        # no argument - cd to home
+        # shellcheck disable=SC2164 # returning with exit code below
         "cd"
         return $?
     elif [ "$1" = "-" ]; then
-        # shellcheck disable=SC2164 # we are returning on the next line
+        # '-' - return to last dir
+        # shellcheck disable=SC2164 # returning with exit code below
         "cd" -
         return $?
     fi
 
-    local target=""
-    local exit_code=0
-
-    local IFS=$'\n'
-    for ln in $(qc-selector "$@"); do
-        if [[ "$ln" = QC:TARGET:* ]]; then
-            target="${ln#QC:TARGET:}"
-            break
-        elif [[ "$ln" = QC:EXIT:* ]]; then
-            exit_code="${ln#QC:EXIT:}"
-            break
-        else
-            echo "$ln"
-        fi
-    done
-    if [ "$exit_code" != 0 ]; then
-        return "$exit_code"
-    fi
-
-    if [ -n "$target" ]; then
-        # shellcheck disable=SC2164 # we are returning on the next line
-        "cd" "$target"
+    local rc
+    local result_file
+    if ! result_file="$(mktemp -t qc-target.XXXXXXX)"; then
         return $?
     fi
-    return 0
+
+    local PATH="$PATH:$QC_DIR"
+
+    if qc_result_file="$result_file" qc-selector "$@"; then
+        # shellcheck disable=SC2164 # returning with exit code below
+        "cd" "$(cat "$result_file")"
+        rc=$?
+    else
+        rc=$?
+    fi
+    rm -f "$result_file"
+    return "$rc"
 }
 
 # vim:ft=sh:et:ts=4:sw=4
