@@ -21,18 +21,24 @@
 # file is managed using the command 'dstore'.
 QC_DSTORE_INDEX=$QC_DIR/index.dstore
 
-if [ -z "${__QC_TEST__:-}" ]; then
-    if ! ls "$QC_DIR"/*.index >/dev/null 2>&1; then
-        echo "QuickChangeDirectory: No index files found - creating ..."
-        qc-build-index.sh
-    fi
-    if [ ! -e "$QC_DSTORE_INDEX" ]; then
-        touch "$QC_DSTORE_INDEX"
-    fi
-fi
+# delete left over temporary files
+find ${TMP:-/tmp}  -daystart -maxdepth 1 -mmin +60 -type f -user $(id -u) -name "qc-target.*" -delete
 
 function qc
 {
+    if [ ! -d "$QC_DIR" ] || ! ls -A "$QC_DIR"/*.index >/dev/null 2>&1; then
+        if [ -z "${__QC_TEST__:-}" ]; then
+            local answer
+            echo "Quick Change Directory not initialized. Initialzing might take a few minutes."
+            read -p "Initialize now? [y/n] " -r -n1 answer
+            echo
+            if [ "$answer" = "y" ]; then
+                qc-build-index.sh
+            else
+                return
+            fi
+        fi
+    fi
     if [ $# -eq 0 ]; then
         # no argument - cd to home
         # shellcheck disable=SC2164 # returning with exit code below
