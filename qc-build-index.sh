@@ -2,12 +2,12 @@
 #
 # FILE: qc-build-index.sh
 #
-# ABSTRACT: Reads qc-index.list and builds indexes.
+# ABSTRACT: Reads qc-index.cfg and builds indexes.
 #
-# The content of qc-index.list describes the indexes to create.
+# The content of qc-index.cfg describes the indexes to create.
 # Empty lines and lines starting with '#' are ignored.
 #
-# Example qc-index.list:
+# Example qc-index.cfg:
 #
 #    # create index of $HOME
 #    test.index $HOME -- '.*' CVS
@@ -24,8 +24,9 @@ script_dir="$(cd "$(dirname "$0")" && pwd)" || exit 1
 script_name="$(basename "$0")"
 
 [ -z "$QC_DIR" ] && QC_DIR=$HOME/.qc
+QC_DSTORE_INDEX=$QC_DIR/index.dstore
 
-LST="$QC_DIR/qc-index.list"
+CFG="$QC_DIR/qc-index.cfg"
 
 usage()
 {
@@ -260,9 +261,12 @@ if [ ! -d "$QC_DIR" ]; then
     echo "Creating directory $QC_DIR"
     mkdir "$QC_DIR" || exit 1
 fi
-if [ ! -e "$QC_DIR/qc-index.list" ]; then
-    echo "Copying default config file to $QC_DIR/qc-index.list"
-    cp "$script_dir/qc-index.list" "$QC_DIR/qc-index.list"
+if [ ! -e "$CFG" ]; then
+    echo "Copying default config file to $CFG"
+    cp "$script_dir/qc-index.cfg" "$CFG"
+fi
+if [ ! -e "$QC_DSTORE_INDEX" ]; then
+    touch "$QC_DSTORE_INDEX"
 fi
 
 typeset -a INC_UPD
@@ -289,6 +293,7 @@ export QC_LIST_UPD=true
 
 shopt -s extglob
 
+idxCount=0
 oifs="$IFS"
 IFS=$'\n'
 typeset -i lno=0
@@ -300,15 +305,16 @@ while IFS= read -r line; do
     fi
     # shellcheck disable=SC2016  # the '$(' MUST NOT be expanded
     if [[ $line == *'$('* ]] || [[ $line == *'`'* ]]; then
-        printf >&2 '%s[%d] ERROR: Possible command substitution: %s\n' "$LST" "$lno" "$line"
+        printf >&2 '%s[%d] ERROR: Possible command substitution: %s\n' "$CFG" "$lno" "$line"
         continue
     fi
     #echo "LN: $line"
 
     if ! eval "ARGS=( $line )"; then
-        printf >&2 '%s[%d] ERROR: Cannot parse: %s\n' "$LST" "$lno" "$line"
+        printf >&2 '%s[%d] ERROR: Cannot parse: %s\n' "$CFG" "$lno" "$line"
         continue
     fi
+    ((idxCount++))
 
     if [ $ignExt ]; then
         case "${ARGS[0]}" in
@@ -324,7 +330,7 @@ while IFS= read -r line; do
         *.index.ext.$HOSTNAME) : ;;
         *.index.!(*.*)) continue ;; # ignore index with other host name
         *.index.ext.!(*.*)) continue ;; # ignore index with other host name
-        *) printf >&2 '%s[%d] Ignoring index %s\n' "$LST" "$lno" "${ARGS[0]}"
+        *) printf >&2 '%s[%d] Ignoring index %s\n' "$CFG" "$lno" "${ARGS[0]}"
             continue
             ;;
     esac
@@ -344,8 +350,17 @@ while IFS= read -r line; do
 
     echo "Updating ${ARGS[0]}..."
     if ! build_index "${ARGS[@]}"; then
-        printf >&2 '%s[%d] ERROR: Building index failed.\n' "$LST" "$lno"
+        printf >&2 '%s[%d] ERROR: Building index failed.\n' "$CFG" "$lno"
     fi
-done < "$LST"
+done < "$CFG"
 IFS="$oifs"
+
+if [ $idxCount -gt 0 ]; then
+    exit 0
+else
+    echo >&2 "ERROR: No index defined in $CFG"
+    exit 1
+fi
+
+
 

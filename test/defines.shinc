@@ -125,9 +125,10 @@ if [ -n "${BUILD_TEST_DIRS:-}" ]; then
     mkdir -p testDirectory/A_B
     mkdir -p testDirectory/A.B
 
-    echo "test.index ${script_dir}/testDirectory -- '.*'" > "$QC_DIR/qc-index.list"
-    echo "hidden.index.ext -f '*testDirectory/.*' ${script_dir}/testDirectory" >> "$QC_DIR/qc-index.list"
+    echo "test.index ${script_dir}/testDirectory -- '.*'" > "$QC_DIR/qc-index.cfg"
+    echo "hidden.index.ext -f '*testDirectory/.*' ${script_dir}/testDirectory" >> "$QC_DIR/qc-index.cfg"
     cp ../qc-build-index.sh "$QC_DIR"
+    touch "$QC_DIR/test.index"
 fi
 
 # shellcheck source=./../quick_change_directory.shinc
