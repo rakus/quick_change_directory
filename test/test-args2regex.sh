@@ -16,9 +16,9 @@ tmp_arg2regex="${script_dir}/qc_args2regex.shinc"
 # shellcheck source=./defines.shinc
 . "${script_dir}/defines.shinc"
 
-sed -n '/^function args2regex/,/^}/p' ../qc-selector > "${tmp_arg2regex}"
+sed -n '/^function args2regex/,/^}/p' ../quick-change-directory > "${tmp_arg2regex}"
 if [ ! -s "${tmp_arg2regex}" ]; then
-    echo >&2 "ERROR: Function args2regex not found in ../qc-selector"
+    echo >&2 "ERROR: Function args2regex not found in ../quick-change-directory"
     exit 1
 fi
 

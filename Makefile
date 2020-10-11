@@ -13,7 +13,7 @@ test:   ## Run tests
 	test/run.sh
 
 check:  ## run shellcheck
-	shellcheck -fgcc qc-selector dstore  qc-build-index.sh
+	shellcheck -fgcc quick-change-directory dstore  qc-build-index.sh
 	shellcheck -fgcc -sbash quick_change_directory.shinc
 	shellcheck -fgcc -sksh quick_change_directory.shinc
 	shellcheck -fgcc -sbash qc_complete.bash

@@ -161,8 +161,8 @@ fi
 
 
 echo
-echo "Testing that command substitution in qc-index.list is ignores ..."
-echo "test-fail.index ${script_dir}/testDirectory -- '.*' \$(echo hallo)" >> "$QC_DIR/qc-index.list"
+echo "Testing that command substitution in qc-index.cfg is ignores ..."
+echo "test-fail.index ${script_dir}/testDirectory -- '.*' \$(echo hallo)" >> "$QC_DIR/qc-index.cfg"
 
 printf "Command substitution ignored"
 if qc -u 2>&1 | grep "Possible command substitution" >/dev/null; then

@@ -1,13 +1,11 @@
 #!/bin/bash
 #
-# FILE: qc-selector
+# FILE: quick-change-directory
 #
 # ABSTRACT: Selects a directory by pattern from the index
 #
 # AUTHOR: Ralf Schandl
 #
-
-script_name="$(basename "$0")"
 
 # Directory for qc index files
 [ -z "${QC_DIR:-}" ] && QC_DIR=$HOME/.qc
@@ -15,12 +13,6 @@ script_name="$(basename "$0")"
 # Manual index file storing directory names and bookmarked directories. This
 # file is managed using the command 'dstore'.
 QC_DSTORE_INDEX=$QC_DIR/index.dstore
-
-function do_exit
-{
-    rc=${1:-$?}
-    exit "$rc"
-}
 
 # Create regex from qc argument
 # Used from qc and completion
@@ -280,6 +272,8 @@ show_help()
     echo "      Print statistics of index."
     echo "  qc -"
     echo "      Act like 'cd -'."
+    echo "  qc"
+    echo "      Act like 'cd \$HOME'."
     echo ""
     echo "Note: qc automatically adds wildcards"
     echo "  'qc Documents/Adm' searches for '**/Documents/Adm*'"
@@ -287,19 +281,69 @@ show_help()
     echo ""
     echo "See also: dstore --help"
     echo ""
+    check_initialized
+}
+
+function check_initialized
+{
+    if [ ! -d "$QC_DIR" ] || ! ls -A "$QC_DIR"/*.index >/dev/null 2>&1; then
+        echo "==============================================================================="
+        echo
+        echo "Quick Change Directory not initialized."
+        echo
+        echo "Your home directory needs to be scanned to create a index. Depending on its"
+        echo "size this might take a few minutes."
+        echo
+        echo "Call 'qc -u' or 'qc -U' to create a index of your home directory."
+        echo
+        echo "See 'qc --help' for details."
+        echo
+        echo "==============================================================================="
+        return 1
+    else
+        return 0
+    fi
+}
+
+get_dirs()
+{
+    typeset grepOpt="$1"
+    shift
+    typeset searchExtIdx="$1"
+    shift
+
+    typeset IFS=$'\n'
+    typeset -a dl idxFiles
+    case $1 in
+        :*)
+            pattern=$1
+            [ $# -gt 1 ] && echo >&2 "WARNING: Extra arguments ignored"
+            if [ ! -e "$QC_DSTORE_INDEX" ]; then
+                return 1
+            fi
+            # grep: -h: Suppress the prefixing of file names on output.
+            grep -ahi -- "^${pattern}[^ ]* " "$QC_DSTORE_INDEX" | cut "-d " -f2- | sort | uniq
+            ;;
+        *)
+            mapfile -d$'\n' -t idxFiles < <( get_indexes "$searchExtIdx")
+            if [ ${#idxFiles[@]} = 0 ]; then
+                return 1
+            fi
+            pattern=$(args2regex "$@")
+            # shellcheck disable=SC2086  # grepOpt should split
+            grep --color=never -ah $grepOpt -- "/$pattern" "${idxFiles[@]}" |sed "s/^:[^ ]* //"|sort|uniq
+            ;;
+    esac
 }
 
 #---------[ MAIN ]-------------------------------------------------------------
-
-if [ -z "${qc_result_file:-}" ]; then
-    echo >&2 "$script_name: Only intended to be called by shell function 'qc'"
-    exit 1
-fi
 
 typeset grepOpt=""
 typeset searchExtIdx=""
 typeset OPTIND
 typeset o
+
+PATH="$PATH:$QC_DIR"
 
 while getopts ":ieuUSl" o "$@"; do
     case $o in
@@ -309,39 +353,38 @@ while getopts ":ieuUSl" o "$@"; do
             ;;
         u)
             shift $((OPTIND-1))
-            updateIndex -E "$@"
-            do_exit 0
+            updateIndex -E "$@" >&2
+            exit 0
             ;;
         U)
             shift $((OPTIND-1))
-            updateIndex "$@"
-            do_exit 0
+            updateIndex "$@" >&2
+            exit 0
             ;;
         S)
             typeset fn
             for fn in $(get_indexes "1"); do
-                echo "$fn"
-                echo "   Last Upd: $(stat -c "%y" "$fn")"
+                echo >&2 "$fn"
+                echo >&2 "   Last Upd: $(stat -c "%y" "$fn")"
                 # shellcheck disable=SC2183,SC2046  # wc produces two args
-                printf "   Entries:  %'d (%'d bytes)\n" $(wc -lc <"$fn")
+                printf >&2 "   Entries:  %'d (%'d bytes)\n" $(wc -lc <"$fn")
                 if [ "$fn" = "$QC_DSTORE_INDEX" ]; then
-                    echo "   Labeled entries:  $(grep -c "^:" "$fn")"
+                    echo >&2 "   Labeled entries:  $(grep -c "^:" "$fn")"
                 fi
             done
-            do_exit 0
+            exit 0
             ;;
         l)
-            grep --color=always '^:[^ ]* ' "$QC_DSTORE_INDEX"
-            do_exit 0
+            grep --color=always '^:[^ ]* ' "$QC_DSTORE_INDEX" >&2
+            exit 0
             ;;
         *)
-            rc=0
             if [[ "$*" != *--help* ]]; then
                 echo >&2 "Invalid option '$OPTARG'" && echo >&2 ""
                 show_help >&2
                 exit 1
             else
-                show_help
+                show_help >&2
                 exit 0
             fi
             ;;
@@ -350,16 +393,35 @@ done
 
 shift $((OPTIND-1))
 
-case $1 in
-    ?*)
-        typeset tgt=$(dir_select "$grepOpt" "$searchExtIdx" "$@")
-        if [ -n "${tgt:-}" ]; then
-            echo "$tgt" > "$qc_result_file"
-        else
-            do_exit 1
-        fi
-        ;;
-esac
+if ! check_initialized >&2; then
+    exit 1
+fi
+
+if [ -n "$__QC_COMPLETE" ]; then
+    if [ "$*" = "" ]; then
+        exit 0
+    fi
+
+    cleanPattern="$(args2regex "${@: -1}")"
+    #echo ">>$cleanPattern<<"
+    get_dirs "$grepOpt" "$searchExtIdx" "$@" | sed "s|^.*\($cleanPattern\)$|\1|;s|$|/|"
+    exit 0
+fi
+
+
+
+if [ "$*" = "" ]; then
+    echo "$HOME"
+elif [ "$*" = "-" ]; then
+    echo "-"
+else
+    typeset tgt=$(dir_select "$grepOpt" "$searchExtIdx" "$@")
+    if [ -n "${tgt:-}" ]; then
+        echo "$tgt"
+    else
+        exit 1
+    fi
+fi
 
 
 # vim: ft=sh
