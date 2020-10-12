@@ -2,7 +2,7 @@
 #
 # FILE: INSTALL
 #
-# ABSTRACT: Install QC files and update crontab & .bashrc
+# ABSTRACT: Install QC files from working copy and update crontab & .bashrc
 #
 # AUTHOR: Ralf Schandl
 #
@@ -115,16 +115,16 @@ add_to_init_file()
         return
     fi
 
-    if grep "\\.quick_change_dir" "$file" >/dev/null 2>&1; then
-        echo "SKIPPED: The file .quick_change_dir seems to be already sourced from $file:"
-        grep "\\.quick_change_dir" "$file" | sed "s/^/    /"
+    if grep "quick_change_directory.shinc" "$file" >/dev/null 2>&1; then
+        echo "SKIPPED: The file quick_change_directory.shinc seems to be already sourced from $file:"
+        grep "quick_change_directory.shinc" "$file" | sed "s/^/    /"
     else
-        echo "Adding .quick_change_dir to $file..."
+        echo "Adding quick_change_directory.shinc to $file..."
         # to complex for run_cmd (because of redir)
         if [ "$execute" = "true" ]; then
-            echo "[ -f \"\$HOME/.quick_change_dir\" ] && . \$HOME/.quick_change_dir" >> "$file"
+            echo "[ -f \"\$HOME/.qc/quick_change_directory.shinc\" ] && . \$HOME/.qc/quick_change_directory.shinc" >> "$file"
         else
-            echo "echo \"[ -f \"\$HOME/.quick_change_dir\" ] && . \$HOME/.quick_change_dir\" >> $file"
+            echo "echo \"[ -f \"\$HOME/.qc/quick_change_directory.shinc\" ] && . \$HOME/.qc/quick_change_directory.shinc\" >> $file"
         fi
     fi
 }
@@ -178,33 +178,20 @@ if [ ! -d "$bin_target_dir" ]; then
     execute mkdir -p "$bin_target_dir"
 fi
 
-for fn in _*[!~]; do
-    if [ -f "$fn" ]; then
-        install_rcfile "$fn" "$rc_target_dir"
+for fn in quick_change_directory.shinc quick-change-directory qc-build-index.sh dstore; do
+    if [ ! -f "$fn" ]; then
+        echo >&2 "ERROR: Missing file: $fn"
+        exit 1
     fi
+    install_file "$fn" "$bin_target_dir"
 done
 
-for fn in [!_]*[!~]; do
-    case "$fn" in
-        INSTALL*) : ;;
-        Makefile*) : ;;
-        README*) : ;;
-        LICENSE*) : ;;
-        qc-index.list) : ;;
-        *)
-            if [ ! -d "$fn" ]; then
-                install_file "$fn" "$bin_target_dir"
-            fi
-            ;;
-    esac
-done
-
-if [ -e "$bin_target_dir/qc-index.list" ]; then
-    echo "Copying qc-index.list -> $bin_target_dir/qc-index.list.new"
-    execute cp -f qc-index.list "$bin_target_dir/qc-index.list.new"
+if [ -e "$bin_target_dir/qc-index.cfg" ]; then
+    echo "Copying qc-index.cfg -> $bin_target_dir/qc-index.cfg.new"
+    execute cp -f qc-index.cfg "$bin_target_dir/qc-index.cfg.new"
 else
-    echo "Copying qc-index.list -> $bin_target_dir/qc-index.list"
-    execute cp qc-index.list "$bin_target_dir/qc-index.list"
+    echo "Copying qc-index.cfg -> $bin_target_dir/qc-index.cfg"
+    execute cp qc-index.cfg "$bin_target_dir/qc-index.cfg"
 fi
 
 add_to_crontab
