@@ -14,7 +14,6 @@ check:  ## run shellcheck
 	shellcheck -fgcc quick-change-directory dstore  qc-build-index.sh
 	shellcheck -fgcc -sbash quick_change_directory.shinc
 	shellcheck -fgcc -sksh quick_change_directory.shinc
-	shellcheck -fgcc -sbash qc_complete.bash
 	(cd test && shellcheck -sbash -fgcc *.sh *.shinc ../quick_change_directory.shinc)
 
 local-install-pkg: build/qc-local-install.sh  ## Build self-extractable script for local install
