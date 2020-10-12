@@ -19,7 +19,7 @@
 
 qc()
 {
-    local PATH="$PATH:$QC_DIR"
+    local PATH="$QC_DIR:$PATH"
     local __qc_target
     __qc_target="$(quick-change-directory "$@")"
     if [ -n "$__qc_target" ]; then
@@ -30,24 +30,31 @@ qc()
     return 0
 }
 
+if [ -e "$QC_DIR/dstore" ]; then
+    # shellcheck disable=SC2139 # yes, it should expand now
+    alias "dstore=$QC_DIR/dstore"
+fi
+
 if [ -n "$BASH" ]; then
 
     __qc_complete()
     {
-        local PATH="$PATH:$QC_DIR"
-        local words=( "${COMP_WORDS[@]:1}" )
-        if echo " ${words[*]}" | grep " -[^ ]*[Sl]" >/dev/null 2>&1 ; then
-            return 0
-        fi
-        if echo " ${words[*]}" | grep " -[^ ]*[uU]" >/dev/null 2>&1 ; then
-            mapfile -d$'\n' -t COMPREPLY < <(compgen -o dirnames -- "${words[-1]}")
-            return 0
-        fi
-        if [[ "${words[-1]}" = -* ]]; then
-            return 0
-        fi
+        local PATH="$QC_DIR:$PATH"
 
-        mapfile -d$'\n' -t COMPREPLY < <( __QC_COMPLETE="true" quick-change-directory "${words[@]}" )
+        # special handling for :*
+        _get_comp_words_by_ref -n : cur
+
+        local words=( "${COMP_WORDS[@]:1}" )
+
+        # shellcheck disable=SC2154 # '$cur' created by _get_comp_words_by_ref
+        case "$cur" in
+            ':'*)
+                mapfile -d$'\n' -t COMPREPLY < <( quick-change-directory --complete "$cur" )
+                ;;
+            *)
+                mapfile -d$'\n' -t COMPREPLY < <( quick-change-directory --complete "${words[@]}" )
+                ;;
+        esac
     }
 
     complete -o nospace -F __qc_complete qc

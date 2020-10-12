@@ -305,7 +305,7 @@ function check_initialized
     fi
 }
 
-get_dirs()
+complete_index_dir()
 {
     typeset grepOpt="$1"
     shift
@@ -317,12 +317,12 @@ get_dirs()
     case $1 in
         :*)
             pattern=$1
-            [ $# -gt 1 ] && echo >&2 "WARNING: Extra arguments ignored"
+            [ $# -gt 1 ] && exit 0
             if [ ! -e "$QC_DSTORE_INDEX" ]; then
                 return 1
             fi
             # grep: -h: Suppress the prefixing of file names on output.
-            grep -ahi -- "^${pattern}[^ ]* " "$QC_DSTORE_INDEX" | cut "-d " -f2- | sort | uniq
+            grep -ahi -- "^${pattern}[^ ]* " "$QC_DSTORE_INDEX" | cut "-d " -f1 | sort -u | cut -d: -f2
             ;;
         *)
             mapfile -d$'\n' -t idxFiles < <( get_indexes "$searchExtIdx")
@@ -330,11 +330,37 @@ get_dirs()
                 return 1
             fi
             pattern=$(args2regex "$@")
+            cleanPattern="$(args2regex "${@:$#}")"
+            #echo ">>$cleanPattern<<"
             # shellcheck disable=SC2086  # grepOpt should split
-            grep --color=never -ah $grepOpt -- "/$pattern" "${idxFiles[@]}" |sed "s/^:[^ ]* //"|sort|uniq
+            grep --color=never -ah $grepOpt -- "/$pattern" "${idxFiles[@]}" |sed "s/^:[^ ]* //"|sort -u| sed "s|^.*\($cleanPattern\)$|\1|;s|^[^:].*$|\0/|"
             ;;
     esac
 }
+
+complete_local_dir()
+{
+    compgen -o dirnames -- "${@:$#}"
+    exit 0
+}
+
+complete_option()
+{
+    # shellcheck disable=SC2124 # this creates a on-element-array
+    local cur="${@:$#}"
+    if [[ " $*" = *--help* ]]; then
+        exit 0
+    elif [[ "$cur" = --* ]]; then
+        echo "--help"
+    elif [[ "$cur" = -* ]]; then
+        printf "%s\n" i e u U S l
+        if [[ "$cur" != -?* ]]; then
+            echo "--help"
+        fi
+        exit 1
+    fi
+}
+
 
 #---------[ MAIN ]-------------------------------------------------------------
 
@@ -345,6 +371,12 @@ typeset o
 
 PATH="$PATH:$QC_DIR"
 
+if [ "$1" = "--complete" ]; then
+    shift
+    cl_completion=true
+    complete_option "$@"
+fi
+
 while getopts ":ieuUSl" o "$@"; do
     case $o in
         i) grepOpt="-i"
@@ -352,16 +384,19 @@ while getopts ":ieuUSl" o "$@"; do
         e) searchExtIdx="true"
             ;;
         u)
+            [ -n "$cl_completion" ] && complete_local_dir "$@"
             shift $((OPTIND-1))
             updateIndex -E "$@" >&2
             exit 0
             ;;
         U)
+            [ -n "$cl_completion" ] && complete_local_dir "$@"
             shift $((OPTIND-1))
             updateIndex "$@" >&2
             exit 0
             ;;
         S)
+            [ -n "$cl_completion" ] && exit 1
             typeset fn
             for fn in $(get_indexes "1"); do
                 echo >&2 "$fn"
@@ -375,6 +410,7 @@ while getopts ":ieuUSl" o "$@"; do
             exit 0
             ;;
         l)
+            [ -n "$cl_completion" ] && exit 1
             grep --color=always '^:[^ ]* ' "$QC_DSTORE_INDEX" >&2
             exit 0
             ;;
@@ -397,14 +433,12 @@ if ! check_initialized >&2; then
     exit 1
 fi
 
-if [ -n "$__QC_COMPLETE" ]; then
+if [ -n "$cl_completion" ]; then
     if [ "$*" = "" ]; then
         exit 0
     fi
 
-    cleanPattern="$(args2regex "${@: -1}")"
-    #echo ">>$cleanPattern<<"
-    get_dirs "$grepOpt" "$searchExtIdx" "$@" | sed "s|^.*\($cleanPattern\)$|\1|;s|$|/|"
+    complete_index_dir "$grepOpt" "$searchExtIdx" "$@"
     exit 0
 fi
 
@@ -422,6 +456,5 @@ else
         exit 1
     fi
 fi
-
 
 # vim: ft=sh
