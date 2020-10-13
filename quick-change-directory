@@ -329,11 +329,19 @@ complete_index_dir()
             if [ ${#idxFiles[@]} = 0 ]; then
                 return 1
             fi
+            # shellcheck disable=SC2124 # this creates a on-element-array
+            last_part="${@:$#}"
             pattern=$(args2regex "$@")
-            cleanPattern="$(args2regex "${@:$#}")"
-            #echo ">>$cleanPattern<<"
+            if [[ ! "$pattern" =~ .*\*\$$ ]]; then
+                clean_pattern="${pattern/%\$/}"
+                pattern="${pattern/%\$/\/[^/]*$}"
+            else
+                clean_pattern="${pattern/%\[^\/\]\*\$/}"
+            fi
+            #echo ">>$pattern<<"
+            #echo ">>$clean_pattern<<"
             # shellcheck disable=SC2086  # grepOpt should split
-            grep --color=never -ah $grepOpt -- "/$pattern" "${idxFiles[@]}" |sed "s/^:[^ ]* //"|sort -u| sed "s|^.*\($cleanPattern\)$|\1|;s|^[^:].*$|\0/|"
+            grep --color=never -ah $grepOpt -- "/$pattern" "${idxFiles[@]}" | sed "s|^.*\($clean_pattern\)|$last_part|;s|$|/|"
             ;;
     esac
 }
