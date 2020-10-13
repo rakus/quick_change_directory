@@ -10,11 +10,13 @@ help:
 test:   ## Run tests
 	test/run.sh
 
-check:  ## run shellcheck
+shellcheck:  ## run shellcheck
 	shellcheck -fgcc quick-change-directory dstore  qc-build-index.sh qc-local-install.sh.template
 	shellcheck -fgcc -sbash quick_change_directory.shinc
 	shellcheck -fgcc -sksh quick_change_directory.shinc
 	(cd test && shellcheck -sbash -fgcc *.sh *.shinc ../quick_change_directory.shinc)
+
+check: test shellcheck ## run test & shellcheck
 
 local-install-pkg: build/qc-local-install.sh  ## Build self-extractable script for local install
 
