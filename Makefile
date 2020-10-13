@@ -11,7 +11,7 @@ test:   ## Run tests
 	test/run.sh
 
 check:  ## run shellcheck
-	shellcheck -fgcc quick-change-directory dstore  qc-build-index.sh
+	shellcheck -fgcc quick-change-directory dstore  qc-build-index.sh qc-local-install.sh.template
 	shellcheck -fgcc -sbash quick_change_directory.shinc
 	shellcheck -fgcc -sksh quick_change_directory.shinc
 	(cd test && shellcheck -sbash -fgcc *.sh *.shinc ../quick_change_directory.shinc)

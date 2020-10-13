@@ -20,7 +20,7 @@ execute()
     if [ "$execute" == "true" ]; then
         "$@"
     else
-        echo " # $@"
+        echo " # $*"
     fi
 }
 
@@ -44,6 +44,7 @@ add_to_init_file()
         if [ "$execute" = "true" ]; then
             echo "[ -f \"\$HOME/.qc/$rc_file\" ] && . \$HOME/.qc/$rc_file" >> "$file"
         else
+            # shellcheck disable=SC2016  # this is log output
             echo ' # echo "[ -f \"\$HOME/.qc/$rc_file\" ] && . \$HOME/.qc/$rc_file" >> "$file"'
         fi
     fi
@@ -52,7 +53,9 @@ add_to_init_file()
 # Add qc-build-index.sh to crontab
 add_to_crontab()
 {
-    if crontab -l | grep "qc-build-index.sh" >/dev/null 2>&1; then
+    if ! command -v crontab; then
+        echo "  SKIPPED: Crontab command not available"
+    elif crontab -l | grep "qc-build-index.sh" >/dev/null 2>&1; then
         echo "  SKIPPED: Crontab entry seems to exist:"
         crontab -l | grep "qc-build-index.sh" | sed "s/^/  > /"
     else
@@ -116,11 +119,12 @@ if [ -e "$HOME/.qc/qc-index.cfg" ]; then
     echo
 fi
 
+typeset -i ARCHIVE_OFFSET
 ARCHIVE_OFFSET=$(awk '/^__ARCHIVE_BELOW__/ {print NR + 1; exit 0; }' "$script_file")
 
 would_overwrite=""
 if [ "$force" != "true" ]; then
-    for fn in $(tail -n+$ARCHIVE_OFFSET "$script_file" | tar -tf -| grep -v '/$'); do
+    for fn in $(tail "-n+$ARCHIVE_OFFSET" "$script_file" | tar -tf -| grep -v '/$'); do
         if [ -e "$HOME/$fn" ]; then
             would_overwrite="true"
             echo "File exists: $fn"
@@ -144,11 +148,11 @@ fi
 echo
 echo "Extracting files ..."
 if [ "$execute" = "true" ]; then
-    tail -n+$ARCHIVE_OFFSET $0 | tar -xvf -
+    tail "-n+$ARCHIVE_OFFSET" "$script_file" | tar -xvf -
 else
-    echo " # tail -n+$ARCHIVE_OFFSET $0 | tar -xvf -"
+    echo " # tail -n+$ARCHIVE_OFFSET $script_file | tar -xvf -"
     echo " # Would extract:"
-    tail -n+$ARCHIVE_OFFSET $0 | tar -tf - | sed "s/^/ # /"
+    tail "-n+$ARCHIVE_OFFSET" "$script_file" | tar -tf - | sed "s/^/ # /"
 fi
 
 if [ -n "$idx_cfg_backup" ]; then
