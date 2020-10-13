@@ -17,6 +17,35 @@
 QC_DSTORE_INDEX=$QC_DIR/index.dstore
 
 
+
+show_help()
+{
+    echo "Manually manage content of $QC_DSTORE_INDEX for usage with 'qc'."
+    echo ""
+    echo "Usage:"
+    echo "  dstore"
+    echo "      store current directory"
+    echo "  dstore dirname"
+    echo "      store given directory"
+    echo "  dstore -d"
+    echo "      remove current directory from index"
+    echo "  dstore -d dirname"
+    echo "      remove given directory from index"
+    echo "  dstore :lbl"
+    echo "      store current directory with label ':lbl'"
+    echo "  dstore :lbl dirname"
+    echo "      store given directory with label ':lbl'"
+    echo "  dstore -d :lbl"
+    echo "      remove directory labeled with ':lbl' from index"
+    echo "  dstore [-e | -l | -c]"
+    echo "      '-e'  edit directory index (using ${VISUAL:-${EDITOR:-vi}})"
+    echo "      '-l'  list directory index"
+    echo "      '-c'  clean up duplicate/none-existing entries"
+    echo ""
+    echo "See also: qc --help"
+    echo ""
+}
+
 # cleanup ~/.qc/index.dstore
 function __dstore_clean
 {
@@ -95,6 +124,7 @@ function __qc_fqname
     fi
 }
 
+
 #---------[ MAIN ]-------------------------------------------------------------
 # create ~/.qc/index.dstore if it does not exist.
 [ ! -d "$QC_DIR" ] && mkdir "$QC_DIR"
@@ -120,33 +150,14 @@ while getopts ":elcd" o "$@"; do
         d) delete=true
             ;;
         *)
-            if [[ "$*" != *--help* ]]; then
-                echo >&2 "Invalid option '$OPTARG'" && echo >&2 ""
+            if [ "${!OPTIND}" = "--help" ]; then
+                show_help
+                exit 0
+            else
+                echo >&2 "Invalid option '$OPTARG' in '${!OPTIND}'" && echo >&2 ""
+                show_help
+                exit 1
             fi
-            echo >&2 "Manually manage content of $QC_DSTORE_INDEX for usage with 'qc'."
-            echo >&2 ""
-            echo >&2 "Usage:"
-            echo >&2 "  dstore"
-            echo >&2 "      store current directory"
-            echo >&2 "  dstore dirname"
-            echo >&2 "      store given directory"
-            echo >&2 "  dstore -d"
-            echo >&2 "      remove current directory from index"
-            echo >&2 "  dstore -d dirname"
-            echo >&2 "      remove given directory from index"
-            echo >&2 "  dstore :lbl"
-            echo >&2 "      store current directory with label ':lbl'"
-            echo >&2 "  dstore :lbl dirname"
-            echo >&2 "      store given directory with label ':lbl'"
-            echo >&2 "  dstore -d :lbl"
-            echo >&2 "      remove directory labeled with ':lbl' from index"
-            echo >&2 "  dstore [-e | -l | -c]"
-            echo >&2 "      '-e'  edit directory index (using ${VISUAL:-${EDITOR:-vi}})"
-            echo >&2 "      '-l'  list directory index"
-            echo >&2 "      '-c'  clean up duplicate/none-existing entries"
-            echo >&2 ""
-            echo >&2 "See also: qc --help"
-            echo >&2 ""
             exit
             ;;
     esac

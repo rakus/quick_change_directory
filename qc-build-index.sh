@@ -28,7 +28,7 @@ QC_DSTORE_INDEX=$QC_DIR/index.dstore
 
 CFG="$QC_DIR/qc-index.cfg"
 
-usage()
+show_help()
 {
     echo >&2 "USAGE: $script_name [-E] [-i dir] [index...]"
     echo >&2 ""
@@ -281,8 +281,14 @@ while getopts ":Ei:" o "$@"; do
             ignExt=true
             ;;
         *)
-            [ "${!OPTIND}" != "--help" ] && echo >&2 "can't parse: ${!OPTIND}" && echo >&2 ""
-            usage
+            if [ "${!OPTIND}" = "--help" ]; then
+                show_help
+                exit 0
+            else
+                echo >&2 "Invalid option '$OPTARG' in '${!OPTIND}'" && echo >&2 ""
+                show_help
+                exit 1
+            fi
             ;;
     esac
 done
