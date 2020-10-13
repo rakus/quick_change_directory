@@ -18,13 +18,14 @@ shellcheck:  ## run shellcheck
 
 check: test shellcheck ## run test & shellcheck
 
-local-install-pkg: build/qc-local-install.sh  ## Build self-extractable script for local install
+local-install-pkg: build/qc-local-install.sh.gz  ## Build self-extractable script for local install
 
-build/qc-local-install.sh: qc-local-install.sh.template quick_change_directory.shinc quick-change-directory qc-build-index.sh qc-index.cfg dstore
+build/qc-local-install.sh.gz: qc-local-install.sh.template quick_change_directory.shinc quick-change-directory qc-build-index.sh qc-index.cfg dstore
 	mkdir -p build/home/.qc
 	cp quick_change_directory.shinc quick-change-directory qc-build-index.sh qc-index.cfg dstore build/home/.qc
 	cp qc-local-install.sh.template build/qc-local-install.sh
 	(cd build/home && tar -cvf - .qc ) >> build/qc-local-install.sh
+	gzip -fk9 build/qc-local-install.sh
 
 
 
