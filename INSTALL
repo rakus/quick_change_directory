@@ -90,7 +90,9 @@ install_file()
 
 add_to_crontab()
 {
-    if crontab -l | grep "qc-build-index.sh" >/dev/null 2>&1; then
+    if ! command -v crontab; then
+        echo "  SKIPPED: Crontab command not available"
+    elif crontab -l | grep "qc-build-index.sh" >/dev/null 2>&1; then
         echo "SKIPPED: Crontab entry seems to exist:"
         crontab -l | grep "qc-build-index.sh" | sed "s/^/    /"
     else
