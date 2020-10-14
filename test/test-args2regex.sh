@@ -11,6 +11,8 @@
 
 script_dir="$(cd "$(dirname "$0")" && pwd)" || exit 1
 
+set -u
+
 tmp_arg2regex="${script_dir}/qc_args2regex.shinc"
 
 # shellcheck source=./defines.shinc

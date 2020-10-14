@@ -11,7 +11,7 @@
 
 script_dir="$(cd "$(dirname "$0")" && pwd)" || exit 1
 
-script_dir="$(cd "$(dirname "$0")" && pwd)" || exit 1
+set -u
 
 export BUILD_TEST_DIRS=true
 # shellcheck source=./defines.shinc
