@@ -39,14 +39,15 @@ if [ -n "$BASH" ]; then
 
     __qc_complete()
     {
-        local PATH="$QC_DIR:$PATH"
+        local PATH cur words
+
+        PATH="$QC_DIR:$PATH"
 
         # special handling for :*
         _get_comp_words_by_ref -n : cur
 
-        local words=( "${COMP_WORDS[@]:1}" )
+        words=( "${COMP_WORDS[@]:1}" )
 
-        # shellcheck disable=SC2154 # '$cur' created by _get_comp_words_by_ref
         case "$cur" in
             ':'*)
                 mapfile -d$'\n' -t COMPREPLY < <( quick-change-directory --complete "$cur" )
