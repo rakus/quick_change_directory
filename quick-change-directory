@@ -330,8 +330,9 @@ complete_index_dir()
             if [ ${#idxFiles[@]} = 0 ]; then
                 return 1
             fi
-            # shellcheck disable=SC2124 # this creates a on-element-array
+            # shellcheck disable=SC2124 # this expands to one element
             last_part="${@:$#}"
+            last_part="${last_part%[*/]}"
             pattern=$(args2regex "$@")
             if [[ ! "$pattern" =~ .*\*\$$ ]]; then
                 clean_pattern="${pattern/%\$/}"
@@ -342,7 +343,7 @@ complete_index_dir()
             #echo ">>$pattern<<"
             #echo ">>$clean_pattern<<"
             # shellcheck disable=SC2086  # grepOpt should split
-            grep --color=never -ah $grepOpt -- "/$pattern" "${idxFiles[@]}" | sed "s|^.*\($clean_pattern\)|$last_part|;s|$|/|"
+            grep --color=never -ah $grepOpt -- "/$pattern" "${idxFiles[@]}" | sed "s|^.*\($clean_pattern\)|$last_part|;s|$|/|" | sort -u
             ;;
     esac
 }
@@ -355,7 +356,7 @@ complete_local_dir()
 
 complete_option()
 {
-    # shellcheck disable=SC2124 # this creates a on-element-array
+    # shellcheck disable=SC2124 # this expands to one element
     local cur="${@:$#}"
     if [[ " $*" = *--help* ]]; then
         exit 0
