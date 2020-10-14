@@ -14,6 +14,12 @@
 # file is managed using the command 'dstore'.
 QC_DSTORE_INDEX=$QC_DIR/index.dstore
 
+# error on unset variable
+set -u
+
+# enable extended globbing
+shopt -s extglob
+
 show_help()
 {
     echo "Quick Change -- index based directory changer"
@@ -90,6 +96,12 @@ function args2regex
         esac
         glob="$glob/$w"
     done
+    if [ -n "${cl_completion:-}" ]; then
+        # fix multiple trailing '*'
+        if [[ "$glob" = *\*\* ]]; then
+            glob="${glob%%*(\*)}*"
+        fi
+    fi
 
     # Remove
     # - leading slashes
@@ -332,11 +344,11 @@ complete_index_dir()
             fi
             # shellcheck disable=SC2124 # this expands to one element
             last_part="${@:$#}"
-            last_part="${last_part%[*/]}"
+            last_part="${last_part%%*(\*)}"
             pattern=$(args2regex "$@")
             if [[ ! "$pattern" =~ .*\*\$$ ]]; then
-                clean_pattern="${pattern/%\$/}"
-                pattern="${pattern/%\$/\/[^/]*$}"
+                clean_pattern="${pattern/%\$//}"
+                pattern="${pattern/%\$/\/[^/]*\$}"
             else
                 clean_pattern="${pattern/%\[^\/\]\*\$/}"
             fi
@@ -381,6 +393,7 @@ typeset o
 
 PATH="$PATH:$QC_DIR"
 
+cl_completion=""
 if [ "$1" = "--complete" ]; then
     shift
     cl_completion=true
@@ -443,7 +456,7 @@ if ! check_initialized >&2; then
     exit 1
 fi
 
-if [ -n "$cl_completion" ]; then
+if [ -n "${cl_completion:-}" ]; then
     if [ "$*" = "" ]; then
         exit 0
     fi
