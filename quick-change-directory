@@ -217,8 +217,7 @@ function dir_select
     else
         # If selection list needs more than terminal hight lines
         # ask user, if he/she really want's to see it.
-        typeset limit=$((LINES -1))
-        if [ -n "${LINES:-}" ] && [ "$cnt" -gt $limit ]; then
+        if [ -n "${LINES:-}" ] && [ "$cnt" -gt $((LINES -1)) ]; then
 
             echo >&2 -n "Display all $cnt directories? (y or n) "
             read -rN1 yn
@@ -394,7 +393,7 @@ typeset o
 PATH="$PATH:$QC_DIR"
 
 cl_completion=""
-if [ "$1" = "--complete" ]; then
+if [ "${1:-}" = "--complete" ]; then
     shift
     cl_completion=true
     complete_option "$@"

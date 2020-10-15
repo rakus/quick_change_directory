@@ -105,6 +105,7 @@ fi
 echo ""
 
 
+doQC "$HOME"
 doQC "${script_dir}"/testDirectory/Customer/YoYoDyne/Admin Yo Adm
 doQC "${script_dir}"/testDirectory/Customer/YoYoDyne/Admin Y A
 doQC "${script_dir}"/testDirectory/Customer/YoYoDyne/Admin testDirectory//Y A
