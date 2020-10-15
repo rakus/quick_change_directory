@@ -115,6 +115,7 @@ if [ -n "${BUILD_TEST_DIRS:-}" ]; then
 
     mkdir -p testDirectory/.qc
     export QC_DIR=${script_dir}/testDirectory/.qc
+    export QC_TEST_DIR=${script_dir}/testDirectory
 
     mkdir -p testDirectory/.config/localhost
     mkdir -p testDirectory/Customer/YoYoDyne/Admin

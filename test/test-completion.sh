@@ -11,13 +11,54 @@
 
 script_dir="$(cd "$(dirname "$0")" && pwd)" || exit 1
 
-set -u
-
 export BUILD_TEST_DIRS=true
 # shellcheck source=./defines.shinc
 . "${script_dir}/defines.shinc"
 
+# disable -u because of bash completion functions
+set +u
+
+# load bash-completion if necessary
+declare -F _completion_loader &>/dev/null || {
+    # shellcheck disable=SC1091
+    [ -e /usr/share/bash-completion/bash_completion ] && source /usr/share/bash-completion/bash_completion
+}
+
+
+. ../quick_change_directory.shinc
+
 TEST_STATUS=0
+
+# Prints maven completions, pipe separated
+# $*: mvn command line
+get_completions(){
+    local COMP_CWORD COMP_LINE COMP_POINT COMP_WORDS COMPREPLY=()
+
+    COMP_LINE=$*
+    COMP_POINT=${#COMP_LINE}
+
+    #eval set -- "$@"
+
+    COMP_WORDS=("$@")
+
+    # add '' to COMP_WORDS if the last character of the command line is a space
+    [[ "$COMP_LINE" = *' ' ]] && COMP_WORDS+=('')
+
+    # index of the last word
+    COMP_CWORD=$(( ${#COMP_WORDS[@]} - 1 ))
+
+    # execute completion function
+    __qc_complete > "$COMP_LOG_FILE" 2>&1
+
+
+
+    # print completions to stdout
+    printf '%s\n' "${COMPREPLY[@]}" | LC_ALL=C sort # | paste -sd ','
+}
+
+#export -f get_completions __qc_complete
+
+COMP_LOG_FILE="$QC_TEST_DIR/_comp.log"
 
 test_completion()
 {
@@ -36,8 +77,16 @@ test_completion()
 
     readarray -t expected < <(printf '%s\n' "${expected[@]}" | sort )
 
+    cat /dev/null > "$COMP_LOG_FILE"
     printf "qc %s -> %s " "${args[*]}" "${expected[*]}"
-    mapfile -d$'\n' -t result < <(quick-change-directory --complete "${args[@]}")
+    mapfile -d$'\n' -t result < <(get_completions qc "${args[@]}")
+    if [ -s "$COMP_LOG_FILE" ]; then
+        ERROR
+        echo >&2 "   Completion produced output:"
+        sed 's/^/   /' "$COMP_LOG_FILE"
+        echo >&2
+        return
+    fi
 
     if [ "${expected[*]}" = "${result[*]}" ]; then
         OK

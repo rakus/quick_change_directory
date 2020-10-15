@@ -39,9 +39,8 @@ if [ -n "$BASH" ]; then
 
     __qc_complete()
     {
-        local PATH cur words
-
-        PATH="$QC_DIR:$PATH"
+        local PATH="$QC_DIR:$PATH"
+        local cur words
 
         # special handling for :*
         _get_comp_words_by_ref -n : cur
