@@ -162,6 +162,20 @@ Note:
 * calling `qc` without parameter acts like calling `cd` without parameter
 * calling `qc -` acts like calling `cd -`
 
+## Configuration
+
+Qc can be configured with the following environment variables:
+
+* `QC_DIR` - Default is `$HOME/.qc`. The directory with the index configuration
+  file (`qc-index.cfg`) and the created indexes. For local installation this
+  directory also contains all scripts. Important: If `qc-build-index.sh` is run
+  via crontab, make sure the correct variable is set in that context too.
+
+* `QC_SKIP_FILTER_EXISTING` - By default qc filters out all not existing
+  directories. By setting this variable this can be skipped.
+
+* `QC_SORT_LENGTH` - Qc sorts the results alphabetically. When this variable is
+  set, the result is sorted by length (shortest first). Requires Perl.
 
 ## Indexes
 

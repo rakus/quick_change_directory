@@ -261,6 +261,10 @@ function dir_select
             return
         fi
 
+        if [ -n "${QC_SORT_LENGTH:-}" ]; then
+            mapfile -d$'\n' -t dl < <(IFS=$'\n';perl -e 'print sort { length($a) <=> length($b) } <>' <<<"${dl[*]}" )
+        fi
+
         typeset COLUMNS=0
         # replace home directory with '~' for display and later re-add it on
         # choosen dir.
