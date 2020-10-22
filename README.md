@@ -10,8 +10,6 @@ It creates a index file with all directories from a directory tree and
 then searches this index to find the directory to change to. The creation of the
 index is configurable and multiple indexes can be created.
 
-Quick Change Directory requires BASH.
-
 ## Searching and changing directories
 
 ### Search by (part of the) directory name
@@ -133,10 +131,12 @@ Examples to change to that directory:
     qc MyPr Adm
     qc MyProject/Ad
     qc Customer//Admin      # "Admin" somewhere below "Customer"
-    qc 'YoYo/*/Admin'       # '*' matches on subdirs
-    qc 'Customer/**/Admin'  # '**' matches multiple subdirs
-    qc YoYo '*' Admin
-    qc Cust '**' Admin
+    qc YoYo/*/Admin         # '*' matches on subdirs
+    qc Customer/**/Admin    # '**' matches multiple subdirs
+    qc YoYo * Admin
+    qc Cust ** Admin
+
+Note that wildcard expansion is disabled for `qc`. No need to escape `*` etc.
 
 ### Command line completion
 
@@ -172,7 +172,8 @@ Qc can be configured with the following environment variables:
   via crontab, make sure the correct variable is set in that context too.
 
 * `QC_SKIP_FILTER_EXISTING` - By default qc filters out all not existing
-  directories. By setting this variable this can be skipped.
+  directories. By setting this variable this can be skipped. Useful when
+  file system access is slow.
 
 * `QC_SORT_LENGTH` - Qc sorts the results alphabetically. When this variable is
   set, the result is sorted by length (shortest first). Requires Perl.
@@ -182,7 +183,8 @@ Qc can be configured with the following environment variables:
 The qc universe knows three type of indexes. Two of those types can be created
 automatically (via script), the third one is for manual management.
 
-All index files are held in the directory `~/.qc`.
+All index files are held in the directory `~/.qc` (or whatever `QC_DIR` is set
+to).
 
 ### Normal and Extended Indexes
 
@@ -193,7 +195,7 @@ Normal indexes have the file extension `.index` and are always searched by qc.
 Extended indexes have the file extension `.index.ext` and are only searched when
 qc is called with the option `-e`.
 
-The indexes are defined in the file `~/.qc/qc-index.list`.
+The indexes are defined in the file `~/.qc/qc-index.cfg`.
 
 Example:
 
@@ -203,9 +205,9 @@ This defines the index "home.index" (file: `~/.qc/home.index`), that contains
 all directories below `$HOME`, but excludes `.*` (= hidden dirs) and directories
 named `CVS`.
 
-The comments in the file `qc-index.list` contains more details and examples.
+The comments in the file `qc-index.cfg` contains more details and examples.
 
-The file `qc-index.list` is processed using the script `qc-build-index.sh`.
+The file `qc-index.cfg` is processed using the script `qc-build-index.sh`.
 
 __Host-Local Indexes__
 
@@ -224,10 +226,12 @@ Examples (assuming hosts "pluto" and "mars"):
 __Update Performance__
 
 My home directory contains ~140000 directories and my HD is a SSD.
-I have two indexes defined (see file qc-index.list).
+I have two indexes defined (see file qc-index.cfg).
 
 After dropping the file caches the first update takes about 30-40 seconds.
 Subsequent updates are much faster, they take about 5 seconds.
+
+Update performance depends on the number of indexes and their definition.
 
 BTW: Due to ignored dirs (like .git, .metadata, ...) only half of the existing
 directories are stored in the indexes.
@@ -293,40 +297,44 @@ Just call `qc` with the option `-S`.
 
 The following files are distributed:
 
-| File                | Description                                      | Install Location          |
-| ------------------- | ------------------------------------------------ | ------------------------- |
-| `README.md`         | The file you are just reading.                   | Not installed             |
-| `INSTALL`           | The installation script.                         | Not installed             |
-| `_quick_change_dir` | The script to be sourced by .bashrc.             | `~/.quick_change_dir`     |
-| `qc-build-index.sh` | Processes `qc-index.list` to create index files. | `~/.qc/qc-build-index.sh` |
-| `qc-index.list`     | Defines indexes to create.                       | `~/.qc/qc-index.list`     |
+| File                           | Description                                      | Install Location          |
+| ------------------------------ | ------------------------------------------------ | ------------------------- |
+| `README.md`                    | The file you are just reading.                   | Not installed             |
+| `INSTALL`                      | The installation script.                         | Not installed             |
+| `LICENSE`                      | The MIT license.                                 | Not installed             |
+| `quick_change_directory.shinc` | To be sourced by the shell.                      | `~/.qc/quick_change_directory.shinc` |
+| `quick-change_directory`       | Script implementing qc functionality.            | `~/.qc/quick-change-directory`       |
+| `dstore`                       | Script to manage the manual index.               | `~/.qc/dstore`            |
+| `qc-build-index.sh`            | Processes `qc-index.cfg` to create index files.  | `~/.qc/qc-build-index.sh` |
+| `qc-index.cfg`                 | Defines indexes to create.                       | `~/.qc/qc-index.cfg`      |
 
 
 ### I don't want to install -- just test it
 
 This is easy. Just do:
 
-    . ./_quick_change_dir
+    export PATH="$PATH:$PWD"
+    . ./quick_change_directory.shinc
 
-As no index exist, this will create the directory `~/.qc` and create a default
-index of all directories in your home directory (excluding hidden dirs).
+As no index exist, `qc` will complain on first usage. Run `qc -u` to create a
+default index of all directories in your home directory (excluding hidden dirs).
 
 ### Manual Installation
 
 1. Create the directory `$HOME/.qc`.
 
 2. Copy the following files to `$HOME/.qc`:
+  * `quick_change_directory.shinc`
+  * `quick-change_directory`
   * `qc-build-index.sh`
-  * `qc-index.list`
+  * `qc-index.cfg`
 
-3. Copy `_quick_change_dir` to `$HOME/.quick_change_dir`. Note the leading dot!
+3. Add the following line to your `.bashrc`:
 
-4. Add the following line to your `.bashrc`:
+   `[ -f "$HOME/.qc/quick_change_directory.shinc" ] && . "$HOME/.qc/quick_change_directory.shinc"`
 
-   `[ -f "$HOME/.quick_change_dir" ] && . $HOME/.quick_change_dir`
-
-5. Optional: Extend your local crontab, so the directory index is updated every 10 minutes.
-   The update will typically just take a few seconds (on my machine with SSD).
+4. Optional: Extend your local crontab, so the directory index is updated every 10 minutes.
+   The update will typically just take a few seconds.
 
    Run `crontab -e` and add the following line at the end of the file:
 
@@ -335,8 +343,10 @@ index of all directories in your home directory (excluding hidden dirs).
    Every execution will write its output to `~/.qc/qc-build-index.log`. This log file
    is always overwritten, so it only contains the log of the last execution.
 
-6. Now source `.quick_change_dir` by executing `. $HOME/.quick_change_dir` or just start a new shell.
-   During the first sourcing of the script, the indexes are created.
+5. Now source `quick_change_directory.shinc` by executing `.
+   $HOME/.qc/quick_change_directory.shinc` or just start a new shell.
+
+6. Run `qc -U` to create the index files.
 
 ### Installation Script
 
@@ -360,13 +370,17 @@ done.
 If you installed it before, you will need either '-f' (to overwrite) or '-b' (to
 create backup files using the current time stamp).
 
-The file `qc-index.list` will always be copied. Even if `symlink` is used for
+The file `qc-index.cfg` will always be copied. Even if `symlink` is used for
 install. The file is typically changed by the user. If the file is already
-installed, the new version is copied to `~/.qc/qc-index.list.new`.
+installed, the new version is copied to `~/.qc/qc-index.cfg.new`.
 
-Then source `.quick_change_dir` by executing `. $HOME/.quick_change_dir` or
-just start a new shell.
-During the first sourcing of the script, the indexes are created.
+The source `quick_change_directory.shinc` by executing
+
+    .  $HOME/.qc/quick_change_directory.shinc
+
+or just start a new shell.
+
+Finally run `qc -U` to create the index files.
 
 
 [//]:  vim:ft=markdown:et:ts=4:spelllang=en_us:spell:tw=80
