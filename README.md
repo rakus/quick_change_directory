@@ -168,7 +168,7 @@ Qc can be configured with the following environment variables:
 
 * `QC_DIR` - Default is `$HOME/.qc`. The directory with the index configuration
   file (`qc-index.cfg`) and the created indexes. For local installation this
-  directory also contains all scripts. Important: If `qc-build-index.sh` is run
+  directory also contains all scripts. Important: If `qc-build-index` is run
   via crontab, make sure the correct variable is set in that context too.
 
 * `QC_SKIP_FILTER_EXISTING` - By default qc filters out all not existing
@@ -207,7 +207,7 @@ named `CVS`.
 
 The comments in the file `qc-index.cfg` contains more details and examples.
 
-The file `qc-index.cfg` is processed using the script `qc-build-index.sh`.
+The file `qc-index.cfg` is processed using the script `qc-build-index`.
 
 __Host-Local Indexes__
 
@@ -297,16 +297,16 @@ Just call `qc` with the option `-S`.
 
 The following files are distributed:
 
-| File                           | Description                                      | Install Location          |
-| ------------------------------ | ------------------------------------------------ | ------------------------- |
-| `README.md`                    | The file you are just reading.                   | Not installed             |
-| `INSTALL`                      | The installation script.                         | Not installed             |
-| `LICENSE`                      | The MIT license.                                 | Not installed             |
+| File                           | Description                                      | Install Location       |
+| ------------------------------ | ------------------------------------------------ | ---------------------- |
+| `README.md`                    | The file you are just reading.                   | Not installed          |
+| `INSTALL`                      | The installation script.                         | Not installed          |
+| `LICENSE`                      | The MIT license.                                 | Not installed          |
 | `quick_change_directory.shinc` | To be sourced by the shell.                      | `~/.qc/quick_change_directory.shinc` |
 | `quick-change_directory`       | Script implementing qc functionality.            | `~/.qc/quick-change-directory`       |
-| `dstore`                       | Script to manage the manual index.               | `~/.qc/dstore`            |
-| `qc-build-index.sh`            | Processes `qc-index.cfg` to create index files.  | `~/.qc/qc-build-index.sh` |
-| `qc-index.cfg`                 | Defines indexes to create.                       | `~/.qc/qc-index.cfg`      |
+| `dstore`                       | Script to manage the manual index.               | `~/.qc/dstore`         |
+| `qc-build-index`               | Processes `qc-index.cfg` to create index files.  | `~/.qc/qc-build-index` |
+| `qc-index.cfg`                 | Defines indexes to create.                       | `~/.qc/qc-index.cfg`   |
 
 
 ### I don't want to install -- just test it
@@ -326,7 +326,7 @@ default index of all directories in your home directory (excluding hidden dirs).
 2. Copy the following files to `$HOME/.qc`:
   * `quick_change_directory.shinc`
   * `quick-change_directory`
-  * `qc-build-index.sh`
+  * `qc-build-index`
   * `qc-index.cfg`
 
 3. Add the following line to your `.bashrc`:
@@ -338,7 +338,7 @@ default index of all directories in your home directory (excluding hidden dirs).
 
    Run `crontab -e` and add the following line at the end of the file:
 
-   `*/10 * * * * ${HOME}/.qc/qc-build-index.sh >${HOME}/.qc/qc-build-index.log 2>&1`
+   `*/10 * * * * ${HOME}/.qc/qc-build-index >${HOME}/.qc/qc-build-index.log 2>&1`
 
    Every execution will write its output to `~/.qc/qc-build-index.log`. This log file
    is always overwritten, so it only contains the log of the last execution.

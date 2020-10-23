@@ -36,12 +36,12 @@ startTest "Version Number"
 make_version="$(grep "^QC_VERSION " ./Makefile | sed 's/^.* = //')"
 script_version="$(./quick-change-directory --version 2>&1 | sed 's/^.* v//')"
 dstore_version="$(./dstore --version | sed 's/^.* v//')"
-build_idx_version="$(./qc-build-index.sh --version | sed 's/^.* v//')"
+build_idx_version="$(./qc-build-index --version | sed 's/^.* v//')"
 
 test_set "in Makefile" "$make_version"
 test_set "from quick-change-directory --version" "$script_version"
 test_set "from quick_change_directory.shinc --version" "$dstore_version"
-test_set "from qc-build-index.sh --version" "$build_idx_version"
+test_set "from qc-build-index --version" "$build_idx_version"
 
 typeset -A version
 version[$make_version]=1
@@ -57,12 +57,12 @@ else
     echo >&2 "    Makefile:                     $make_version"
     echo >&2 "    quick-change-directory:       $script_version"
     echo >&2 "    quick_change_directory.shinc: $dstore_version"
-    echo >&2 "    qc-build-index.sh:            $build_idx_version"
+    echo >&2 "    qc-build-index:               $build_idx_version"
 fi
 
 script_version_lbl="$(./quick-change-directory --version 2>&1 | sed 's/^[^ ]*//')"
 dstore_version_lbl="$(./dstore --version | sed 's/^[^ ]*//')"
-build_idx_version_lbl="$(./qc-build-index.sh --version | sed 's/^[^ ]*//')"
+build_idx_version_lbl="$(./qc-build-index --version | sed 's/^[^ ]*//')"
 
 typeset -A version_lbl
 version_lbl[$script_version_lbl]=1
@@ -76,7 +76,7 @@ else
     ERROR
     echo >&2 "quick-change-directory:       $script_version_lbl"
     echo >&2 "quick_change_directory.shinc: $dstore_version_lbl"
-    echo >&2 "qc-build-index.sh:            $build_idx_version_lbl"
+    echo >&2 "qc-build-index:               $build_idx_version_lbl"
 fi
 
 endTest $TEST_STATUS

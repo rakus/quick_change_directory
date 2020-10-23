@@ -92,11 +92,11 @@ add_to_crontab()
 {
     if ! command -v crontab; then
         echo "  SKIPPED: Crontab command not available"
-    elif crontab -l | grep "qc-build-index.sh" >/dev/null 2>&1; then
+    elif crontab -l | grep "qc-build-index" >/dev/null 2>&1; then
         echo "SKIPPED: Crontab entry seems to exist:"
-        crontab -l | grep "qc-build-index.sh" | sed "s/^/    /"
+        crontab -l | grep "qc-build-index" | sed "s/^/    /"
     else
-        CRE="*/10 * * * * \${HOME}/.qc/qc-build-index.sh >\${HOME}/.qc/qc-build-index.log 2>&1"
+        CRE="*/10 * * * * \${HOME}/.qc/qc-build-index >\${HOME}/.qc/qc-build-index.log 2>&1"
         echo "Installing crontab entry:"
         echo "    $CRE"
         # to complex for run_cmd
@@ -180,7 +180,7 @@ if [ ! -d "$bin_target_dir" ]; then
     execute mkdir -p "$bin_target_dir"
 fi
 
-for fn in quick_change_directory.shinc quick-change-directory qc-build-index.sh dstore; do
+for fn in quick_change_directory.shinc quick-change-directory qc-build-index dstore; do
     if [ ! -f "$fn" ]; then
         echo >&2 "ERROR: Missing file: $fn"
         exit 1

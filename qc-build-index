@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# FILE: qc-build-index.sh
+# FILE: qc-build-index
 #
 # ABSTRACT: Reads qc-index.cfg and builds indexes.
 #
@@ -259,7 +259,7 @@ build_index()
 #---------[ MAIN ]-------------------------------------------------------------
 
 if [ ! -d "$QC_DIR" ]; then
-    echo "qc-build-index.sh: First call -- initialization ...."
+    echo "qc-build-index: First call -- initialization ...."
     echo "Creating directory $QC_DIR"
     mkdir "$QC_DIR" || exit 1
 fi

@@ -128,7 +128,7 @@ if [ -n "${BUILD_TEST_DIRS:-}" ]; then
 
     echo "test.index ${script_dir}/testDirectory -- '.*'" > "$QC_DIR/qc-index.cfg"
     echo "hidden.index.ext -f '*testDirectory/.*' ${script_dir}/testDirectory" >> "$QC_DIR/qc-index.cfg"
-    cp ../qc-build-index.sh "$QC_DIR"
+    cp ../qc-build-index "$QC_DIR"
     touch "$QC_DIR/test.index"
 fi
 

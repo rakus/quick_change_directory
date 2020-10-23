@@ -36,7 +36,7 @@ show_help()
     echo "      Use the command 'dstore' to manage labeled directories."
     echo "  qc -u [dir...]"
     echo "      Updates index. If dirs are given only that directories are updated,"
-    echo "      This uses the external command 'qc-build-index.sh'."
+    echo "      This uses the external command 'qc-build-index'."
     echo "  qc -U [dir...]"
     echo "      Like '-u', but also updates extended indexes."
     echo "  qc -l"
@@ -286,7 +286,7 @@ function dir_select
 function updateIndex
 {
     typeset PATH="$QC_DIR:$PATH"
-    if command -v qc-build-index.sh &>/dev/null; then
+    if command -v qc-build-index &>/dev/null; then
         echo "Updating index ..."
         typeset -a ARGS
         typeset d
@@ -298,7 +298,7 @@ function updateIndex
                 ARGS+=( "-i" "$d")
             fi
         done
-        qc-build-index.sh "${ARGS[@]}"
+        qc-build-index "${ARGS[@]}"
     else
         echo "Updating index (internal update)..."
         internalUpdateIndex "$@"
