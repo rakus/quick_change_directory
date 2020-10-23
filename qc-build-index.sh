@@ -23,6 +23,8 @@
 script_dir="$(cd "$(dirname "$0")" && pwd)" || exit 1
 script_name="$(basename "$0")"
 
+qc_version=2.0
+
 [ -z "$QC_DIR" ] && QC_DIR=$HOME/.qc
 QC_DSTORE_INDEX=$QC_DIR/index.dstore
 
@@ -283,6 +285,9 @@ while getopts ":Ei:" o "$@"; do
         *)
             if [ "${!OPTIND}" = "--help" ]; then
                 show_help
+                exit 0
+            elif [ "${!OPTIND}" = "--version" ]; then
+                echo "$script_name - quick change directory v$qc_version"
                 exit 0
             else
                 echo >&2 "Invalid option '$OPTARG' in '${!OPTIND}'" && echo >&2 ""

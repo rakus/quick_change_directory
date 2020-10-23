@@ -4,6 +4,8 @@
 
 .PHONY: test shellcheck check zip html clean
 
+QC_VERSION = 2.0
+
 ZIP_FILE = quick-change-directory.zip
 ZIP_CONTENT = README.md LICENSE INSTALL quick_change_directory.shinc quick-change-directory qc-build-index.sh qc-index.cfg dstore
 

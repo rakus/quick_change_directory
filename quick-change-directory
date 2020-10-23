@@ -7,6 +7,8 @@
 # AUTHOR: Ralf Schandl
 #
 
+qc_version=2.0
+
 # Directory for qc index files
 [ -z "${QC_DIR:-}" ] && QC_DIR=$HOME/.qc
 
@@ -443,6 +445,9 @@ while getopts ":ieuUSl" o "$@"; do
         *)
             if [ "${!OPTIND}" = "--help" ]; then
                 show_help >&2
+                exit 0
+            elif [ "${!OPTIND}" = "--version" ]; then
+                echo "qc - quick change directory v$qc_version" >&2
                 exit 0
             else
                 echo >&2 "Invalid option '$OPTARG' in '${!OPTIND}'" && echo >&2 ""

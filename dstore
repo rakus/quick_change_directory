@@ -9,14 +9,16 @@
 # CREATED: 2020-10-08
 #
 
+script_name="$(basename "$0")"
+
+qc_version=2.0
+
 # Directory for qc index files
 [ -z "${QC_DIR:-}" ] && QC_DIR=$HOME/.qc
 
 # Manual index file storing directory names and bookmarked directories. This
 # file is managed using the command 'dstore'.
 QC_DSTORE_INDEX=$QC_DIR/index.dstore
-
-
 
 show_help()
 {
@@ -153,9 +155,12 @@ while getopts ":elcd" o "$@"; do
             if [ "${!OPTIND}" = "--help" ]; then
                 show_help
                 exit 0
+            elif [ "${!OPTIND}" = "--version" ]; then
+                echo "$script_name - quick change directory v$qc_version"
+                exit 0
             else
                 echo >&2 "Invalid option '$OPTARG' in '${!OPTIND}'" && echo >&2 ""
-                show_help
+                show_help >&2
                 exit 1
             fi
             exit
