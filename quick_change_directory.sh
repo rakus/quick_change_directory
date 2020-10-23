@@ -1,6 +1,6 @@
 # shellcheck shell=bash
 #
-# FILE: quick_change_directory.shinc
+# FILE: quick_change_directory.sh
 #
 # Provides the shell alias 'qc' for index based quick change directory.
 # Qc searches a index file for a matching directory and then changes to it.

@@ -7,7 +7,7 @@
 QC_VERSION = 2.0
 
 ZIP_FILE = quick-change-directory.zip
-ZIP_CONTENT = README.md LICENSE INSTALL quick_change_directory.shinc quick-change-directory qc-build-index qc-index.cfg dstore
+ZIP_CONTENT = README.md LICENSE INSTALL quick_change_directory.sh quick-change-directory qc-build-index qc-index.cfg dstore
 
 help:
 	@cat $(MAKEFILE_LIST) | grep -E '^[a-zA-Z_-]+:.*?## .*$$' | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%s\033[0m\n    %s\n", $$1, $$2}'
@@ -17,9 +17,9 @@ test:   ## Run tests.
 
 shellcheck:  ## Run shellcheck.
 	shellcheck -fgcc quick-change-directory dstore  qc-build-index
-	shellcheck -fgcc -sbash quick_change_directory.shinc
-	shellcheck -fgcc -sksh quick_change_directory.shinc
-	(cd test && shellcheck -sbash -fgcc *.sh *.shinc ../quick_change_directory.shinc)
+	shellcheck -fgcc -sbash quick_change_directory.sh
+	shellcheck -fgcc -sksh quick_change_directory.sh
+	(cd test && shellcheck -sbash -fgcc *.sh *.shinc ../quick_change_directory.sh)
 
 check: test shellcheck ## Run tests and shellcheck.
 

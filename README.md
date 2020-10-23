@@ -297,16 +297,16 @@ Just call `qc` with the option `-S`.
 
 The following files are distributed:
 
-| File                           | Description                                      | Install Location       |
-| ------------------------------ | ------------------------------------------------ | ---------------------- |
-| `README.md`                    | The file you are just reading.                   | Not installed          |
-| `INSTALL`                      | The installation script.                         | Not installed          |
-| `LICENSE`                      | The MIT license.                                 | Not installed          |
-| `quick_change_directory.shinc` | To be sourced by the shell.                      | `~/.qc/quick_change_directory.shinc` |
-| `quick-change_directory`       | Script implementing qc functionality.            | `~/.qc/quick-change-directory`       |
-| `dstore`                       | Script to manage the manual index.               | `~/.qc/dstore`         |
-| `qc-build-index`               | Processes `qc-index.cfg` to create index files.  | `~/.qc/qc-build-index` |
-| `qc-index.cfg`                 | Defines indexes to create.                       | `~/.qc/qc-index.cfg`   |
+| File                        | Description                                      | Install Location       |
+| --------------------------- | ------------------------------------------------ | ---------------------- |
+| `README.md`                 | The file you are just reading.                   | Not installed          |
+| `INSTALL`                   | The installation script.                         | Not installed          |
+| `LICENSE`                   | The MIT license.                                 | Not installed          |
+| `quick_change_directory.sh` | To be sourced by the shell.                      | `~/.qc/quick_change_directory.sh` |
+| `quick-change_directory`    | Script implementing qc functionality.            | `~/.qc/quick-change-directory`    |
+| `dstore`                    | Script to manage the manual index.               | `~/.qc/dstore`         |
+| `qc-build-index`            | Processes `qc-index.cfg` to create index files.  | `~/.qc/qc-build-index` |
+| `qc-index.cfg`              | Defines indexes to create.                       | `~/.qc/qc-index.cfg`   |
 
 
 ### I don't want to install -- just test it
@@ -314,7 +314,7 @@ The following files are distributed:
 This is easy. Just do:
 
     export PATH="$PATH:$PWD"
-    . ./quick_change_directory.shinc
+    . ./quick_change_directory.sh
 
 As no index exist, `qc` will complain on first usage. Run `qc -u` to create a
 default index of all directories in your home directory (excluding hidden dirs).
@@ -324,14 +324,14 @@ default index of all directories in your home directory (excluding hidden dirs).
 1. Create the directory `$HOME/.qc`.
 
 2. Copy the following files to `$HOME/.qc`:
-  * `quick_change_directory.shinc`
+  * `quick_change_directory.sh`
   * `quick-change_directory`
   * `qc-build-index`
   * `qc-index.cfg`
 
 3. Add the following line to your `.bashrc`:
 
-   `[ -f "$HOME/.qc/quick_change_directory.shinc" ] && . "$HOME/.qc/quick_change_directory.shinc"`
+   `[ -f "$HOME/.qc/quick_change_directory.sh" ] && . "$HOME/.qc/quick_change_directory.sh"`
 
 4. Optional: Extend your local crontab, so the directory index is updated every 10 minutes.
    The update will typically just take a few seconds.
@@ -343,8 +343,8 @@ default index of all directories in your home directory (excluding hidden dirs).
    Every execution will write its output to `~/.qc/qc-build-index.log`. This log file
    is always overwritten, so it only contains the log of the last execution.
 
-5. Now source `quick_change_directory.shinc` by executing `.
-   $HOME/.qc/quick_change_directory.shinc` or just start a new shell.
+5. Now source `quick_change_directory.sh` by executing `.
+   $HOME/.qc/quick_change_directory.sh` or just start a new shell.
 
 6. Run `qc -U` to create the index files.
 
@@ -374,9 +374,9 @@ The file `qc-index.cfg` will always be copied. Even if `symlink` is used for
 install. The file is typically changed by the user. If the file is already
 installed, the new version is copied to `~/.qc/qc-index.cfg.new`.
 
-The source `quick_change_directory.shinc` by executing
+The source `quick_change_directory.sh` by executing
 
-    .  $HOME/.qc/quick_change_directory.shinc
+    .  $HOME/.qc/quick_change_directory.sh
 
 or just start a new shell.
 

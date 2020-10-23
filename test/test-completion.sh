@@ -27,7 +27,7 @@ declare -F _completion_loader &>/dev/null || {
 }
 
 
-. ../quick_change_directory.shinc
+. ../quick_change_directory.sh
 
 TEST_STATUS=0
 
