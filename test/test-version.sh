@@ -69,7 +69,7 @@ version_lbl[$script_version_lbl]=1
 version_lbl[$dstore_version_lbl]=1
 version_lbl[$build_idx_version_lbl]=1
 
-echo -n "Test version prefix"
+echo -n "Test product name"
 if [ ${#version_lbl[@]} -eq 1 ]; then
     OK
 else

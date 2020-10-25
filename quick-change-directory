@@ -447,7 +447,7 @@ while getopts ":ieuUSl" o "$@"; do
                 show_help >&2
                 exit 0
             elif [ "${!OPTIND}" = "--version" ]; then
-                echo "qc - quick change directory v$qc_version" >&2
+                echo "qc - Quick Change Directory v$qc_version" >&2
                 exit 0
             else
                 echo >&2 "Invalid option '$OPTARG' in '${!OPTIND}'" && echo >&2 ""

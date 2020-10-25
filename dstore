@@ -156,7 +156,7 @@ while getopts ":elcd" o "$@"; do
                 show_help
                 exit 0
             elif [ "${!OPTIND}" = "--version" ]; then
-                echo "$script_name - quick change directory v$qc_version"
+                echo "$script_name - Quick Change Directory v$qc_version"
                 exit 0
             else
                 echo >&2 "Invalid option '$OPTARG' in '${!OPTIND}'" && echo >&2 ""
