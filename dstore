@@ -54,7 +54,7 @@ function __dstore_clean
     # if action is 'warn' just warn about none-existing dirs
     typeset action=${1:-}
     # delete duplicates
-    LC_ALL=C sort "$QC_DSTORE_INDEX" | uniq > "$QC_DSTORE_INDEX.tmp"
+    LC_ALL=C sort -u "$QC_DSTORE_INDEX" > "$QC_DSTORE_INDEX.tmp"
     mv -f "$QC_DSTORE_INDEX.tmp" "$QC_DSTORE_INDEX"
 
     # get other index files

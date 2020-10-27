@@ -192,7 +192,7 @@ function dir_select
                 return 1
             fi
             # grep: -h: Suppress the prefixing of file names on output.
-            mapfile -d$'\n' -t dl < <(grep -ahi -- "^${pattern}[^ ]* " "$QC_DSTORE_INDEX" | cut "-d " -f2- | sort | uniq)
+            mapfile -d$'\n' -t dl < <(grep -ahi -- "^${pattern}[^ ]* " "$QC_DSTORE_INDEX" | cut "-d " -f2- | sort -u)
             ;;
         *)
             mapfile -d$'\n' -t idxFiles < <( get_indexes "$searchExtIdx")
@@ -202,7 +202,7 @@ function dir_select
             fi
             pattern=$(args2regex "$@")
             # shellcheck disable=SC2086  # grepOpt should split
-            mapfile -d$'\n' -t dl < <(grep --color=always -ah $grepOpt -- "/$pattern" "${idxFiles[@]}" |sed "s/^:[^ ]* //"|sort|uniq)
+            mapfile -d$'\n' -t dl < <(grep --color=always -ah $grepOpt -- "/$pattern" "${idxFiles[@]}" | sed "s/^:[^ ]* //" | sort -u)
             ;;
     esac
 
