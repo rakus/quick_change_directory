@@ -273,10 +273,15 @@ function dir_select
         dl=( "${dl[@]/#$HOME/\~}" )
         local LINES=0
         local COLUMNS=1
+        local PS3="# or 'q' to quit? "
         select dir in "${dl[@]}" ; do
-            # replace ~ with $HOME and remove color codes
-            echo "${dir/#\~/$HOME}" | sed -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]//g"
-            break
+            if [ "$dir" = "" ]; then
+                [ "$REPLY" = "q" ] && break
+            else
+                # replace ~ with $HOME and remove color codes
+                echo "${dir/#\~/$HOME}" | sed -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]//g"
+                break
+            fi
         done
     fi
 }
