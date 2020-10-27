@@ -48,7 +48,7 @@ __qc_complete()
     local cur words
 
     # special handling for :*
-    _get_comp_words_by_ref -n : cur
+    cur="${COMP_LINE##* }"
 
     words=( "${COMP_WORDS[@]:1}" )
 
