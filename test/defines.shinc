@@ -134,6 +134,6 @@ fi
 
 # shellcheck source=./../quick_change_directory.sh
 . "${script_dir}/../quick_change_directory.sh"
-export PATH="$PATH:$script_dir/.."
+export PATH="$script_dir/..:$PATH"
 
 # vim:ft=sh

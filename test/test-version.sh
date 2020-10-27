@@ -21,7 +21,7 @@ cd "$script_dir/.." || exit 1
 
 test_set()
 {
-    echo -n "Version $1"
+    echo -n "$1"
     if [ -n "$2" ]; then
         OK
     else
@@ -34,14 +34,14 @@ TEST_STATUS=0
 startTest "Version Number"
 
 make_version="$(grep "^QC_VERSION " ./Makefile | sed 's/^.* = //')"
-script_version="$(./quick-change-directory --version 2>&1 | sed 's/^.* v//')"
-dstore_version="$(./dstore --version | sed 's/^.* v//')"
-build_idx_version="$(./qc-build-index --version | sed 's/^.* v//')"
+script_version="$(quick-change-directory --version 2>&1 | sed 's/^.* v//')"
+dstore_version="$(dstore --version | sed 's/^.* v//')"
+build_idx_version="$(qc-build-index --version | sed 's/^.* v//')"
 
-test_set "in Makefile" "$make_version"
-test_set "from quick-change-directory --version" "$script_version"
-test_set "from quick_change_directory.sh --version" "$dstore_version"
-test_set "from qc-build-index --version" "$build_idx_version"
+test_set "Version in Makefile" "$make_version"
+test_set "Version from quick-change-directory --version" "$script_version"
+test_set "Version from quick_change_directory.sh --version" "$dstore_version"
+test_set "Version from qc-build-index --version" "$build_idx_version"
 
 typeset -A version
 version[$make_version]=1
@@ -49,7 +49,7 @@ version[$script_version]=1
 version[$dstore_version]=1
 version[$build_idx_version]=1
 
-echo -n "All versions same"
+echo -n "Test same version"
 if [ ${#version[@]} -eq 1 ]; then
     OK
 else
@@ -60,16 +60,20 @@ else
     echo >&2 "    qc-build-index:            $build_idx_version"
 fi
 
-script_version_lbl="$(./quick-change-directory --version 2>&1 | sed 's/^[^ ]*//')"
-dstore_version_lbl="$(./dstore --version | sed 's/^[^ ]*//')"
-build_idx_version_lbl="$(./qc-build-index --version | sed 's/^[^ ]*//')"
+script_version_lbl="$(quick-change-directory --version 2>&1 | sed 's/^[^ ]*//')"
+dstore_version_lbl="$(dstore --version | sed 's/^[^ ]*//')"
+build_idx_version_lbl="$(qc-build-index --version | sed 's/^[^ ]*//')"
+
+test_set "Product name from quick-change-directory --version" "$script_version_lbl"
+test_set "Product name from quick_change_directory.sh --version" "$dstore_version_lbl"
+test_set "Product name from qc-build-index --version" "$build_idx_version_lbl"
 
 typeset -A version_lbl
 version_lbl[$script_version_lbl]=1
 version_lbl[$dstore_version_lbl]=1
 version_lbl[$build_idx_version_lbl]=1
 
-echo -n "Test product name"
+echo -n "Test same product name"
 if [ ${#version_lbl[@]} -eq 1 ]; then
     OK
 else
