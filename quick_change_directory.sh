@@ -16,7 +16,7 @@ __qc()
     [ -n "${rst_f:-}" ] && set +f
     local PATH="${QC_DIR:-$HOME/.qc}:$PATH"
     local __qc_target
-    __qc_target="$(quick-change-directory "$@")"
+    __qc_target="$(qc-backend "$@")"
     if [ -n "$__qc_target" ]; then
         # shellcheck disable=SC2164 # returning with exit code below
         "cd" "$__qc_target"
@@ -54,10 +54,10 @@ __qc_complete()
 
     case "$cur" in
         ':'*)
-            mapfile -d$'\n' -t COMPREPLY < <( quick-change-directory --complete "$cur" )
+            mapfile -d$'\n' -t COMPREPLY < <( qc-backend --complete "$cur" )
             ;;
         *)
-            mapfile -d$'\n' -t COMPREPLY < <( quick-change-directory --complete "${words[@]}" )
+            mapfile -d$'\n' -t COMPREPLY < <( qc-backend --complete "${words[@]}" )
             ;;
     esac
 }

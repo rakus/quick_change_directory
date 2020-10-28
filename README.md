@@ -303,7 +303,7 @@ The following files are distributed:
 | `INSTALL`                   | The installation script.                         | Not installed          |
 | `LICENSE`                   | The MIT license.                                 | Not installed          |
 | `quick_change_directory.sh` | To be sourced by the shell.                      | `~/.qc/quick_change_directory.sh` |
-| `quick-change_directory`    | Script implementing qc functionality.            | `~/.qc/quick-change-directory`    |
+| `qc-backend`                | Script implementing qc functionality.            | `~/.qc/qc-backend`     |
 | `dstore`                    | Script to manage the manual index.               | `~/.qc/dstore`         |
 | `qc-build-index`            | Processes `qc-index.cfg` to create index files.  | `~/.qc/qc-build-index` |
 | `qc-index.cfg`              | Defines indexes to create.                       | `~/.qc/qc-index.cfg`   |
@@ -325,7 +325,7 @@ default index of all directories in your home directory (excluding hidden dirs).
 
 2. Copy the following files to `$HOME/.qc`:
   * `quick_change_directory.sh`
-  * `quick-change_directory`
+  * `qc-backend`
   * `qc-build-index`
   * `qc-index.cfg`
 

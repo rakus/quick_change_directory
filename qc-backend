@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# FILE: quick-change-directory
+# FILE: qc-backend
 #
 # ABSTRACT: Selects a directory by pattern from the index
 #

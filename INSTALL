@@ -181,7 +181,7 @@ if [ ! -d "$bin_target_dir" ]; then
     execute mkdir -p "$bin_target_dir"
 fi
 
-for fn in quick_change_directory.sh quick-change-directory qc-build-index dstore; do
+for fn in quick_change_directory.sh qc-backend qc-build-index dstore; do
     if [ ! -f "$fn" ]; then
         echo >&2 "ERROR: Missing file: $fn"
         exit 1
