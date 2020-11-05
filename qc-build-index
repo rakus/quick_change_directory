@@ -258,29 +258,36 @@ build_index()
 copy_default_config()
 {
     if [ -r "$script_dir/../share/quick-change-directory/qc-index.cfg" ]; then
-        echo "Copying default config file to $CFG"
+        echo >&2 "Copying default config file to $CFG"
         cp "$script_dir/../share/quick-change-directory/qc-index.cfg" "$CFG"
     elif [ -r "/usr/share/quick-change-directory/qc-index.cfg" ]; then
-        echo "Copying default config file to $CFG"
+        echo >&2 "Copying default config file to $CFG"
         cp "/usr/share/quick-change-directory/qc-index.cfg" "$CFG"
     elif [ -e "$script_dir/qc-index.cfg" ]; then
-        echo "Copying default config file to $CFG"
+        echo >&2 "Copying default config file to $CFG"
         cp "$script_dir/qc-index.cfg" "$CFG"
     fi
     if [ ! -e "$CFG" ]; then
-        echo "Default config file not found."
-        echo "Creating simple callback config in $CFG"
-        echo "# Fallback config" > "$CFG"
-        echo "home.index \$HOME -- '.*' CVS" >> "$CFG"
-        echo "home.hidden.index.ext -f '*/.*' \$HOME -- .metadata .settings .git .svn .hg '.jazz*' .bzr .qc .cp .cache CVS" >> "$CFG"
+        echo >&2 "Creating simple default config in $CFG"
+        cat <<'EOF' > "$CFG"
+# simple default config
+
+# create index of $HOME that ignores all hidden directories and directories
+# named 'CVS'
+home.index $HOME -- '.*' CVS
+
+# create extension index of $HOME only containing hidden directories.
+# Ignores some 'useless' hidden dirs.
+home.hidden.index.ext -f '*/.*' $HOME -- .metadata .settings .git .svn .hg '.jazz*' .bzr .qc .cp .cache CVS
+EOF
     fi
 }
 
 #---------[ MAIN ]-------------------------------------------------------------
 
 if [ ! -d "$QC_DIR" ]; then
-    echo "qc-build-index: First call -- initialization ...."
-    echo "Creating directory $QC_DIR"
+    echo >&2 "qc-build-index: First call -- initialization ...."
+    echo >&2 "Creating directory $QC_DIR"
     mkdir "$QC_DIR" || exit 1
     touch "$QC_DSTORE_INDEX"
 fi
