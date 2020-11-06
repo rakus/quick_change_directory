@@ -32,18 +32,18 @@ CFG="$QC_DIR/qc-index.cfg"
 
 show_help()
 {
-    echo >&2 "USAGE: $script_name [-E] [-i dir] [index...]"
-    echo >&2 ""
-    echo >&2 "   -E      Don't update extension index(es)."
-    echo >&2 ""
-    echo >&2 "   -i dir  Incremental update the given dir in the affected index(es)."
-    echo >&2 "           Indexes that does not contain the dir are not touched."
-    echo >&2 ""
-    echo >&2 "   index   Name of the indexes that should be updated. The given names"
-    echo >&2 "           are matched against the index names. So 'home' will match"
-    echo >&2 "           'home.index' and 'home.hidden.index.ext'."
-    echo >&2 "           To only update extension indexes use '*.ext'."
-    echo >&2 ""
+    echo "USAGE: $script_name [-E] [-i dir] [index...]"
+    echo ""
+    echo "   -E      Don't update extension index(es)."
+    echo ""
+    echo "   -i dir  Incremental update the given dir in the affected index(es)."
+    echo "           Indexes that does not contain the dir are not touched."
+    echo ""
+    echo "   index   Name of the indexes that should be updated. The given names"
+    echo "           are matched against the index names. So 'home' will match"
+    echo "           'home.index' and 'home.hidden.index.ext'."
+    echo "           To only update extension indexes use '*.ext'."
+    echo ""
     exit 1
 }
 
@@ -169,7 +169,7 @@ build_index()
                     echo >&2 "ERROR: Index $IDX_NAME does not contain any of [ ${INC_UPD[*]} ]"
                     return 1
                 else
-                    echo >&2 "Skipping $IDX_NAME: does not contain any of [ ${INC_UPD[*]} ]"
+                    echo "Skipping $IDX_NAME: does not contain any of [ ${INC_UPD[*]} ]"
                     return 0
                 fi
             fi
@@ -179,7 +179,7 @@ build_index()
     fi
 
     typeset NEW_INDEX
-    NEW_INDEX=$(mktemp "${INDEX_FILE}.XXXX")
+    NEW_INDEX=$(mktemp "${INDEX_FILE/.index/.updating-index}.XXXX")
 
     # if incremental update set new ROOTS and prefill index file
     if [ ${#INC_ROOTS[@]} -gt 0 ]; then
@@ -258,17 +258,17 @@ build_index()
 copy_default_config()
 {
     if [ -r "$script_dir/../share/quick-change-directory/qc-index.cfg" ]; then
-        echo >&2 "Copying default config file to $CFG"
+        echo "Copying default config file to $CFG"
         cp "$script_dir/../share/quick-change-directory/qc-index.cfg" "$CFG"
     elif [ -r "/usr/share/quick-change-directory/qc-index.cfg" ]; then
-        echo >&2 "Copying default config file to $CFG"
+        echo "Copying default config file to $CFG"
         cp "/usr/share/quick-change-directory/qc-index.cfg" "$CFG"
     elif [ -e "$script_dir/qc-index.cfg" ]; then
-        echo >&2 "Copying default config file to $CFG"
+        echo "Copying default config file to $CFG"
         cp "$script_dir/qc-index.cfg" "$CFG"
     fi
     if [ ! -e "$CFG" ]; then
-        echo >&2 "Creating simple default config in $CFG"
+        echo "Creating simple default config in $CFG"
         cat <<'EOF' > "$CFG"
 # simple default config
 
@@ -286,8 +286,8 @@ EOF
 #---------[ MAIN ]-------------------------------------------------------------
 
 if [ ! -d "$QC_DIR" ]; then
-    echo >&2 "qc-build-index: First call -- initialization ...."
-    echo >&2 "Creating directory $QC_DIR"
+    echo "qc-build-index: First call -- initialization ...."
+    echo "Creating directory $QC_DIR"
     mkdir "$QC_DIR" || exit 1
     touch "$QC_DSTORE_INDEX"
 fi
@@ -315,7 +315,7 @@ while getopts ":Ei:" o "$@"; do
                 exit 0
             else
                 echo >&2 "Invalid option '$OPTARG' in '${!OPTIND}'" && echo >&2 ""
-                show_help
+                show_help >&2
                 exit 1
             fi
             ;;
