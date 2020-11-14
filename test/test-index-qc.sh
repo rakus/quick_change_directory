@@ -42,13 +42,28 @@ doQCselect()
     expected="$1"
     num="$2"
     shift 2
-    printf "qc %s" "$@"
+    printf "qc %s" "$*"
     qc "$@" <<< "$num"
     if [ "$PWD" = "$expected" ]; then
         OK
     else
         ERROR
         echo   "Actual: $PWD"
+    fi
+}
+
+chkQCfoundDirs()
+{
+    expected_cnt=$1
+    shift
+    printf "Expected %s dirs: " "$expected_cnt"
+    printf "qc %s" "$*"
+    real_cnt="$(qc "$@" 2>&1 </dev/null | wc -l)"
+    if [ "$real_cnt" = "$expected_cnt" ]; then
+        OK
+    else
+        ERROR
+        echo   "Actual: $real_cnt"
     fi
 }
 
@@ -68,7 +83,7 @@ else
     exit 1
 fi
 printf "test.index entry count"
-if [ 13 -eq "$(wc -l < "${script_dir}/testDirectory/.qc/test.index")" ]; then
+if [ 14 -eq "$(wc -l < "${script_dir}/testDirectory/.qc/test.index")" ]; then
     OK
 else
     ERROR
@@ -83,7 +98,7 @@ else
     exit 1
 fi
 printf "hidden.index.ext entry count"
-if [ 3 -eq "$(wc -l < "${script_dir}/testDirectory/.qc/hidden.index.ext")" ]; then
+if [ 4 -eq "$(wc -l < "${script_dir}/testDirectory/.qc/hidden.index.ext")" ]; then
     OK
 else
     ERROR
@@ -127,7 +142,10 @@ doQC "${script_dir}"/testDirectory/Customer/ACME/Admin :l
 doQC "${script_dir}"/testDirectory/Customer/YoYo -i yOyO/
 doQC "${script_dir}"/testDirectory/.config/localhost -e local
 doQC "${script_dir}"/testDirectory/.config/localhost -ei LOCALHOST
+doQC "${script_dir}"/testDirectory/.config/testdir -E testd
+doQC "${script_dir}"/testDirectory/testdir testd
 
+chkQCfoundDirs 2 -e testd
 
 case "$(printf "%s\n" testDirectory/Customer/YoYo testDirectory/Customer/YoYoDyne | sort | head -n1)" in
     testDirectory/Customer/YoYo)

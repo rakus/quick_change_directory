@@ -118,6 +118,8 @@ if [ -n "${BUILD_TEST_DIRS:-}" ]; then
     export QC_TEST_DIR=${script_dir}/testDirectory
 
     mkdir -p testDirectory/.config/localhost
+    mkdir -p testDirectory/.config/testdir
+    mkdir -p testDirectory/testdir
     mkdir -p testDirectory/Customer/YoYoDyne/Admin
     mkdir -p testDirectory/Customer/YoYoDyne/docs
     mkdir -p testDirectory/Customer/YoYoDyne/src

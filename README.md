@@ -152,6 +152,7 @@ Like:
 
 * `-i` Search is case-insensitive. Only when searching by name.
 * `-e` Also search extended index files.
+* `-E` Only search extended index files.
 * `-u` Update the normal indexes.
 * `-U` Update the normal and extended indexes.
 * `-l` List labeled directories.
@@ -193,7 +194,7 @@ This indexes are normal text files with one directory name per line.
 Normal indexes have the file extension `.index` and are always searched by qc.
 
 Extended indexes have the file extension `.index.ext` and are only searched when
-qc is called with the option `-e`.
+qc is called with the option `-e` or `-E`.
 
 The indexes are defined in the file `~/.qc/qc-index.cfg`.
 

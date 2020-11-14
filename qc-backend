@@ -27,10 +27,11 @@ show_help()
     echo "Quick Change -- index based directory changer"
     echo ""
     echo "Usage:"
-    echo "  qc [-ie] <dir>"
+    echo "  qc [-i] [-eE] <dir>"
     echo "      Search for dir in index and cd to it."
     echo "      -i  Search case-insensitive (slower)."
     echo "      -e  Also search extended index."
+    echo "      -E  Only search extended index."
     echo "  qc :name"
     echo "      Search for dir labeled with ':name' in index and cd to it."
     echo "      Use the command 'dstore' to manage labeled directories."
@@ -163,11 +164,13 @@ function args2regex
 function get_indexes
 {
     typeset IFS=$'\n'
-    ( shopt -s nullglob ; printf '%s\n' "$QC_DIR"/*.index "$QC_DIR"/*.index."$HOSTNAME" )
+    if [ "${1:-}" != "E" ]; then
+        ( shopt -s nullglob ; printf '%s\n' "$QC_DIR"/*.index "$QC_DIR"/*.index."$HOSTNAME" )
+        [ -e "$QC_DSTORE_INDEX" ] && echo "$QC_DSTORE_INDEX"
+    fi
     if [ -n "${1:-}" ]; then
         ( shopt -s nullglob ; printf '%s\n' "$QC_DIR"/*.index.ext "$QC_DIR"/*.index.ext."$HOSTNAME" )
     fi
-    [ -e "$QC_DSTORE_INDEX" ] && echo "$QC_DSTORE_INDEX"
 }
 
 # Select directories found in ~/.qc/*.index.
@@ -178,7 +181,7 @@ function dir_select
 {
     typeset grepOpt="$1"
     shift
-    typeset searchExtIdx="$1"
+    typeset indexSelect="$1"
     shift
 
     typeset IFS=$'\n'
@@ -195,7 +198,7 @@ function dir_select
             mapfile -d$'\n' -t dl < <(grep -ahi -- "^${pattern}[^ ]* " "$QC_DSTORE_INDEX" | cut "-d " -f2- | sort -u)
             ;;
         *)
-            mapfile -d$'\n' -t idxFiles < <( get_indexes "$searchExtIdx")
+            mapfile -d$'\n' -t idxFiles < <( get_indexes "$indexSelect")
             if [ ${#idxFiles[@]} = 0 ]; then
                 echo >&2 "qc: No index file found! Use 'qc -u' or 'dstore' to create it."
                 return 1
@@ -332,7 +335,7 @@ complete_index_dir()
 {
     typeset grepOpt="$1"
     shift
-    typeset searchExtIdx="$1"
+    typeset indexSelect="$1"
     shift
 
     typeset IFS=$'\n'
@@ -348,7 +351,7 @@ complete_index_dir()
             grep -ahi -- "^${pattern}[^ ]* " "$QC_DSTORE_INDEX" | cut "-d " -f1 | sort -u | cut -d: -f2
             ;;
         *)
-            mapfile -d$'\n' -t idxFiles < <( get_indexes "$searchExtIdx")
+            mapfile -d$'\n' -t idxFiles < <( get_indexes "$indexSelect")
             if [ ${#idxFiles[@]} = 0 ]; then
                 return 1
             fi
@@ -397,7 +400,7 @@ complete_option()
 #---------[ MAIN ]-------------------------------------------------------------
 
 typeset grepOpt=""
-typeset searchExtIdx=""
+typeset indexSelect=""
 typeset OPTIND
 typeset o
 
@@ -410,11 +413,13 @@ if [ "${1:-}" = "--complete" ]; then
     complete_option "$@"
 fi
 
-while getopts ":ieuUSl" o "$@"; do
+while getopts ":ieEuUSl" o "$@"; do
     case $o in
         i) grepOpt="-i"
             ;;
-        e) searchExtIdx="true"
+        e) indexSelect="e"
+            ;;
+        E) indexSelect="E"
             ;;
         u)
             [ -n "$cl_completion" ] && complete_local_dir "$@"
@@ -431,7 +436,7 @@ while getopts ":ieuUSl" o "$@"; do
         S)
             [ -n "$cl_completion" ] && exit 1
             typeset fn
-            for fn in $(get_indexes "1"); do
+            for fn in $(get_indexes "e"); do
                 echo >&2 "$fn"
                 echo >&2 "   Last Upd: $(stat -c "%y" "$fn")"
                 # shellcheck disable=SC2183,SC2046  # wc produces two args
@@ -474,7 +479,7 @@ if [ -n "${cl_completion:-}" ]; then
         exit 0
     fi
 
-    complete_index_dir "$grepOpt" "$searchExtIdx" "$@"
+    complete_index_dir "$grepOpt" "$indexSelect" "$@"
     exit 0
 fi
 
@@ -485,7 +490,7 @@ if [ "$*" = "" ]; then
 elif [ "$*" = "-" ]; then
     echo "-"
 else
-    typeset tgt=$(dir_select "$grepOpt" "$searchExtIdx" "$@")
+    typeset tgt=$(dir_select "$grepOpt" "$indexSelect" "$@")
     if [ -n "${tgt:-}" ]; then
         echo "$tgt"
     else
