@@ -196,21 +196,20 @@ build_index()
     if [ ${#IGNORE_DIRS[@]} -gt 0 ]; then
         ignDirs=( '(' )
         for ign in "${IGNORE_DIRS[@]}"; do
-            if [ ${#ignDirs[@]} -gt 1 ]; then
-                ignDirs+=(-o )
-            fi
             if [[ "$ign" =~ ^/.*$ ]]; then
-                ignDirs+=(-wholename "$ign")
+                ignDirs+=(-wholename "$ign" -o)
             elif [[ "$ign" =~ ^\./.*$ ]]; then
                 for R in "${ROOTS[@]}"; do
-                    ignDirs+=(-wholename "${R}${ign:1}")
+                    ignDirs+=(-wholename "${R}${ign:1}" -o)
                 done
             elif [[ "$ign" =~ ^.*/.*$ ]]; then
-                ignDirs+=(-wholename "*$ign")
+                ignDirs+=(-wholename "*$ign" -o)
             else
-                ignDirs+=(-name "$ign")
+                ignDirs+=(-name "$ign" -o)
             fi
         done
+        # remove the final '-o'
+        unset 'ignDirs[-1]'
         ignDirs+=( ")" )
     else
         # nothing to ignore
@@ -231,6 +230,7 @@ build_index()
     fi
 
     # find all directories excluding those configured
+    echo >&2 find "${ROOTS[@]}" -xdev -type d "${ignDirs[@]}" -prune -o -xtype d "${filter[@]}" -print
     find "${ROOTS[@]}" -xdev -type d "${ignDirs[@]}" -prune -o -xtype d "${filter[@]}" -print >> "$NEW_INDEX"
     # Don't check exit code.
     # A "permission denied" in some subdir would kill the index
