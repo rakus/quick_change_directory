@@ -230,7 +230,7 @@ build_index()
     fi
 
     # find all directories excluding those configured
-    echo >&2 find "${ROOTS[@]}" -xdev -type d "${ignDirs[@]}" -prune -o -xtype d "${filter[@]}" -print
+    # echo >&2 find "${ROOTS[@]}" -xdev -type d "${ignDirs[@]}" -prune -o -xtype d "${filter[@]}" -print
     find "${ROOTS[@]}" -xdev -type d "${ignDirs[@]}" -prune -o -xtype d "${filter[@]}" -print >> "$NEW_INDEX"
     # Don't check exit code.
     # A "permission denied" in some subdir would kill the index
