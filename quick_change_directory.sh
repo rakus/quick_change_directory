@@ -15,14 +15,16 @@ __qc()
 {
     [ -n "${rst_f:-}" ] && set +f
     local PATH="${QC_DIR:-$HOME/.qc}:$PATH"
-    local __qc_target
-    __qc_target="$(qc-backend "$@")"
-    if [ -n "$__qc_target" ]; then
+    local qc_target
+    qc_target="$(qc-backend "$@")"
+    local qc_rc=$?
+    if [ -n "$qc_target" ]; then
         # shellcheck disable=SC2164 # returning with exit code below
-        "cd" "$__qc_target"
+        "cd" "$qc_target"
         return
+    else
+        return $qc_rc
     fi
-    return 0
 }
 
 if [ -n "${ZSH_VERSION:-}" ]; then
