@@ -375,7 +375,7 @@ The file `qc-index.cfg` will always be copied. Even if `symlink` is used for
 install. The file is typically changed by the user. If the file is already
 installed, the new version is copied to `~/.qc/qc-index.cfg.new`.
 
-The source `quick_change_directory.sh` by executing
+Then source `quick_change_directory.sh` by executing
 
     .  $HOME/.qc/quick_change_directory.sh
 

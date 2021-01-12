@@ -125,15 +125,17 @@ build_index()
             shift
             break
         fi
-        d="$(readlink -f "$1")"
-        ROOTS=( "${ROOTS[@]}" "$d" )
+        if d="$(readlink -e "$1")"; then
+            ROOTS=( "${ROOTS[@]}" "$d" )
+        else
+            echo >&2 "ERROR: Root directory not found: $1"
+        fi
         shift
     done
     if [ ${#ROOTS[@]} -eq 0 ]; then
-        echo >&2 "ERROR: No root directory given"
+        echo >&2 "ERROR: No root directory"
         return 1
     fi
-
 
     typeset -a IGNORE_DIRS
     while [ $# -gt 0 ]; do
