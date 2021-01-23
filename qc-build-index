@@ -22,17 +22,22 @@
 
 script_dir="$(cd "$(dirname "$0")" && pwd)" || exit 1
 script_name="$(basename "$0")"
+script_file="$script_dir/$script_name"
+
+set -u
 
 qc_version=2.0
 
-[ -z "$QC_DIR" ] && QC_DIR=$HOME/.qc
+[ -z "${QC_DIR:-}" ] && QC_DIR=$HOME/.qc
 QC_DSTORE_INDEX=$QC_DIR/index.dstore
 
 CFG="$QC_DIR/qc-index.cfg"
 
 show_help()
 {
-    echo "USAGE: $script_name [-E] [-i dir] [index...]"
+    echo "USAGE:"
+    echo "   $script_name [-E] [-i dir] [index...]"
+    echo "   $script_name --cron [minutes]"
     echo ""
     echo "   -E      Don't update extension index(es)."
     echo ""
@@ -43,6 +48,14 @@ show_help()
     echo "           are matched against the index names. So 'home' will match"
     echo "           'home.index' and 'home.hidden.index.ext'."
     echo "           To only update extension indexes use '*.ext'."
+    echo ""
+    echo "   --cron [minutes]"
+    echo "           Configure crontab to run $script_name."
+    echo "           minutes:"
+    echo "             not given: Lists current crontab config."
+    echo "             0:         Removes $script_name from crontab."
+    echo "             1 - 59:    Configures to run every given minutes."
+    echo "                        A existing configuration is replaced."
     echo ""
     exit 1
 }
@@ -99,8 +112,8 @@ build_index()
         return 1
     fi
 
-    typeset -a FILTER
-    typeset -a INC_UPD
+    typeset -a FILTER=()
+    typeset -a INC_UPD=()
     typeset OPTARG OPTIND=0 d
     while getopts ":f:i:" o "$@"; do
         case $o in
@@ -119,7 +132,7 @@ build_index()
 
     shift $((OPTIND-1))
 
-    typeset -a ROOTS
+    typeset -a ROOTS=()
     while [ $# -gt 0 ]; do
         if [ "$1" = "--" ]; then
             shift
@@ -137,7 +150,7 @@ build_index()
         return 1
     fi
 
-    typeset -a IGNORE_DIRS
+    typeset -a IGNORE_DIRS=()
     while [ $# -gt 0 ]; do
         IGNORE_DIRS=( "${IGNORE_DIRS[@]}" "$1" )
         shift
@@ -152,7 +165,7 @@ build_index()
 
     typeset INDEX_FILE=$QC_DIR/$IDX_NAME
 
-    typeset -a INC_ROOTS
+    typeset -a INC_ROOTS=()
     if [ ${#INC_UPD[@]} -gt 0 ]; then
         if [ -e "$INDEX_FILE" ]; then
             for d in "${INC_UPD[@]}"; do
@@ -194,7 +207,7 @@ build_index()
     inc_start=$(wc -l < "$NEW_INDEX")
 
     # Build the 'find' expression for ignored dirs.
-    typeset -a ignDirs
+    typeset -a ignDirs=()
     if [ ${#IGNORE_DIRS[@]} -gt 0 ]; then
         ignDirs=( '(' )
         for ign in "${IGNORE_DIRS[@]}"; do
@@ -218,7 +231,7 @@ build_index()
         ignDirs=( '-false' )
     fi
 
-    typeset -a filter
+    typeset -a filter=()
     if [ ${#FILTER[@]} -gt 0 ]; then
         filter=( '(' )
         for f in "${FILTER[@]}"; do
@@ -285,6 +298,46 @@ EOF
     fi
 }
 
+configure_crontab()
+{
+    if ! command -v crontab >/dev/null 2>&1; then
+        echo "ERROR: Command 'crontab' not available"
+        return 1
+    fi
+    local cron_label="# Quick Change Directory: update index"
+
+    if [ -z "$1" ]; then
+        crontab -l 2>/dev/null | grep "$cron_label\|$script_name"
+        return 1
+    fi
+    if [ -n "${1//[0-9]/}" ]; then
+        echo >&2 "ERROR: Invalid minutes value for '--cron'"
+        return 1
+    fi
+    typeset -i minutes=$1
+    # shellcheck disable=SC2086 # minutes is a int number
+    if [ $minutes -eq 0 ] ; then
+        echo "Removing $script_name from crontab"
+        crontab -l 2>/dev/null | grep -v "$cron_label\|$script_name" | crontab -
+        return
+    elif [ $minutes -lt 1 ] || [ $minutes -gt 59 ]; then
+        echo >&2 "ERROR: Minutes value for '--cron' out of range 1-59"
+        return 1
+    fi
+
+    local exe="${script_file/#$HOME/\${HOME\}}"
+    local log_file="$QC_DIR/qc-build-index.log"
+    log_file="${log_file/#$HOME/\${HOME\}}"
+
+    local cron_entry="*/$minutes * * * * $exe >$log_file 2>&1"
+
+    echo "Configuring crontab to run $script_name every $minutes minutes:"
+    echo "$cron_label"
+    echo "$cron_entry"
+
+    (crontab -l 2>/dev/null | grep -v "$cron_label" | grep -v "$script_name"; echo "$cron_label"; echo "$cron_entry") | crontab -
+}
+
 #---------[ MAIN ]-------------------------------------------------------------
 
 if [ ! -d "$QC_DIR" ]; then
@@ -297,7 +350,7 @@ if [ ! -e "$CFG" ]; then
     copy_default_config
 fi
 
-typeset -a INC_UPD
+typeset -a INC_UPD=()
 while getopts ":Ei:" o "$@"; do
     case $o in
         i)
@@ -315,6 +368,10 @@ while getopts ":Ei:" o "$@"; do
             elif [ "${!OPTIND}" = "--version" ]; then
                 echo "$script_name - Quick Change Directory v$qc_version"
                 exit 0
+            elif [ "${!OPTIND}" = "--cron" ]; then
+                shift
+                configure_crontab "${!OPTIND}"
+                exit
             else
                 echo >&2 "Invalid option '$OPTARG' in '${!OPTIND}'" && echo >&2 ""
                 show_help >&2
@@ -353,7 +410,7 @@ while IFS= read -r line; do
     fi
     ((idxCount++))
 
-    if [ $ignExt ]; then
+    if [ -n "${ignExt:-}" ]; then
         case "${ARGS[0]}" in
             *.index.ext) continue ;;
             *.index.ext.$HOSTNAME) continue ;;

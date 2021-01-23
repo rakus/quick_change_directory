@@ -334,12 +334,17 @@ default index of all directories in your home directory (excluding hidden dirs).
 
    `[ -f "$HOME/.qc/quick_change_directory.sh" ] && . "$HOME/.qc/quick_change_directory.sh"`
 
-4. Optional: Extend your local crontab, so the directory index is updated every 10 minutes.
-   The update will typically just take a few seconds.
+4. Optional: Configure crontab, so the directory index is updated every 10 minutes.
+   The index update will typically just take a few seconds.
 
-   Run `crontab -e` and add the following line at the end of the file:
+   Run `$HOME/.qc/qc-build-index --cron 10`.
 
-   `*/10 * * * * ${HOME}/.qc/qc-build-index >${HOME}/.qc/qc-build-index.log 2>&1`
+   This will add the following lines to your crontab (use `crontab -l` to check):
+
+   ```
+   # Quick Change Directory: update index
+   */10 * * * * ${HOME}/.qc/qc-build-index >${HOME}/.qc/qc-build-index.log 2>&1
+   ```
 
    Every execution will write its output to `~/.qc/qc-build-index.log`. This log file
    is always overwritten, so it only contains the log of the last execution.
