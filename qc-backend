@@ -330,6 +330,22 @@ function internalUpdateIndex
     echo "Stored $(wc -l < "$INDEX_FILE") directory names."
 }
 
+# Show statistics of indexes. List index.dstore last.
+index_statistics()
+{
+    mapfile -d$'\n' -t idx_list < <(get_indexes "e" | grep -v "$QC_DSTORE_INDEX")
+    [ -e "$QC_DSTORE_INDEX" ] && idx_list+=( "$QC_DSTORE_INDEX" )
+    for fn in "${idx_list[@]}"; do
+        echo >&2 "$fn"
+        echo >&2 "   Last Upd: $(stat -c "%y" "$fn")"
+        # shellcheck disable=SC2183,SC2046  # wc produces two args
+        printf >&2 "   Entries:  %'d (%'d bytes)\n" $(wc -lc <"$fn")
+        if [ "$fn" = "$QC_DSTORE_INDEX" ]; then
+            echo >&2 "   Labeled entries:  $(grep -c "^:" "$fn")"
+        fi
+    done
+}
+
 
 complete_index_dir()
 {
@@ -435,16 +451,7 @@ while getopts ":ieEuUSl" o "$@"; do
             ;;
         S)
             [ -n "$cl_completion" ] && exit 1
-            typeset fn
-            for fn in $(get_indexes "e"); do
-                echo >&2 "$fn"
-                echo >&2 "   Last Upd: $(stat -c "%y" "$fn")"
-                # shellcheck disable=SC2183,SC2046  # wc produces two args
-                printf >&2 "   Entries:  %'d (%'d bytes)\n" $(wc -lc <"$fn")
-                if [ "$fn" = "$QC_DSTORE_INDEX" ]; then
-                    echo >&2 "   Labeled entries:  $(grep -c "^:" "$fn")"
-                fi
-            done
+            index_statistics
             exit 0
             ;;
         l)
