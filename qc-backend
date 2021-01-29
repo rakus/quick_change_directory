@@ -58,7 +58,7 @@ show_help()
     check_initialized
 }
 
-function check_initialized
+check_initialized()
 {
     if [ ! -d "$QC_DIR" ] || ! ls -A "$QC_DIR"/*.index >/dev/null 2>&1; then
         echo "==============================================================================="
@@ -82,7 +82,7 @@ function check_initialized
 # Create regex from qc argument
 # Used from qc and completion
 # $*: The pattern to create a regex
-function args2regex
+args2regex()
 {
     typeset glob regex w
     glob=''
@@ -161,7 +161,7 @@ function args2regex
 
 # Determine index files. One file per line
 # If "$1" is not empty include extended indexes
-function get_indexes
+get_indexes()
 {
     typeset IFS=$'\n'
     if [ "${1:-}" != "E" ]; then
@@ -177,7 +177,7 @@ function get_indexes
 # $1: grep options (ignored for search by label)
 # $2: Search extended indexes? ("true" or "")
 # $3-: text to search for. With leading ':' triggers search by label.
-function dir_select
+dir_select()
 {
     typeset grepOpt="$1"
     shift
@@ -291,7 +291,7 @@ function dir_select
 
 
 # Update/create the index.
-function updateIndex
+updateIndex()
 {
     typeset PATH="$QC_DIR:$PATH"
     if command -v qc-build-index &>/dev/null; then
@@ -313,7 +313,7 @@ function updateIndex
     fi
 }
 
-function internalUpdateIndex
+internalUpdateIndex()
 {
     [ -z "${QC_DIR:-}" ] && QC_DIR="$HOME/.qc"
     if [ ! -d "$QC_DIR" ]; then

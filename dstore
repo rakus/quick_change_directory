@@ -49,7 +49,7 @@ show_help()
 }
 
 # cleanup ~/.qc/index.dstore
-function __dstore_clean
+__dstore_clean()
 {
     # if action is 'warn' just warn about none-existing dirs
     typeset action=${1:-}
@@ -115,7 +115,7 @@ function __dstore_clean
     mv -f "$QC_DSTORE_INDEX.tmp" "$QC_DSTORE_INDEX"
 }
 
-function __qc_fqname
+__qc_fqname()
 {
     if [ -d "$1" ]; then
         if ! (cd -- "$1" && pwd); then
