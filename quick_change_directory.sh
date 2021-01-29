@@ -11,7 +11,7 @@
 # AUTHOR: Ralf Schandl
 #
 
-__qc()
+function __qc
 {
     [ -n "${rst_f:-}" ] && set +f
     local PATH="${QC_DIR:-$HOME/.qc}:$PATH"
@@ -39,7 +39,7 @@ if [ -e "${QC_DIR:-$HOME/.qc}/dstore" ]; then
     alias "dstore=${QC_DIR:-$HOME/.qc}/dstore"
 fi
 
-if [ -z "$BASH" ]; then
+if [ -z "${BASH_VERSION:-}" ]; then
     return
 fi
 # the following lines are bash-specific
