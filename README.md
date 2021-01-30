@@ -1,5 +1,6 @@
 # Quick Change Directory
 
+[![Test](https://github.com/rakus/quick_change_directory/workflows/Test/badge.svg)](https://github.com/rakus/quick_change_directory/actions?query=workflow%3ATest)
 
 ## What is Quick Change Directory?
 
