@@ -14,10 +14,10 @@
 function __qc
 {
     [ -n "${rst_f:-}" ] && set +f
-    local PATH="${QC_DIR:-$HOME/.qc}:$PATH"
-    local qc_target
+    typeset PATH="${QC_DIR:-$HOME/.qc}:$PATH"
+    typeset qc_target
     qc_target="$(qc-backend "$@")"
-    local qc_rc=$?
+    typeset qc_rc=$?
     if [ -n "$qc_target" ]; then
         # shellcheck disable=SC2164 # returning with exit code below
         "cd" "$qc_target"
