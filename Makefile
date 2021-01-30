@@ -13,7 +13,7 @@ help:
 	@cat $(MAKEFILE_LIST) | grep -E '^[a-zA-Z_-]+:.*?## .*$$' | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%s\033[0m\n    %s\n", $$1, $$2}'
 
 test:   ## Run tests.
-	test/run.sh
+	test/run.sh all
 
 shellcheck:  ## Run shellcheck.
 	shellcheck -fgcc qc-backend dstore  qc-build-index
