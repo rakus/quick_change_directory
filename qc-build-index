@@ -340,16 +340,6 @@ configure_crontab()
 
 #---------[ MAIN ]-------------------------------------------------------------
 
-if [ ! -d "$QC_DIR" ]; then
-    echo "qc-build-index: First call -- initialization ...."
-    echo "Creating directory $QC_DIR"
-    mkdir "$QC_DIR" || exit 1
-    touch "$QC_DSTORE_INDEX"
-fi
-if [ ! -e "$CFG" ]; then
-    copy_default_config
-fi
-
 typeset -a INC_UPD=()
 while getopts ":Ei:" o "$@"; do
     case $o in
@@ -382,6 +372,17 @@ while getopts ":Ei:" o "$@"; do
 done
 
 shift $((OPTIND-1))
+
+if [ ! -d "$QC_DIR" ]; then
+    echo "qc-build-index: First call -- initialization ...."
+    echo "Creating directory $QC_DIR"
+    mkdir "$QC_DIR" || exit 1
+    touch "$QC_DSTORE_INDEX"
+fi
+if [ ! -e "$CFG" ]; then
+    copy_default_config
+fi
+
 
 export QC_LIST_UPD=true
 

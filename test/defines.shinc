@@ -106,15 +106,15 @@ onExit()
 
 trap "onExit" EXIT
 
+[ -d "$script_dir/testDirectory" ] && rm -rf "$script_dir/testDirectory"
+mkdir -p testDirectory/.qc
+export QC_DIR=${script_dir}/testDirectory/.qc
+
 # IF BUILD_TEST_DIRS is set ....
 if [ -n "${BUILD_TEST_DIRS:-}" ]; then
 
     echo "Setting up Test directory..."
 
-    [ -d "$script_dir/testDirectory" ] && rm -rf "$script_dir/testDirectory"
-
-    mkdir -p testDirectory/.qc
-    export QC_DIR=${script_dir}/testDirectory/.qc
     export QC_TEST_DIR=${script_dir}/testDirectory
 
     mkdir -p testDirectory/.config/localhost
