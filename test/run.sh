@@ -17,6 +17,8 @@ run_tests()
 {
     shell="$1"
     if command -v "$shell" >/dev/null 2>&1; then
+        echo "============================================================"
+        echo "Testing with $shell ($($shell --version 2>&1 | head -n1))"
         for fn in test-*.sh test-*."$shell"; do
             if [ -e "$fn" ]; then
                 echo "Running $shell $fn"
