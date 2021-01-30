@@ -16,10 +16,10 @@ test:   ## Run tests.
 	test/run.sh all
 
 shellcheck:  ## Run shellcheck.
-	shellcheck -fgcc qc-backend dstore  qc-build-index
-	shellcheck -fgcc -sbash quick_change_directory.sh
-	shellcheck -fgcc -sksh quick_change_directory.sh
-	(cd test && shellcheck -sbash -fgcc *.sh *.shinc ../quick_change_directory.sh)
+	shellcheck -e SC1107 -fgcc qc-backend dstore  qc-build-index
+	shellcheck -e SC1107 -fgcc -sbash quick_change_directory.sh
+	shellcheck -e SC1107 -fgcc -sksh quick_change_directory.sh
+	(cd test && shellcheck -e SC1107 -sbash -fgcc *.sh *.shinc ../quick_change_directory.sh)
 
 check: test shellcheck ## Run tests and shellcheck.
 
