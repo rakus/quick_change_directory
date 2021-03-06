@@ -360,7 +360,7 @@ while getopts ":Ei:" o "$@"; do
                 exit 0
             elif [ "${!OPTIND}" = "--cron" ]; then
                 shift
-                configure_crontab "${!OPTIND}"
+                configure_crontab "${!OPTIND:-}"
                 exit
             else
                 echo >&2 "Invalid option '$OPTARG' in '${!OPTIND}'" && echo >&2 ""
