@@ -20,10 +20,11 @@ shellcheck:  ## Run shellcheck.
 	shellcheck -e SC1107 -fgcc -sbash quick_change_directory.sh
 	shellcheck -e SC1107 -fgcc -sksh quick_change_directory.sh
 	(cd test && shellcheck -e SC1107 -sbash -fgcc *.sh *.shinc ../quick_change_directory.sh)
+	(cd test && shellcheck -e SC1107 -sksh -fgcc test*.sh *.shinc ../quick_change_directory.sh)
 
 check: test shellcheck ## Run tests and shellcheck.
 
-zip: ${ZIP_FILE}   ## Create zip file including INSTALL script-
+zip: ${ZIP_FILE}   ## Create zip file including INSTALL script
 
 ${ZIP_FILE}: ${ZIP_CONTENT}
 	mkdir -p build/quick-change-dir
