@@ -308,7 +308,7 @@ configure_crontab()
 
     if [ -z "$1" ]; then
         crontab -l 2>/dev/null | grep "$cron_label\|$script_name"
-        return 1
+        return 0
     fi
     if [ -n "${1//[0-9]/}" ]; then
         echo >&2 "ERROR: Invalid minutes value for '--cron'"
