@@ -13,7 +13,9 @@ script_dir="$(cd "$(dirname "$0")" && pwd)" || exit 1
 
 set -u
 
-shopt -s expand_aliases
+if [ -n "${BASH_VERSION:-}" ]; then
+    shopt -s expand_aliases
+fi
 
 export BUILD_TEST_DIRS=true
 # shellcheck source=./defines.shinc
