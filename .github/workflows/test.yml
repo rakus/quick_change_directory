@@ -14,8 +14,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  # This workflow contains a single job called "build"
-  build:
+  test-linux:
 
     runs-on: ubuntu-latest
 
@@ -35,3 +34,17 @@ jobs:
 
       - name: Run make check
         run: make check
+
+
+  test-windows:
+
+    runs-on: windows-latest
+
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE
+      - uses: actions/checkout@v2
+
+      - name: Run Tests
+        shell: bash
+        run: |
+          test/run.sh all
