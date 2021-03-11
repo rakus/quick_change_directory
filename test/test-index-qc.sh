@@ -21,8 +21,6 @@ export BUILD_TEST_DIRS=true
 # shellcheck source=./defines.shinc
 . "${script_dir}/defines.shinc"
 
-TEST_STATUS=0
-
 doQC()
 {
     cd "${script_dir}" || exit 1
@@ -73,11 +71,11 @@ startTest "index & qc"
 
 qc -U
 
-dstore :label testDirectory/Customer/ACME/Admin
+dstore :label "$TEST_DIRECTORY/Customer/ACME/Admin"
 
 echo ""
 printf "test.index exists"
-if [ -e  "${script_dir}/testDirectory/.qc/test.index" ]; then
+if [ -e  "$TEST_DIRECTORY/.qc/test.index" ]; then
     OK
 else
     ERROR
@@ -85,14 +83,14 @@ else
     exit 1
 fi
 printf "test.index entry count"
-if [ 14 -eq "$(wc -l < "${script_dir}/testDirectory/.qc/test.index")" ]; then
+if [ 14 -eq "$(wc -l < "$TEST_DIRECTORY/.qc/test.index")" ]; then
     OK
 else
     ERROR
 fi
 
 printf "hidden.index.ext exists"
-if [ -e "${script_dir}/testDirectory/.qc/hidden.index.ext" ]; then
+if [ -e "$TEST_DIRECTORY/.qc/hidden.index.ext" ]; then
     OK
 else
     ERROR
@@ -100,14 +98,14 @@ else
     exit 1
 fi
 printf "hidden.index.ext entry count"
-if [ 4 -eq "$(wc -l < "${script_dir}/testDirectory/.qc/hidden.index.ext")" ]; then
+if [ 4 -eq "$(wc -l < "$TEST_DIRECTORY/.qc/hidden.index.ext")" ]; then
     OK
 else
     ERROR
 fi
 
 printf "index.dstore exists"
-if [ -e  "${script_dir}/testDirectory/.qc/index.dstore" ]; then
+if [ -e  "$TEST_DIRECTORY/.qc/index.dstore" ]; then
     OK
 else
     ERROR
@@ -115,7 +113,7 @@ else
     exit 1
 fi
 printf "index.dstore entry count"
-if [ 1 -eq "$(wc -l < "${script_dir}/testDirectory/.qc/index.dstore")" ]; then
+if [ 1 -eq "$(wc -l < "$TEST_DIRECTORY/.qc/index.dstore")" ]; then
     OK
 else
     ERROR
@@ -125,43 +123,43 @@ echo ""
 
 
 doQC "$HOME"
-doQC "${script_dir}"/testDirectory/Customer/YoYoDyne/Admin Yo Adm
-doQC "${script_dir}"/testDirectory/Customer/YoYoDyne/Admin Y A
-doQC "${script_dir}"/testDirectory/Customer/YoYoDyne/Admin testDirectory//Y A
-doQC "${script_dir}"/testDirectory/Customer/YoYoDyne/Admin t // Y A
-doQC "${script_dir}"/testDirectory/Customer/YoYo YoYo/
-doQC "${script_dir}"/testDirectory/Customer/YoYo/MyProject 'My?roject'
-doQC "${script_dir}"/testDirectory/Customer/YoYo/MyProject 'My*ject'
-doQC "${script_dir}"/testDirectory/Customer/YoYoDyne/src 'Cus*//src'
+doQC "$TEST_DIRECTORY"/Customer/YoYoDyne/Admin Yo Adm
+doQC "$TEST_DIRECTORY"/Customer/YoYoDyne/Admin Y A
+doQC "$TEST_DIRECTORY"/Customer/YoYoDyne/Admin "$(basename "$TEST_DIRECTORY")"//Y A
+doQC "$TEST_DIRECTORY"/Customer/YoYoDyne/Admin t // Y A
+doQC "$TEST_DIRECTORY"/Customer/YoYo YoYo/
+doQC "$TEST_DIRECTORY"/Customer/YoYo/MyProject 'My?roject'
+doQC "$TEST_DIRECTORY"/Customer/YoYo/MyProject 'My*ject'
+doQC "$TEST_DIRECTORY"/Customer/YoYoDyne/src 'Cus*//src'
 
-doQC "${script_dir}"/testDirectory/A.B A.B
+doQC "$TEST_DIRECTORY"/A.B A.B
 
-doQC "${script_dir}"/testDirectory/Customer '[cC]ustomer'
+doQC "$TEST_DIRECTORY"/Customer '[cC]ustomer'
 
-doQC "${script_dir}"/testDirectory/Customer/ACME/Admin :label
-doQC "${script_dir}"/testDirectory/Customer/ACME/Admin :l
+doQC "$TEST_DIRECTORY"/Customer/ACME/Admin :label
+doQC "$TEST_DIRECTORY"/Customer/ACME/Admin :l
 
-doQC "${script_dir}"/testDirectory/Customer/YoYo -i yOyO/
-doQC "${script_dir}"/testDirectory/.config/localhost -e local
-doQC "${script_dir}"/testDirectory/.config/localhost -ei LOCALHOST
-doQC "${script_dir}"/testDirectory/.config/testdir -E testd
-doQC "${script_dir}"/testDirectory/testdir testd
+doQC "$TEST_DIRECTORY"/Customer/YoYo -i yOyO/
+doQC "$TEST_DIRECTORY"/.config/localhost -e local
+doQC "$TEST_DIRECTORY"/.config/localhost -ei LOCALHOST
+doQC "$TEST_DIRECTORY"/.config/testdir -E testd
+doQC "$TEST_DIRECTORY"/testdir testd
 
 chkQCfoundDirs 2 -e testd
 
-case "$(printf "%s\n" testDirectory/Customer/YoYo testDirectory/Customer/YoYoDyne | sort | head -n1)" in
-    testDirectory/Customer/YoYo)
+case "$(printf "%s\n" "$TEST_DIRECTORY/Customer/YoYo" "$TEST_DIRECTORY/Customer/YoYoDyne" | sort | head -n1)" in
+    */Customer/YoYo)
         yoyoIdx=1
         yoyoDyneIdx=2
         ;;
-    testDirectory/Customer/YoYoDyne)
+    */Customer/YoYoDyne)
         yoyoDyneIdx=1
         yoyoIdx=2
         ;;
 esac
 
-doQCselect "${script_dir}"/testDirectory/Customer/YoYoDyne $yoyoDyneIdx YoYo
-doQCselect "${script_dir}"/testDirectory/Customer/YoYo $yoyoIdx YoYo
+doQCselect "$TEST_DIRECTORY"/Customer/YoYoDyne $yoyoDyneIdx YoYo
+doQCselect "$TEST_DIRECTORY"/Customer/YoYo $yoyoIdx YoYo
 
 # For ksh the '| cat' is needed. Don't know why.
 NOT_EXIST_OUT="$(qc xx yy zz 2>&1 | cat)"
@@ -187,7 +185,7 @@ fi
 
 echo
 echo "Testing that command substitution in qc-index.cfg is ignores ..."
-echo "test-fail.index ${script_dir}/testDirectory -- '.*' \$(echo hallo)" >> "$QC_DIR/qc-index.cfg"
+echo "test-fail.index $TEST_DIRECTORY -- '.*' \$(echo hallo)" >> "$QC_DIR/qc-index.cfg"
 
 printf "Command substitution ignored"
 if qc -u 2>&1 | grep "Possible command substitution" >/dev/null; then
@@ -198,7 +196,7 @@ fi
 
 
 printf "test-fail.index NOT created"
-if [ ! -e  "${script_dir}/testDirectory/.qc/test-fail.index" ]; then
+if [ ! -e  "$TEST_DIRECTORY/.qc/test-fail.index" ]; then
     OK
 else
     ERROR
@@ -206,7 +204,7 @@ fi
 
 cd "${script_dir}" || exit 1
 
-endTest $TEST_STATUS
+endTest
 
 
 #---------[ END OF FILE test-index-qc.sh ]-------------------------------------

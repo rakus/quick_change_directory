@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# FILE: test-completion.sh
+# FILE: test-completion.bash
 #
 # ABSTRACT:
 #
@@ -60,7 +60,7 @@ get_completions(){
 
 #export -f get_completions __qc_complete
 
-COMP_LOG_FILE="$QC_TEST_DIR/_comp.log"
+COMP_LOG_FILE="$TEST_DIRECTORY/_comp.log"
 
 test_completion()
 {
@@ -125,5 +125,5 @@ test_completion NotThere
 
 test_completion :la -- "label"
 
-endTest $TEST_STATUS
+endTest
 

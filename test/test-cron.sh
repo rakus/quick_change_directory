@@ -16,21 +16,24 @@ set -u
 # shellcheck source=./defines.shinc
 . "${script_dir}/defines.shinc"
 
-if ! command -v crontab >/dev/null 2>&1; then
-    echo "Test skipped: Command 'crontab' not available."
-    exit 0
-fi
 
 startTest "qc-build-index --cron"
 
+if ! command -v crontab >/dev/null 2>&1; then
+    echo ""
+    echo "Test skipped: Command 'crontab' not available."
+    skipTest
+fi
+
 
 printf "Saving original crontab"
-if curEntry="$(crontab -l 2>/dev/null)"; then
+if curEntry="$(crontab -l)"; then
     OK
 else
-    ERROR
-    echo >&2 "Exiting before we destroy something"
-    endTest $TEST_STATUS
+    echo ""
+    echo "Either user has no crontab or something is wrong."
+    echo "It may be the latter, so it's better to stop now."
+    skipTest
 fi
 
 printf "List cron entry"
@@ -79,7 +82,5 @@ else
     ERROR
 fi
 
-endTest $TEST_STATUS
+endTest
 
-
-#---------[ END OF FILE test-cron.sh ]-----------------------------------------

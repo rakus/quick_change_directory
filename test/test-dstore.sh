@@ -59,18 +59,7 @@ entryExists()
     fi
 }
 
-
-
-
-#    mkdir -p testDirectory/.config/localhost
-#    mkdir -p testDirectory/Customer/YoYoDyne/Admin
-#    mkdir -p testDirectory/Customer/YoYoDyne/docs
-#    mkdir -p testDirectory/Customer/YoYoDyne/src
-#    mkdir -p testDirectory/Customer/YoYo/MyProject/Admin
-#    mkdir -p testDirectory/Customer/ACME/Admin
-
-cd "${script_dir}/testDirectory" || exit 1
-touch .qc/home.index
+cd "$TEST_DIRECTORY" || exit 1
 
 startTest "dstore"
 
@@ -109,7 +98,5 @@ entryExists "^.*HALLO"
 checkSize 4
 
 
-endTest $TEST_STATUS
+endTest
 
-
-#---------[ END OF FILE test-dstore.sh ]---------------------------------------

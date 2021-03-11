@@ -29,8 +29,6 @@ test_set()
     fi
 }
 
-TEST_STATUS=0
-
 startTest "Version Number"
 
 make_version="$(grep "^QC_VERSION " ./Makefile | sed 's/^.* = //')"
@@ -77,7 +75,5 @@ else
     echo >&2 "    qc-build-index:            $build_idx_version_lbl"
 fi
 
-endTest $TEST_STATUS
-
-exit $TEST_STATUS
+endTest
 

@@ -66,7 +66,6 @@ startTest()
 
 endTest()
 {
-    typeset rc=$1
     echo ""
     echo "------------------------------------------------------------"
     if [ $TEST_STATUS -eq 0 ]; then
@@ -78,21 +77,27 @@ endTest()
 
     TEST_OBJEKT=
 
-    exit "$rc"
+    exit "$TEST_STATUS"
+}
+
+skipTest()
+{
+    echo ""
+    echo "------------------------------------------------------------"
+    echo "  Test \"$TEST_OBJEKT\" SKIPPED"
+    echo "------------------------------------------------------------"
+    TEST_OBJEKT=
+    exit 0
 }
 
 onExit()
 {
     rc=$?
     if [ $rc = 0 ]; then
-        [ -d "${script_dir}/testDirectory" ] && rm -rf "${script_dir}/testDirectory"
+        [ -d "$TEST_DIRECTORY" ] && rm -rf "$TEST_DIRECTORY"
     else
         echo >&2 "Test FAILED"
-        echo >&2 "Testdirectory left intact: ${script_dir}/testDirectory"
-    fi
-
-    if [ -n "${tmp_arg2regex:-}" ] && [ -e "${tmp_arg2regex}" ]; then
-        rm -f "${tmp_arg2regex}"
+        echo >&2 "Testdirectory left intact: $TEST_DIRECTORY"
     fi
 
     if [ -n "$TEST_OBJEKT" ]; then
@@ -106,30 +111,29 @@ onExit()
 
 trap "onExit" EXIT
 
-[ -d "$script_dir/testDirectory" ] && rm -rf "$script_dir/testDirectory"
-mkdir -p testDirectory/.qc
-export QC_DIR=${script_dir}/testDirectory/.qc
+TEST_DIRECTORY="$script_dir/testDirectory"
+[ -d "$TEST_DIRECTORY" ] && rm -rf "$TEST_DIRECTORY"
+mkdir -p "$TEST_DIRECTORY/.qc"
+export QC_DIR="$TEST_DIRECTORY"/.qc
 
 # IF BUILD_TEST_DIRS is set ....
 if [ -n "${BUILD_TEST_DIRS:-}" ]; then
 
     echo "Setting up Test directory..."
 
-    export QC_TEST_DIR=${script_dir}/testDirectory
+    mkdir -p "$TEST_DIRECTORY/.config/localhost"
+    mkdir -p "$TEST_DIRECTORY/.config/testdir"
+    mkdir -p "$TEST_DIRECTORY/testdir"
+    mkdir -p "$TEST_DIRECTORY/Customer/YoYoDyne/Admin"
+    mkdir -p "$TEST_DIRECTORY/Customer/YoYoDyne/docs"
+    mkdir -p "$TEST_DIRECTORY/Customer/YoYoDyne/src"
+    mkdir -p "$TEST_DIRECTORY/Customer/YoYo/MyProject/Admin"
+    mkdir -p "$TEST_DIRECTORY/Customer/ACME/Admin"
+    mkdir -p "$TEST_DIRECTORY/A_B"
+    mkdir -p "$TEST_DIRECTORY/A.B"
 
-    mkdir -p testDirectory/.config/localhost
-    mkdir -p testDirectory/.config/testdir
-    mkdir -p testDirectory/testdir
-    mkdir -p testDirectory/Customer/YoYoDyne/Admin
-    mkdir -p testDirectory/Customer/YoYoDyne/docs
-    mkdir -p testDirectory/Customer/YoYoDyne/src
-    mkdir -p testDirectory/Customer/YoYo/MyProject/Admin
-    mkdir -p testDirectory/Customer/ACME/Admin
-    mkdir -p testDirectory/A_B
-    mkdir -p testDirectory/A.B
-
-    echo "test.index ${script_dir}/testDirectory -- '.*'" > "$QC_DIR/qc-index.cfg"
-    echo "hidden.index.ext -f '*testDirectory/.*' ${script_dir}/testDirectory" >> "$QC_DIR/qc-index.cfg"
+    echo "test.index '$TEST_DIRECTORY' -- '.*'" > "$QC_DIR/qc-index.cfg"
+    echo "hidden.index.ext -f '*testDirectory/.*' '$TEST_DIRECTORY'" >> "$QC_DIR/qc-index.cfg"
     cp ../qc-build-index "$QC_DIR"
     touch "$QC_DIR/test.index"
 fi

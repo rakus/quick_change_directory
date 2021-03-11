@@ -13,21 +13,10 @@ script_dir="$(cd "$(dirname "$0")" && pwd)" || exit 1
 
 set -u
 
-tmp_arg2regex="${script_dir}/qc_args2regex.shinc"
-
 # shellcheck source=./defines.shinc
 . "${script_dir}/defines.shinc"
 
-sed -n '/^args2regex()/,/^}/p' ../qc-backend > "${tmp_arg2regex}"
-if [ ! -s "${tmp_arg2regex}" ]; then
-    echo >&2 "ERROR: Function args2regex not found in ../qc-backend"
-    exit 1
-fi
-
-# shellcheck disable=SC1090
-.   "${tmp_arg2regex}"
-
-TEST_STATUS=0
+tmp_arg2regex="$TEST_DIRECTORY/args2regex"
 
 g2re()
 {
@@ -35,7 +24,6 @@ g2re()
     shift
     printf "%s" "$* -> $expected"
     actual="$(args2regex "$@")"
-
 
     if [ "$actual" = "$expected" ]; then
         OK
@@ -49,6 +37,24 @@ g2re()
 #---------[ TESTS ]------------------------------------------------------------
 
 startTest "args2regex"
+
+printf "Extracting function arg2regex"
+echo "#!/usr/bin/env bash" > "$tmp_arg2regex"
+sed -n '/^args2regex()/,/^}/p' ../qc-backend >> "${tmp_arg2regex}"
+if [ "$(wc -l <"$tmp_arg2regex")" -gt 1 ]; then
+    echo 'args2regex "$@"' >> "$tmp_arg2regex"
+    chmod +x "$tmp_arg2regex"
+    OK
+    export PATH="$TEST_DIRECTORY:$PATH"
+else
+    ERROR
+    rm -f "${tmp_arg2regex}"
+    echo >&2 "ERROR: Function args2regex not found in ../qc-backend"
+    endTest
+fi
+
+# shellcheck disable=SC1090
+#.   "${tmp_arg2regex}"
 
 g2re '[^/]*$' '*'
 g2re '[^/]*$' '*/'
@@ -105,8 +111,6 @@ g2re  'Admin[^/]*$'                            '*/Admin'
 g2re  'Admin[^/]*$'                            '*******/Admin'
 
 #------------------------------------------------------------------------------
-endTest $TEST_STATUS
+rm -f "${tmp_arg2regex}"
+endTest
 
-exit $TEST_STATUS
-
-#---------[ END OF FILE test-args2regex.sh ]-----------------------------------
