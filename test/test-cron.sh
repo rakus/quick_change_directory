@@ -4,9 +4,11 @@
 #
 # ABSTRACT: test crontab handling of qc-build-index
 #
-# AUTHOR: Ralf Schandl
+# This test is a little risky as it manipulates the users crontab. It only
+# runs on GitHub Workflow or when the environment variable QC_TEST_CRON
+# is set.
 #
-# CREATED: 2017-05-11
+# AUTHOR: Ralf Schandl
 #
 
 script_dir="$(cd "$(dirname "$0")" && pwd)" || exit 1
@@ -19,6 +21,11 @@ set -u
 
 startTest "qc-build-index --cron"
 
+if [ -z "${GITHUB_WORKFLOW:-}" ] && [ -z "${QC_TEST_CRON:-}" ]; then
+    echo "Not GitHub workflow and QC_TEST_CRON not set"
+    skipTest
+fi
+
 if ! command -v crontab >/dev/null 2>&1; then
     echo ""
     echo "Test skipped: Command 'crontab' not available."
@@ -27,14 +34,9 @@ fi
 
 
 printf "Saving original crontab"
-if curEntry="$(crontab -l)"; then
-    OK
-else
-    echo ""
-    echo "Either user has no crontab or something is wrong."
-    echo "It may be the latter, so it's better to stop now."
-    skipTest
-fi
+# might produce a message if user has no crontab
+curEntry="$(crontab -l)"
+OK
 
 printf "List cron entry"
 if qc-build-index --cron >/dev/null; then
