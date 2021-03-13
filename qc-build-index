@@ -341,7 +341,7 @@ configure_crontab()
 #---------[ MAIN ]-------------------------------------------------------------
 
 typeset -a INC_UPD=()
-while getopts ":Ei:" o "$@"; do
+while getopts ":Ei:-" o "$@"; do
     case $o in
         i)
             d=$OPTARG
@@ -351,7 +351,7 @@ while getopts ":Ei:" o "$@"; do
         E)
             ignExt=true
             ;;
-        *)
+        -)
             if [ "${!OPTIND}" = "--help" ]; then
                 show_help
                 exit 0
@@ -363,10 +363,15 @@ while getopts ":Ei:" o "$@"; do
                 configure_crontab "${!OPTIND:-}"
                 exit
             else
-                echo >&2 "Invalid option '$OPTARG' in '${!OPTIND}'" && echo >&2 ""
-                show_help >&2
+                echo >&2 "Invalid option '${!OPTIND:-}'" && echo >&2 ""
+                echo >&2 "Try '$script_name --help' for more information."
                 exit 1
             fi
+            ;;
+        *)
+            echo >&2 "Invalid option '$OPTARG'"
+            echo >&2 "Try '$script_name --help' for more information."
+            exit 1
             ;;
     esac
 done

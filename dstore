@@ -135,7 +135,7 @@ __qc_fqname()
 typeset delete=''
 typeset OPTIND o
 
-while getopts ":elcd" o "$@"; do
+while getopts ":elcd-" o "$@"; do
     case $o in
         e)
             ${VISUAL:-${EDITOR:-vi}} "$QC_DSTORE_INDEX"
@@ -151,7 +151,7 @@ while getopts ":elcd" o "$@"; do
             ;;
         d) delete=true
             ;;
-        *)
+        -)
             if [ "${!OPTIND}" = "--help" ]; then
                 show_help
                 exit 0
@@ -159,11 +159,16 @@ while getopts ":elcd" o "$@"; do
                 echo "$script_name - Quick Change Directory v$qc_version"
                 exit 0
             else
-                echo >&2 "Invalid option '$OPTARG' in '${!OPTIND}'" && echo >&2 ""
-                show_help >&2
+                echo >&2 "Invalid option '${!OPTIND:-}'" && echo >&2 ""
+                echo >&2 "Try '$script_name --help' for more information."
                 exit 1
             fi
             exit
+            ;;
+        *)
+            echo >&2 "Invalid option '$OPTARG'"
+            echo >&2 "Try '$script_name --help' for more information."
+            exit 1
             ;;
     esac
 done
