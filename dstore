@@ -225,7 +225,12 @@ while [ $# -gt 0 ]; do
             ;;
     esac
 done
-diff "$QC_DSTORE_INDEX.org" "$QC_DSTORE_INDEX" | grep -a -- "^[<>]" | sed "s/^</Removed:/;s/^>/Added:  /"
+if cmp -s "$QC_DSTORE_INDEX.org" "$QC_DSTORE_INDEX"; then
+    echo "No change"
+else
+    diff -N "$QC_DSTORE_INDEX.org" "$QC_DSTORE_INDEX" | grep -a -- "^[<>]" | sed "s/^</Removed:/;s/^>/Added:  /"
+fi
+
 rm "$QC_DSTORE_INDEX.org"
 __dstore_clean warn
 
