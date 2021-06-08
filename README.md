@@ -178,7 +178,7 @@ Qc can be configured with the following environment variables:
   file system access is slow.
 
 * `QC_SORT_LENGTH` - Qc sorts the results alphabetically. When this variable is
-  set, the result is sorted by length (shortest first). Requires Perl.
+  set, the result is sorted by length (shortest first).
 
 ## Indexes
 

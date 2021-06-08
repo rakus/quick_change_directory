@@ -35,8 +35,7 @@ else
 fi
 
 if [ -e "${QC_DIR:-$HOME/.qc}/dstore" ]; then
-    # shellcheck disable=SC2139 # yes, it should expand now
-    alias "dstore=${QC_DIR:-$HOME/.qc}/dstore"
+    alias 'dstore=${QC_DIR:-$HOME/.qc}/dstore'
 fi
 
 if [ -z "${BASH_VERSION:-}" ]; then

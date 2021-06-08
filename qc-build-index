@@ -91,10 +91,10 @@ is_descendant()
     typeset e
     for e in "${@:2}"; do
         case "$1" in
-            $e)
+            "$e")
                 return 0
                 ;;
-            $e/*)
+            "$e"/*)
                 return 0
                 ;;
         esac
@@ -393,7 +393,7 @@ export QC_LIST_UPD=true
 
 shopt -s extglob
 
-idxCount=0
+typeset -i idxCount=0
 oifs="$IFS"
 IFS=$'\n'
 typeset -i lno=0
@@ -455,7 +455,7 @@ while IFS= read -r line; do
 done < "$CFG"
 IFS="$oifs"
 
-if [ $idxCount -gt 0 ]; then
+if [ "$idxCount" -gt 0 ]; then
     exit 0
 else
     echo >&2 "ERROR: No index defined in $CFG"
