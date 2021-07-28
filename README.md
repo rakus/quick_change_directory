@@ -180,6 +180,9 @@ Qc can be configured with the following environment variables:
 * `QC_SORT_LENGTH` - Qc sorts the results alphabetically. When this variable is
   set, the result is sorted by length (shortest first).
 
+* `QC_FZF` - On multiple matches use `fzf` instead of the shells `select` to
+  choose a directory.
+
 ## Indexes
 
 The qc universe knows three type of indexes. Two of those types can be created

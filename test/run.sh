@@ -13,6 +13,8 @@ script_dir="$(cd "$(dirname "$0")" && pwd)" || exit 1
 
 cd "$script_dir" || exit 1
 
+unset QC_FZF
+
 test_shells=""
 
 run_tests()
