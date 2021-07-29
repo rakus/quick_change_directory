@@ -89,16 +89,16 @@ else
     ERROR
 fi
 
-printf "hidden.index.ext exists"
-if [ -e "$TEST_DIRECTORY/.qc/hidden.index.ext" ]; then
+printf "test.index.hidden exists"
+if [ -e "$TEST_DIRECTORY/.qc/test.index.hidden" ]; then
     OK
 else
     ERROR
     echo "Can't continue"
     exit 1
 fi
-printf "hidden.index.ext entry count"
-if [ 4 -eq "$(wc -l < "$TEST_DIRECTORY/.qc/hidden.index.ext")" ]; then
+printf "test.index.hidden entry count"
+if [ 4 -eq "$(wc -l < "$TEST_DIRECTORY/.qc/test.index.hidden")" ]; then
     OK
 else
     ERROR
@@ -140,12 +140,12 @@ doQC "$TEST_DIRECTORY"/Customer/ACME/Admin :label
 doQC "$TEST_DIRECTORY"/Customer/ACME/Admin :l
 
 doQC "$TEST_DIRECTORY"/Customer/YoYo -i yOyO/
-doQC "$TEST_DIRECTORY"/.config/localhost -e local
-doQC "$TEST_DIRECTORY"/.config/localhost -ei LOCALHOST
-doQC "$TEST_DIRECTORY"/.config/testdir -E testd
+doQC "$TEST_DIRECTORY"/.config/localhost -h local
+doQC "$TEST_DIRECTORY"/.config/localhost -hi LOCALHOST
+doQC "$TEST_DIRECTORY"/.config/testdir -H testd
 doQC "$TEST_DIRECTORY"/testdir testd
 
-chkQCfoundDirs 2 -e testd
+chkQCfoundDirs 2 -h testd
 
 case "$(printf "%s\n" "$TEST_DIRECTORY/Customer/YoYo" "$TEST_DIRECTORY/Customer/YoYoDyne" | sort | head -n1)" in
     */Customer/YoYo)

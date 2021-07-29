@@ -133,7 +133,8 @@ if [ -n "${BUILD_TEST_DIRS:-}" ]; then
     mkdir -p "$TEST_DIRECTORY/A.B"
 
     echo "test.index '$TEST_DIRECTORY' -- '.*'" > "$QC_DIR/qc-index.cfg"
-    echo "hidden.index.ext -f '*testDirectory/.*' '$TEST_DIRECTORY'" >> "$QC_DIR/qc-index.cfg"
+    #echo "hidden.index.ext -f '*testDirectory/.*' '$TEST_DIRECTORY'" >> "$QC_DIR/qc-index.cfg"
+    echo "test.index.hidden '$TEST_DIRECTORY'" >> "$QC_DIR/qc-index.cfg"
     cp "$script_dir/../qc-build-index" "$QC_DIR"
     touch "$QC_DIR/test.index"
 fi

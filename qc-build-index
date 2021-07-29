@@ -39,6 +39,8 @@ show_help()
     echo "   $script_name [-E] [-i dir] [index...]"
     echo "   $script_name --cron [minutes]"
     echo ""
+    echo "   -H      Don't update hidden index(es)."
+    echo ""
     echo "   -E      Don't update extension index(es)."
     echo ""
     echo "   -i dir  Incremental update the given dir in the affected index(es)."
@@ -149,6 +151,15 @@ build_index()
         echo >&2 "ERROR: No root directory"
         return 1
     fi
+
+    case "$IDX_NAME" in
+        *.index.hidden) ;&
+        *.index.hidden.$HOSTNAME)
+            for r in "${ROOTS[@]}"; do
+                FILTER+=( "${r}*/.**" )
+            done
+            ;;
+    esac
 
     typeset -a IGNORE_DIRS=()
     while [ $# -gt 0 ]; do
@@ -291,9 +302,9 @@ copy_default_config()
 # named 'CVS'
 home.index $HOME -- '.*' CVS
 
-# create extension index of $HOME only containing hidden directories.
+# create index of hidden directories below $HOME.
 # Ignores some 'useless' hidden dirs.
-home.hidden.index.ext -f '*/.*' $HOME -- .metadata .settings .git .svn .hg '.jazz*' .bzr .qc .cp .cache CVS
+home.index.hidden $HOME -- .metadata .settings .git .svn .hg '.jazz*' .bzr .qc .cp .cache CVS
 EOF
     fi
 }
@@ -341,12 +352,15 @@ configure_crontab()
 #---------[ MAIN ]-------------------------------------------------------------
 
 typeset -a INC_UPD=()
-while getopts ":Ei:-" o "$@"; do
+while getopts ":HEi:-" o "$@"; do
     case $o in
         i)
             d=$OPTARG
             d="${d%"${d##*[!/]}"}"
             INC_UPD+=( -i "$d" )
+            ;;
+        H)
+            ignHidden=true
             ;;
         E)
             ignExt=true
@@ -423,13 +437,23 @@ while IFS= read -r line; do
         esac
     fi
 
+    if [ -n "${ignHidden:-}" ]; then
+        case "${ARGS[0]}" in
+            *.index.hidden) continue ;;
+            *.index.hidden.$HOSTNAME) continue ;;
+        esac
+    fi
+
     case "${ARGS[0]}" in
         *.index) : ;;
         *.index.ext) : ;;
+        *.index.hidden) : ;;
         *.index.$HOSTNAME) : ;;
         *.index.ext.$HOSTNAME) : ;;
+        *.index.hidden.$HOSTNAME) : ;;
         *.index.!(*.*)) continue ;; # ignore index with other host name
         *.index.ext.!(*.*)) continue ;; # ignore index with other host name
+        *.index.hidden.!(*.*)) continue ;; # ignore index with other host name
         *) printf >&2 '%s[%d] Ignoring index %s\n' "$CFG" "$lno" "${ARGS[0]}"
             continue
             ;;

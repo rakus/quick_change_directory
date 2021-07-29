@@ -30,8 +30,11 @@ show_help()
     echo "  qc [-i] [-eE] <dir>"
     echo "      Search for dir in index and cd to it."
     echo "      -i  Search case-insensitive (slower)."
-    echo "      -e  Also search extended index."
-    echo "      -E  Only search extended index."
+    echo "      -h  Also search indexes of hidden dirs."
+    echo "      -H  Only search indexes of hidden dirs."
+    echo "      -e  Also search extended indexes."
+    echo "      -E  Only search extended indexes."
+    echo "      -a  Search all indexes."
     echo "  qc :name"
     echo "      Search for dir labeled with ':name' in index and cd to it."
     echo "      Use the command 'dstore' to manage labeled directories."
@@ -160,17 +163,58 @@ args2regex()
 }
 
 # Determine index files. One file per line
-# If "$1" is not empty include extended indexes
+# "$1": zero or more chars describing indexes to select
+#       a: all indexes
+#       h: default & hidden indexes
+#       H: hidden indexes
+#       e: default & extended indexes
+#       E: extended indexes
+#       EMPTY: default indexes
 get_indexes()
 {
     typeset IFS=$'\n'
-    if [ "${1:-}" != "E" ]; then
-        ( shopt -s nullglob ; printf '%s\n' "$QC_DIR"/*.index "$QC_DIR"/*.index."$HOSTNAME" )
-        [ -e "$QC_DSTORE_INDEX" ] && echo "$QC_DSTORE_INDEX"
+
+    typeset sel="${1:-}"
+
+    typeset default=0
+    typeset hidden=0
+    typeset extended=0
+
+
+    if [[ -z $sel ]]; then
+        default=1
+    elif [[ $sel == *a* ]]; then
+        default=1
+        hidden=1
+        extended=1
+    else
+        if [[ $sel = *[H]* ]]; then
+            hidden=1
+        fi
+        if [[ $sel = *[h]* ]]; then
+            default=1
+            hidden=1
+        fi
+        if [[ $sel = *[E]* ]]; then
+            extended=1
+        fi
+        if [[ $sel = *[e]* ]]; then
+            default=1
+            extended=1
+        fi
     fi
-    if [ -n "${1:-}" ]; then
-        ( shopt -s nullglob ; printf '%s\n' "$QC_DIR"/*.index.ext "$QC_DIR"/*.index.ext."$HOSTNAME" )
+
+    if [[ $default = 1 ]]; then
+        ( shopt -s nullglob ; printf '%s\n' "$QC_DIR"/*.index "$QC_DIR"/*.index."$HOSTNAME" | grep -v '^$' )
     fi
+    if [[ $hidden = 1 ]]; then
+        ( shopt -s nullglob ; printf '%s\n' "$QC_DIR"/*.index.hidden "$QC_DIR"/*.index.hidden."$HOSTNAME" | grep -v '^$' )
+    fi
+    if [[ $extended = 1 ]]; then
+        ( shopt -s nullglob ; printf '%s\n' "$QC_DIR"/*.index.ext "$QC_DIR"/*.index.ext."$HOSTNAME" | grep -v '^$' )
+    fi
+
+    [ -e "$QC_DSTORE_INDEX" ] && echo "$QC_DSTORE_INDEX"
 }
 
 # Select directories found in ~/.qc/*.index.
@@ -342,7 +386,7 @@ internalUpdateIndex()
 # Show statistics of indexes. List index.dstore last.
 index_statistics()
 {
-    mapfile -d$'\n' -t idx_list < <(get_indexes "e" | grep -v "$QC_DSTORE_INDEX")
+    mapfile -d$'\n' -t idx_list < <(get_indexes "a" | grep -v "$QC_DSTORE_INDEX")
     [ -e "$QC_DSTORE_INDEX" ] && idx_list+=( "$QC_DSTORE_INDEX" )
     for fn in "${idx_list[@]}"; do
         echo >&2 "$fn"
@@ -438,13 +482,19 @@ if [ "${1:-}" = "--complete" ]; then
     complete_option "$@"
 fi
 
-while getopts ":ieEuUSl-" o "$@"; do
+while getopts ":ieEhHauUSl-" o "$@"; do
     case $o in
         i) grepOpt="-i"
             ;;
-        e) indexSelect="e"
+        a) indexSelect="${indexSelect}a"
             ;;
-        E) indexSelect="E"
+        h) indexSelect="${indexSelect}h"
+            ;;
+        H) indexSelect="${indexSelect}H"
+            ;;
+        e) indexSelect="${indexSelect}e"
+            ;;
+        E) indexSelect="${indexSelect}E"
             ;;
         u)
             [ -n "$cl_completion" ] && complete_local_dir "$@"
@@ -496,6 +546,11 @@ if ! check_initialized >&2; then
     exit 1
 fi
 
+# if args include hidden filename act like '-e' was given
+if [[ " $*" = *[\ /].* ]] && [[ "$indexSelect" != [hH] ]]; then
+    indexSelect="h"
+fi
+
 if [ -n "${cl_completion:-}" ]; then
     if [ "$*" = "" ]; then
         exit 0
@@ -504,8 +559,6 @@ if [ -n "${cl_completion:-}" ]; then
     complete_index_dir "$grepOpt" "$indexSelect" "$@"
     exit 0
 fi
-
-
 
 if [ "$*" = "" ]; then
     echo "$HOME"

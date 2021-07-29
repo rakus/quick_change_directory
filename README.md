@@ -152,10 +152,13 @@ Like:
 ### Other qc option:
 
 * `-i` Search is case-insensitive. Only when searching by name.
+* `-h` Also search index files of hidden directories.
+* `-H` Only search index files of hidden directories.
 * `-e` Also search extended index files.
 * `-E` Only search extended index files.
-* `-u` Update the normal indexes.
-* `-U` Update the normal and extended indexes.
+* `-a` Search all index files.
+* `-u` Update the normal & hidden indexes.
+* `-U` Update the normal, hidden and extended indexes.
 * `-l` List labeled directories.
 * `-S` Print statistics of index files.
 * `--help` Shows help.
@@ -185,30 +188,42 @@ Qc can be configured with the following environment variables:
 
 ## Indexes
 
-The qc universe knows three type of indexes. Two of those types can be created
-automatically (via script), the third one is for manual management.
+The qc universe knows four type of indexes. Three of those types can be created
+automatically (via script), the fourth one is for manual management.
 
 All index files are held in the directory `~/.qc` (or whatever `QC_DIR` is set
 to).
 
-### Normal and Extended Indexes
+### Normal, Hidden and Extended Indexes
 
 This indexes are normal text files with one directory name per line.
 
-Normal indexes have the file extension `.index` and are always searched by qc.
+Normal indexes have the file extension `.index` and are searched by qc by
+default.
+
+Hidden indexes have the file extension `.index.hidden` and only contain
+sub directories of hidden directories. They are searched when the options `-h`,
+`-H` or `-a` are given
 
 Extended indexes have the file extension `.index.ext` and are only searched when
-qc is called with the option `-e` or `-E`.
+qc is called with the option `-e`, `-E` or `-a`.
 
 The indexes are defined in the file `~/.qc/qc-index.cfg`.
 
 Example:
 
     home.index $HOME -- '.*' CVS
+    home.index.hidden $HOME -- .git .cache
+    dev.index.extended /opt/dev -- '.*'
 
-This defines the index "home.index" (file: `~/.qc/home.index`), that contains
-all directories below `$HOME`, but excludes `.*` (= hidden dirs) and directories
-named `CVS`.
+This defines three indexes:
+* `home.index` (file: `~/.qc/home.index`) contains all directories below
+  `$HOME`, but excludes `.*` (= hidden dirs) and directories named `CVS`.
+* `home.index.hidden` (file: `~/.qc/home.index.hidden`) contains all hidden
+  directories and their descendants below `$HOME`, but excludes `.git` and
+  `.cache`.
+* `dev.index.ext` (file: `~/.qc/dev.index.ext`) contains all directories below
+  `/opt/dev`, excluding hidden directories.
 
 The comments in the file `qc-index.cfg` contains more details and examples.
 
