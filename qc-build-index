@@ -212,13 +212,13 @@ build_index()
         ignDirs=( '(' )
         for ign in "${IGNORE_DIRS[@]}"; do
             if [[ "$ign" =~ ^/.*$ ]]; then
-                ignDirs+=(-wholename "$ign" -o)
+                ignDirs+=(-path "$ign" -o)
             elif [[ "$ign" =~ ^\./.*$ ]]; then
                 for R in "${ROOTS[@]}"; do
-                    ignDirs+=(-wholename "${R}${ign:1}" -o)
+                    ignDirs+=(-path "${R}${ign:1}" -o)
                 done
             elif [[ "$ign" =~ ^.*/.*$ ]]; then
-                ignDirs+=(-wholename "*$ign" -o)
+                ignDirs+=(-path "*$ign" -o)
             else
                 ignDirs+=(-name "$ign" -o)
             fi
@@ -238,7 +238,7 @@ build_index()
             if [ ${#filter[@]} -gt 1 ]; then
                 filter+=(-o)
             fi
-            filter+=(-wholename)
+            filter+=(-path)
             filter+=("$f")
         done
         filter+=(")")
