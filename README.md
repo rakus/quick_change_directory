@@ -202,8 +202,8 @@ Normal indexes have the file extension `.index` and are searched by qc by
 default.
 
 Hidden indexes have the file extension `.index.hidden` and only contain
-sub directories of hidden directories. They are searched when the options `-h`,
-`-H` or `-a` are given
+hidden directories and their descendants. They are searched when the options
+`-h`, `-H` or `-a` are given
 
 Extended indexes have the file extension `.index.ext` and are only searched when
 qc is called with the option `-e`, `-E` or `-a`.
@@ -245,15 +245,15 @@ Examples (assuming hosts "pluto" and "mars"):
 
 __Update Performance__
 
-My home directory contains ~140000 directories and my HD is a SSD.
+My home directory contains ~170000 directories and my HD is a SSD.
 I have two indexes defined (see file qc-index.cfg).
 
-After dropping the file caches the first update takes about 30-40 seconds.
-Subsequent updates are much faster, they take about 5 seconds.
+After dropping the file caches the first update takes about 55 seconds.
+Subsequent updates are much faster due to caching, they take about 10 seconds.
 
 Update performance depends on the number of indexes and their definition.
 
-BTW: Due to ignored dirs (like .git, .metadata, ...) only half of the existing
+BTW: Due to ignored dirs (like .git, .metadata, ...) only about 95000
 directories are stored in the indexes.
 
 ### Manual Index
@@ -302,15 +302,15 @@ Just call `qc` with the option `-S`.
 
     > qc -S
     /home/rks/.qc/home.index
-       Last Upd: 2018-09-30 09:10:03.057322543 +0200
-       Entries:  36.401 (3.857.193 bytes)
-    /home/rks/.qc/home.hidden.index.ext
-       Last Upd: 2018-09-30 09:10:05.165314319 +0200
-       Entries:  18.171 (1.503.203 bytes)
+       Last Upd: 2021-07-30 06:40:04.780054251 +0200
+       Entries:  54.266 (5.642.960 bytes)
+    /home/rks/.qc/home.index.hidden
+       Last Upd: 2021-07-30 06:40:10.237055890 +0200
+       Entries:  42.004 (4.789.003 bytes)
     /home/rks/.qc/index.dstore
-       Last Upd: 2018-09-30 09:01:35.034456049 +0200
-       Entries:  10 (302 bytes)
-       Labeled entries:  8
+       Last Upd: 2021-06-11 16:44:32.358058784 +0200
+       Entries:  2 (73 bytes)
+       Labeled entries:  2
 
 
 ## Installation
