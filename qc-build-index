@@ -110,14 +110,15 @@ build_index()
     shift
 
     if [ "$IDX_NAME" != "$(basename "$IDX_NAME")" ]; then
-        echo >&2 "ERROR: Index name must be a plain filename."
+        echo >&2 "ERROR: Index name must be a plain filename: $IDX_NAME"
         return 1
     fi
 
+    typeset -a MAX_DEPTH=()
     typeset -a FILTER=()
     typeset -a INC_UPD=()
     typeset OPTARG OPTIND=0 d
-    while getopts ":f:i:" o "$@"; do
+    while getopts ":f:i:d:" o "$@"; do
         case $o in
             f) FILTER=( "${FILTER[@]}" "$OPTARG" )
                 ;;
@@ -125,6 +126,17 @@ build_index()
                 d=$OPTARG
                 d="${d%"${d##*[!/]}"}"
                 INC_UPD+=( "$d" )
+                ;;
+            d)
+                if [ ${#MAX_DEPTH[@]} -ne 0 ]; then
+                    echo >&2 "ERROR: Multiple -d for $IDX_NAME"
+                    return 1
+                fi
+                if [ -n "${OPTARG//[0-9]/}" ]; then
+                    echo >&2 "ERROR: Argument for -d not a number for $IDX_NAME"
+                    return 1
+                fi
+                MAX_DEPTH=( "-maxdepth" "$OPTARG" )
                 ;;
             *)
                 return 1
@@ -257,7 +269,7 @@ build_index()
 
     # find all directories excluding those configured
     # echo >&2 find "${ROOTS[@]}" -xdev -type d "${ignDirs[@]}" -prune -o -xtype d "${filter[@]}" -print
-    find "${ROOTS[@]}" -xdev -type d "${ignDirs[@]}" -prune -o -xtype d "${filter[@]}" -print >> "$NEW_INDEX"
+    find "${ROOTS[@]}" "${MAX_DEPTH[@]}" -xdev -type d "${ignDirs[@]}" -prune -o -xtype d "${filter[@]}" -print >> "$NEW_INDEX"
     # Don't check exit code.
     # A "permission denied" in some subdir would kill the index
 
