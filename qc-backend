@@ -204,6 +204,9 @@ get_indexes()
         fi
     fi
 
+    # make the hostname upper case
+    typeset -u HOSTNAME="$HOSTNAME"
+
     if [[ $default = 1 ]]; then
         ( shopt -s nullglob ; printf '%s\n' "$QC_DIR"/*.index "$QC_DIR"/*.index."$HOSTNAME" | grep -v '^$' )
     fi

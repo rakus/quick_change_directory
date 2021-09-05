@@ -419,6 +419,9 @@ export QC_LIST_UPD=true
 
 shopt -s extglob
 
+# make hostname upper case
+typeset -u HOSTNAME="$HOSTNAME"
+
 typeset -i idxCount=0
 oifs="$IFS"
 IFS=$'\n'
