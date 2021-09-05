@@ -212,18 +212,18 @@ The indexes are defined in the file `~/.qc/qc-index.cfg`.
 
 Example:
 
-    home.index $HOME -- '.*' CVS
+    home.index $HOME -- CVS
     home.index.hidden $HOME -- .git .cache
-    dev.index.extended /opt/dev -- '.*'
+    dev.index.extended /opt/dev
 
 This defines three indexes:
 * `home.index` (file: `~/.qc/home.index`) contains all directories below
-  `$HOME`, but excludes `.*` (= hidden dirs) and directories named `CVS`.
+  `$HOME` excluding hidden dirs. It also excludes directories named `CVS`.
 * `home.index.hidden` (file: `~/.qc/home.index.hidden`) contains all hidden
   directories and their descendants below `$HOME`, but excludes `.git` and
   `.cache`.
 * `dev.index.ext` (file: `~/.qc/dev.index.ext`) contains all directories below
-  `/opt/dev`, excluding hidden directories.
+  `/opt/dev` excluding hidden directories.
 
 The comments in the file `qc-index.cfg` contains more details and examples.
 
@@ -276,8 +276,8 @@ The file contains two types of entries (lines):
 
 Example:
 
-    /opt/IBM/WebSphere/AppServer/profiles
-    :tsmlog /var/log/tsm
+    /opt/servers/apache/config
+    :qc /home/joedoe/tools/quick_change_directory
 
 The content of `index.dstore` is managed with the command `dstore`.
 

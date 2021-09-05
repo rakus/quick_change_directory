@@ -114,11 +114,12 @@ build_index()
         return 1
     fi
 
+    typeset include_hidden=""
     typeset -a MAX_DEPTH=()
     typeset -a FILTER=()
     typeset -a INC_UPD=()
     typeset OPTARG OPTIND=0 d
-    while getopts ":f:i:d:" o "$@"; do
+    while getopts ":f:i:d:h" o "$@"; do
         case $o in
             f) FILTER=( "${FILTER[@]}" "$OPTARG" )
                 ;;
@@ -137,6 +138,9 @@ build_index()
                     return 1
                 fi
                 MAX_DEPTH=( "-maxdepth" "$OPTARG" )
+                ;;
+            h)
+                include_hidden=true
                 ;;
             *)
                 return 1
@@ -164,6 +168,7 @@ build_index()
         return 1
     fi
 
+    typeset -a IGNORE_DIRS=()
     case "$IDX_NAME" in
         *.index.hidden) ;&
         *.index.hidden.$HOSTNAME)
@@ -171,9 +176,13 @@ build_index()
                 FILTER+=( "${r}*/.**" )
             done
             ;;
+        *)
+            if [ -z "$include_hidden" ]; then
+                IGNORE_DIRS=( ".*" )
+            fi
+            ;;
     esac
 
-    typeset -a IGNORE_DIRS=()
     while [ $# -gt 0 ]; do
         IGNORE_DIRS=( "${IGNORE_DIRS[@]}" "$1" )
         shift
