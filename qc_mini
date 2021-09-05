@@ -1,0 +1,258 @@
+#!/bin/echo "ERROR: Must be sourced, not executed"
+#
+# Mini-Version of Quick-Change-Directory
+#
+# This script implements minimal versions of dstore and qc as shell functions.
+#
+# Call `dstore --help` or qc `--help` to get invocation details.
+#
+# INDEX
+# -----
+# The index file is "$HOME/.dirstore".
+# This files contains entries created by the function dstore.
+# They are either normal directory names or labeled directories.
+# E.g.:
+#     /home/joe/documents/lyrics
+#     :scripts /home/joe/code/shell-scripts
+#
+# CHANGING DIRECTORY BY NAME
+# --------------------------
+# The search syntax for qc is simple:
+#
+# 1. Every argument gets a '*' appended, except it ends with '/'
+# 2. The arguments are concatenated with a '/'
+# 3. Every '*' is replaced by the regex '[^/]*'
+# 4. Multiple slashes (//, ///, ...) are replaced by '\(.*/\)\?'
+#
+# So:
+#
+# search for dir*
+#     qc dir           .*/dir[^/]*$
+# search for dir (no '*' appended)
+#     qc dir/          .*/dir$
+# search for dir2* in dir1*
+#     qc dir1 dir2     .*/dir1[^/]*/dir2[^/]*$
+# search for dir2* somewhere below  dir1*, could be multiple levels
+#     qc dir1 /dir2    .*/dir1[^/]*/\(.*/\)\?dir2[^/]*$
+# search for dir name starting with "some" and containing "dir"
+#     qc some*dir      .*/some[^/]*dir[^/]*$
+#
+# NOTE: Pathname expansion is disabled for qc. So '*' doesn't have to be
+# escaped on the qc command line.
+#
+# CHANGING DIRECTORY BY LABEL
+# ---------------------------
+# A labled directory entry is created with 'dstore :<LABEL> directory'.
+# To change to it execute 'qc :<LABEL>'.
+# Assuming the example content mentioned above, 'qc :scripts' brings you to
+# /home/joe/code/shell-scripts.
+#
+# PORTABILITY
+# -----------
+# This script is not strictly POSIX compliant.
+#     - uses 'typeset' to define local variables
+#     - uses a select-loop
+#
+# Should run unchanged on BASH and ZSH.
+#
+# For KSH the 'typeset' does not work as expected as it is only honored when
+# used in a function defined with the 'function' keyword. To use it with ksh
+# the line 'dstore()' should be changed to 'function dstore' and '__qc' to
+# 'function __qc'.
+#
+# shellcheck shell=sh
+
+
+# File to store directories (incl. labeled dirs)
+[ -z "${QC_DIRSTORE:-}" ] && export QC_DIRSTORE="$HOME/.dirstore"
+
+#
+# Stores entries in QC_DIRSTORE
+#
+# Usage:
+#   Store current directory: dstore
+#   Store given directories: dstore dir1 ...
+#   Store labeled directory: dstore :label dir
+#
+# Also:
+# -e opens QC_DIRSTORE in editor
+# -l list dirstore content
+#
+dstore()
+{
+    # IMPORTANT: reset OPTIND
+    # shellcheck disable=SC3044 # not POSIX
+    typeset -i OPTIND=1
+    while  getopts "el" o "$@"; do
+        case "$o" in
+            e) ${EDITOR:-vi} "$QC_DIRSTORE"; return $? ;;
+            l) cat "$QC_DIRSTORE"; return $? ;;
+            *)
+                echo >&2 "Usage:"
+                echo >&2 "  dstore"
+                echo >&2 "     Store current directory."
+                echo >&2 "  dstore dir.."
+                echo >&2 "     Store dir(s)."
+                echo >&2 "  dstore :label"
+                echo >&2 "     Store current directory with label."
+                echo >&2 "  dstore :label dir"
+                echo >&2 "     Store given directory with label."
+                echo >&2 "  dstore -e"
+                echo >&2 "     Open index in editor."
+                echo >&2 "  dstore -l"
+                echo >&2 "     Display index."
+                echo >&2 ""
+                return 1
+        esac
+    done
+    shift $((OPTIND-1))
+
+    [ $# -eq 0 ] && set - "$PWD"
+
+    # shellcheck disable=SC3044 # not POSIX
+    typeset qcm_dir
+
+    case "$1" in
+        :*)
+            if [ $# -eq 1 ]; then
+                qcm_dir="."
+            elif [ $# -ne 2 ]; then
+                echo >&2 "ERROR: Expected 2 parameters"
+                return 1
+            else
+                qcm_dir="$2"
+            fi
+            if [ -d "$qcm_dir" ]; then
+                qcm_dir=$(cd "$qcm_dir" && /bin/pwd)
+                echo "$1 $qcm_dir" >> "$QC_DIRSTORE"
+            else
+                echo >&2 "$qcm_dir: Not a directory"
+            fi
+            ;;
+        *)
+            for qcm_dir in "$@"; do
+                if [ -d "$qcm_dir" ]; then
+                    qcm_dir=$(cd "$qcm_dir" && /bin/pwd)
+                    echo "$qcm_dir" >> "$QC_DIRSTORE"
+                else
+                    echo >&2 "$qcm_dir: Not a directory"
+                fi
+            done
+            ;;
+    esac
+
+    # delete duplicates
+    sort -u "$QC_DIRSTORE" > "$QC_DIRSTORE.tmp"
+    mv "$QC_DIRSTORE.tmp" "$QC_DIRSTORE"
+}
+
+
+if [ -n "${ZSH_VERSION:-}" ]; then
+    alias qc='noglob __qc'
+else
+    # bash, ksh, mksh, pdksh, dash
+    alias qc='set -f;rst_f=true __qc'
+fi
+
+__qc()
+{
+    [ -n "${rst_f:-}" ] && set +f
+    # IMPORTANT: reset OPTIND
+    # shellcheck disable=SC3044 # not POSIX
+    typeset -i OPTIND=1
+    while  getopts "l" o "$@"; do
+        case "$o" in
+            l) # list labeled directories
+                grep "^:" "$QC_DIRSTORE"
+                return 0
+                ;;
+            *)
+                # unknown option
+                echo >&2 "Usage:"
+                echo >&2 "  qc dir"
+                echo >&2 "    Change to directory matching 'dir*'"
+                echo >&2 "  qc dir1 dir2"
+                echo >&2 "    Change to directory matching 'dir1*/dir2*'"
+                echo >&2 "  qc -"
+                echo >&2 "    Act like 'cd -'"
+                echo >&2 "  qc"
+                echo >&2 "    Act like 'cd'"
+                echo >&2 "  qc -l"
+                echo >&2 "    List labeled dirs."
+                return 1
+                ;;
+        esac
+    done
+    shift $((OPTIND-1))
+
+    if [ $# -eq 0 ]; then
+        # shellcheck disable=SC2164   # return with exit code below
+        cd
+        return
+    elif [ $# -eq 1 ] && [ "$1" = "-" ]; then
+        # shellcheck disable=SC2164   # return with exit code below
+        cd -
+        return
+    elif [ "$1" = "--" ]; then
+        shift
+    fi
+
+    # shellcheck disable=SC3044 # not POSIX
+    typeset qcm_call_param="$*"
+
+    # shellcheck disable=SC3044 # not POSIX
+    typeset qcm_pattern=""
+    case "$1" in
+        :*) qcm_pattern="^$1";;
+        *)
+            # shellcheck disable=SC3044 # not POSIX
+            typeset qcm_word
+            for qcm_word in "$@"; do
+                # remove trailin '*', replace others with [^/]*
+                qcm_word="$(echo "$qcm_word" | sed 's/\*\+$//;s%\*\+%[^/]*%')"
+                case "$qcm_word" in
+                    */) qcm_pattern="$qcm_pattern/$qcm_word" ;;
+                    *)  qcm_pattern="$qcm_pattern/${qcm_word}[^/]*" ;;
+                esac
+
+            done
+            qcm_pattern="$(echo "$qcm_pattern" | sed 's%//\+%/\\(.*/\\)\\?%g;s%/\+$%%')"
+            qcm_pattern="$qcm_pattern$"
+            ;;
+    esac
+
+    oldIFS="$IFS"
+    IFS="$(printf '\nx')" && IFS="${IFS%x}"
+    set --
+    # shellcheck disable=SC2046  # yes, dangerous
+    set -- $(grep -- "$qcm_pattern" "$QC_DIRSTORE" | sed 's/^:[^ ]* //' | sort -u)
+    IFS="$oldIFS"
+    case $# in
+        0 ) echo >&2 "Not found: '$qcm_call_param' ($qcm_pattern)" ;;
+        1 )
+            # shellcheck disable=SC2164   # return with exit code below
+            cd "$1"
+            return
+            ;;
+        * )
+            # shellcheck disable=SC3044 # not POSIX
+            typeset qcm_dir
+            PS3safe=$PS3
+            PS3="# or 'q' to quit? "
+            # shellcheck disable=SC3008 # not POSIX
+            select qcm_dir in "$@"; do
+                if [ "$qcm_dir" = "" ]; then
+                    [ "$REPLY" = "q" ] && break
+                else
+                    # shellcheck disable=SC2164   # return with exit code below
+                    cd "$qcm_dir"
+                    break
+                fi
+            done
+            PS3=$PS3safe
+            unset PS3safe
+            ;;
+    esac
+}
+
+# vim:ft=sh

@@ -319,6 +319,27 @@ Just call `qc` with the option `-S`.
        Entries:  2 (73 bytes)
        Labeled entries:  2
 
+This only lists indexes that could be used on the current machine.  Host-local
+indexes of other hosts are not shown.
+
+
+## QC Mini
+
+The file `qc_mini` provides a minimal variant of `qc` and `dstore` as shell
+functions. It is intended to be sourced during shell initialization.
+
+The idea is to have a limited `qc` on some machine where one can't (or don't
+want to) install the full featured quick change directory. Typically some remote
+machine that are reached via ssh and where only administrative tasks are
+performed. From my personal experience labeled directories are the most imported
+feature.
+
+Restrictions:
+
+* Only one index file (`$HOME/.dirstore`) used for normal and labeled entries
+* No automatic index creation.
+* Limited expressions (`**` and `?` not supported)
+
 
 ## Installation
 
