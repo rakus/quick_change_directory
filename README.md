@@ -332,7 +332,7 @@ The idea is to have a limited `qc` on some machine where one can't (or don't
 want to) install the full featured quick change directory. Typically some remote
 machine that are reached via ssh and where only administrative tasks are
 performed. From my personal experience labeled directories are the most imported
-feature.
+feature in that use case.
 
 Restrictions:
 

@@ -1,4 +1,3 @@
-#!/bin/echo "ERROR: Must be sourced, not executed"
 #
 # Mini-Version of Quick-Change-Directory
 #
@@ -21,8 +20,10 @@
 #
 # 1. Every argument gets a '*' appended, except it ends with '/'
 # 2. The arguments are concatenated with a '/'
-# 3. Every '*' is replaced by the regex '[^/]*'
-# 4. Multiple slashes (//, ///, ...) are replaced by '\(.*/\)\?'
+#
+# Then a regex is created:
+# 1. Every '*' is replaced with '[^/]*'
+# 1. Multiple slashes (//, ///, ...) are replaced with '\(.*/\)\?'
 #
 # So:
 #
@@ -53,7 +54,7 @@
 #     - uses 'typeset' to define local variables
 #     - uses a select-loop
 #
-# Should run unchanged on BASH and ZSH.
+# Works in BASH and should run unchanged in ZSH.
 #
 # For KSH the 'typeset' does not work as expected as it is only honored when
 # used in a function defined with the 'function' keyword. To use it with ksh
@@ -66,25 +67,30 @@
 # File to store directories (incl. labeled dirs)
 [ -z "${QC_DIRSTORE:-}" ] && export QC_DIRSTORE="$HOME/.dirstore"
 
+unalias dstore >/dev/null 2>&1
+unalias qc >/dev/null 2>&1
+
 #
 # Stores entries in QC_DIRSTORE
 #
 # Usage:
 #   Store current directory: dstore
 #   Store given directories: dstore dir1 ...
-#   Store labeled directory: dstore :label dir
+#   Label current directory: dstore :<label>
+#   Label given directory:   dstore :<label> dir
 #
 # Also:
 # -e opens QC_DIRSTORE in editor
 # -l list dirstore content
 #
+# shellcheck disable=SC3044 # typeset is not POSIX
 dstore()
 {
     # IMPORTANT: reset OPTIND
-    # shellcheck disable=SC3044 # not POSIX
     typeset -i OPTIND=1
-    while  getopts "el" o "$@"; do
-        case "$o" in
+    typeset qcm_o
+    while  getopts "el" qcm_o "$@"; do
+        case "$qcm_o" in
             e) ${EDITOR:-vi} "$QC_DIRSTORE"; return $? ;;
             l) cat "$QC_DIRSTORE"; return $? ;;
             *)
@@ -109,7 +115,6 @@ dstore()
 
     [ $# -eq 0 ] && set - "$PWD"
 
-    # shellcheck disable=SC3044 # not POSIX
     typeset qcm_dir
 
     case "$1" in
@@ -154,14 +159,15 @@ else
     alias qc='set -f;rst_f=true __qc'
 fi
 
+# shellcheck disable=SC3008,SC3044 # select and typeset are not POSIX
 __qc()
 {
     [ -n "${rst_f:-}" ] && set +f
     # IMPORTANT: reset OPTIND
-    # shellcheck disable=SC3044 # not POSIX
     typeset -i OPTIND=1
-    while  getopts "l" o "$@"; do
-        case "$o" in
+    typeset qcm_o
+    while  getopts "l" qcm_o "$@"; do
+        case "$qcm_o" in
             l) # list labeled directories
                 grep "^:" "$QC_DIRSTORE"
                 return 0
@@ -197,15 +203,12 @@ __qc()
         shift
     fi
 
-    # shellcheck disable=SC3044 # not POSIX
     typeset qcm_call_param="$*"
 
-    # shellcheck disable=SC3044 # not POSIX
     typeset qcm_pattern=""
     case "$1" in
         :*) qcm_pattern="^$1";;
         *)
-            # shellcheck disable=SC3044 # not POSIX
             typeset qcm_word
             for qcm_word in "$@"; do
                 # remove trailin '*', replace others with [^/]*
@@ -235,22 +238,24 @@ __qc()
             return
             ;;
         * )
-            # shellcheck disable=SC3044 # not POSIX
             typeset qcm_dir
+            typeset qcm_rc
+            qcm_rc=0
             PS3safe=$PS3
             PS3="# or 'q' to quit? "
-            # shellcheck disable=SC3008 # not POSIX
             select qcm_dir in "$@"; do
                 if [ "$qcm_dir" = "" ]; then
                     [ "$REPLY" = "q" ] && break
                 else
-                    # shellcheck disable=SC2164   # return with exit code below
+                    # shellcheck disable=SC2164 #
                     cd "$qcm_dir"
+                    qcm_rc=$?
                     break
                 fi
             done
             PS3=$PS3safe
             unset PS3safe
+            return $qcm_rc
             ;;
     esac
 }
