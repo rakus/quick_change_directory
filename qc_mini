@@ -255,4 +255,51 @@ __qc()
     esac
 }
 
+# Lots of shellcheck directives now as the following is BASH code
+# shellcheck disable=SC3003,SC3005,SC3018,SC3030,SC3043,SC3044,SC2207,SC3050,SC3054
+if [ -n "${BASH_VERSION:-}" ]; then
+
+
+    _qc_complete()
+    {
+        local cur prev opts
+        COMPREPLY=()
+
+        cur="${COMP_WORDS[COMP_CWORD]}"
+
+        prev="${COMP_WORDS[COMP_CWORD-1]}"
+        if [ -n "$cur" ]; then
+            cur=$(eval "echo ${cur}")
+            if [ "$prev" = ":" ]; then
+                opts=$(grep "^:${cur}[^ ]* " "${QC_DIRSTORE}" | sed "s% .*%%" | sed "s%^:%%")
+            else
+                local qcm_pattern qcm_word
+                qcm_pattern=""
+                for qcm_word in "${COMP_WORDS[@]:1}"; do
+                    qcm_word="$(echo "$qcm_word" | sed 's/\*\+$//;s%\*\+%[^/]*%')"
+                    case "$qcm_word" in
+                        */) qcm_pattern="$qcm_pattern/$qcm_word" ;;
+                        *)  qcm_pattern="$qcm_pattern/${qcm_word}[^/]*" ;;
+                    esac
+                done
+                qcm_pattern="$(echo "$qcm_pattern" | sed 's%//\+%/\\(.*/\\)\\?%g;s%/\+$%%')"
+                qcm_pattern="$qcm_pattern$"
+                opts=$(grep "$qcm_pattern" "${QC_DIRSTORE}" | grep -o "${cur}[^/]*$")
+            fi
+            local IFS=$'\n'
+            COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+            # Do escaping
+            if [ ${#COMPREPLY[@]} = 1 ]; then
+                COMPREPLY=( $(printf "%q" "${COMPREPLY[0]}") )
+            else
+                for ((i=0; i < ${#COMPREPLY[@]}; i++)); do
+                    COMPREPLY[$i]=$(printf "%q" "${COMPREPLY[$i]}")
+                done
+            fi
+            return 0
+        fi
+    }
+complete -F _qc_complete qc
+fi
+
 # vim:ft=sh
