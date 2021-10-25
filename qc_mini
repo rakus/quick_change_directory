@@ -43,7 +43,7 @@
 #
 # CHANGING DIRECTORY BY LABEL
 # ---------------------------
-# A labled directory entry is created with 'dstore :<LABEL> directory'.
+# A labeled directory entry is created with 'dstore :<LABEL> directory'.
 # To change to it execute 'qc :<LABEL>'.
 # Assuming the example content mentioned above, 'qc :scripts' brings you to
 # /home/joe/code/shell-scripts.

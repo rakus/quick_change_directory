@@ -111,7 +111,7 @@ args2regex()
 
     # Remove
     # - leading slashes
-    # - than leading asterixes followed by slashes
+    # - than leading asterisks followed by slashes
     # - than trailing slashes
     glob="$(echo "$glob" | sed 's%^//*%%;s%^\*\**//*%%;s%//*$%%')"
 
@@ -320,7 +320,7 @@ dir_select()
 
         typeset COLUMNS=0
         # replace home directory with '~' for display and later re-add it on
-        # choosen dir.
+        # selected dir.
         dl=( "${dl[@]/#$HOME/\~}" )
 
         if [ -n "${QC_FZF:-}" ]; then
