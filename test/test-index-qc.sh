@@ -184,7 +184,7 @@ fi
 
 
 echo
-echo "Testing that command substitution in qc-index.cfg is ignores ..."
+echo "Testing that command substitution in qc-index.cfg is ignored ..."
 echo "test-fail.index $TEST_DIRECTORY -- '.*' \$(echo hallo)" >> "$QC_DIR/qc-index.cfg"
 
 printf "Command substitution ignored"
