@@ -20,7 +20,7 @@ QC_DSTORE_INDEX=$QC_DIR/index.dstore
 set -u
 
 # enable extended globbing
-shopt -s extglob
+shopt -s extglob nullglob
 
 show_help()
 {
@@ -63,7 +63,8 @@ show_help()
 
 check_initialized()
 {
-    if [ ! -d "$QC_DIR" ] || ! ls -A "$QC_DIR"/*.index >/dev/null 2>&1; then
+    local idx_files=( "$QC_DIR"/*.index )
+    if [ ${#idx_files[*]} -eq 0 ]; then
         echo "==============================================================================="
         echo
         echo "Quick Change Directory not initialized."
@@ -207,17 +208,24 @@ get_indexes()
     # make the hostname upper case
     typeset -u HOSTNAME="$HOSTNAME"
 
+    typeset -a idx_files
+
     if [[ $default = 1 ]]; then
-        ( shopt -s nullglob ; printf '%s\n' "$QC_DIR"/*.index "$QC_DIR"/*.index."$HOSTNAME" | grep -v '^$' )
+        idx_files+=( "$QC_DIR"/*.index "$QC_DIR"/*.index."$HOSTNAME" )
     fi
     if [[ $hidden = 1 ]]; then
-        ( shopt -s nullglob ; printf '%s\n' "$QC_DIR"/*.index.hidden "$QC_DIR"/*.index.hidden."$HOSTNAME" | grep -v '^$' )
+        idx_files+=( "$QC_DIR"/*.index.hidden "$QC_DIR"/*.index.hidden."$HOSTNAME" )
     fi
     if [[ $extended = 1 ]]; then
-        ( shopt -s nullglob ; printf '%s\n' "$QC_DIR"/*.index.ext "$QC_DIR"/*.index.ext."$HOSTNAME" | grep -v '^$' )
+        idx_files+=( "$QC_DIR"/*.index.ext "$QC_DIR"/*.index.ext."$HOSTNAME" )
     fi
 
-    [ -e "$QC_DSTORE_INDEX" ] && echo "$QC_DSTORE_INDEX"
+    [ -e "$QC_DSTORE_INDEX" ] && idx_files+=( "$QC_DSTORE_INDEX" )
+
+    if [ ${#idx_files[*]} -gt 0 ]; then
+        printf "%s\n" "${idx_files[@]}"
+    fi
+
 }
 
 # Select directories found in ~/.qc/*.index.
