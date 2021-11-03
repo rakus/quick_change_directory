@@ -233,21 +233,21 @@ __Host-Local Indexes__
 
 Sometimes the home directory of a user is used on different host. Then also the
 QC configuration is shared. If a index should only be used on a special host,
-the index name can get the hosts name as extension. The host name **must be
-written in UPPER case**.
+the index name can get "host." followed by the hosts name as extension. The host
+name **must be written in LOWER case**.
 
 Examples (assuming hosts "pluto" and "mars"):
 
-    dev.index.PLUTO
-    dev.index.ext.PLUTO
-    dev.index.MARS
-    dev.index.ext.MARS
+    dev.index.host.pluto
+    dev.index.ext.host.pluto
+    dev.index.host.mars
+    dev.index.ext.host.mars
 
 BTW: If the variable $HOSTNAME is used:
 
-    dev.index.$HOSTNAME
+    dev.index.host.$HOSTNAME
 
-The script `qc-build-index` sets the host name in upper case.
+The script `qc-build-index` sets the host name in lower case.
 
 
 __Update Performance__

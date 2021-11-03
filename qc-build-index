@@ -428,8 +428,8 @@ export QC_LIST_UPD=true
 
 shopt -s extglob
 
-# make hostname upper case
-typeset -u HOSTNAME="$HOSTNAME"
+# make hostname lower case
+typeset -l HOSTNAME="$HOSTNAME"
 
 typeset -i idxCount=0
 oifs="$IFS"
@@ -469,16 +469,16 @@ while IFS= read -r line; do
     fi
 
     case "${ARGS[0]}" in
-        *.index) : ;;
-        *.index.ext) : ;;
-        *.index.hidden) : ;;
-        *.index.$HOSTNAME) : ;;
-        *.index.ext.$HOSTNAME) : ;;
-        *.index.hidden.$HOSTNAME) : ;;
-        *.index.!(*.*)) continue ;; # ignore index with other host name
-        *.index.ext.!(*.*)) continue ;; # ignore index with other host name
-        *.index.hidden.!(*.*)) continue ;; # ignore index with other host name
-        *) printf >&2 '%s[%d] Ignoring index %s\n' "$CFG" "$lno" "${ARGS[0]}"
+        *.index?(.ext|.hidden) ) : ;;
+        *.index?(.ext|.hidden).host.$HOSTNAME ) : ;;
+        *.index?(.ext|.hidden).host.*[A-Z]* )
+            printf >&2 '%s[%d] Hostname contains upper case char(s) - ignoring %s\n' "$CFG" "$lno" "${ARGS[0]}"
+            continue
+            ;;
+        *.index?(.ext|.hidden).host.* )
+            continue # silently ignore index with other host name
+            ;;
+        *) printf >&2 '%s[%d] Ignoring invalid index name %s\n' "$CFG" "$lno" "${ARGS[0]}"
             continue
             ;;
     esac
@@ -500,6 +500,7 @@ while IFS= read -r line; do
     if ! build_index "${ARGS[@]}"; then
         printf >&2 '%s[%d] ERROR: Building index failed.\n' "$CFG" "$lno"
     fi
+
 done < "$CFG"
 IFS="$oifs"
 
@@ -509,6 +510,4 @@ else
     echo >&2 "ERROR: No index defined in $CFG"
     exit 1
 fi
-
-
 

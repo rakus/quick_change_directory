@@ -205,19 +205,19 @@ get_indexes()
         fi
     fi
 
-    # make the hostname upper case
-    typeset -u HOSTNAME="$HOSTNAME"
+    # make the hostname lower case
+    typeset -l HOSTNAME="$HOSTNAME"
 
     typeset -a idx_files
 
     if [[ $default = 1 ]]; then
-        idx_files+=( "$QC_DIR"/*.index "$QC_DIR"/*.index."$HOSTNAME" )
+        idx_files+=( "$QC_DIR"/*.index "$QC_DIR"/*.index.host."$HOSTNAME" )
     fi
     if [[ $hidden = 1 ]]; then
-        idx_files+=( "$QC_DIR"/*.index.hidden "$QC_DIR"/*.index.hidden."$HOSTNAME" )
+        idx_files+=( "$QC_DIR"/*.index.hidden "$QC_DIR"/*.index.hidden.host."$HOSTNAME" )
     fi
     if [[ $extended = 1 ]]; then
-        idx_files+=( "$QC_DIR"/*.index.ext "$QC_DIR"/*.index.ext."$HOSTNAME" )
+        idx_files+=( "$QC_DIR"/*.index.ext "$QC_DIR"/*.index.ext.host."$HOSTNAME" )
     fi
 
     [ -e "$QC_DSTORE_INDEX" ] && idx_files+=( "$QC_DSTORE_INDEX" )
