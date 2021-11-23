@@ -76,6 +76,8 @@ g2re 'dir/\(.*/\)*subdir[^/]*$' dir/ //subdir
 
 g2re 'dir/[^/]*/subdir$' 'dir/*/subdir/'
 g2re 'dir/\(.*/\)*subdir$' 'dir/**/subdir/'
+g2re 'dir/\(.*/\)*subdir$' 'dir/***/subdir/'
+g2re 'dir/\(.*/\)*subdir$' 'dir/********/subdir/'
 
 g2re 'a\*b$' a\\\*b/
 g2re 'a\*b$' 'a\*b/'

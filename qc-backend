@@ -119,40 +119,43 @@ args2regex()
     while [ -n "$glob" ]; do
 
         case "$glob" in
-            \*\*/*) # '**' -> '.*'
-                regex="$regex\(.*/\)*"
-                glob="${glob:3}"
-                ;;
-            \*\**) # '**' -> '.*'
-                regex="$regex.*"
+            \*\**)
                 glob="${glob#"${glob%%[!*]*}"}"
+                if [ "${glob:0:1}" = "/" ]; then
+                    # '**/' -> '\(.*/\)*'
+                    glob="${glob:1}"
+                    regex+='\(.*/\)*'
+                else
+                    # '**' -> '.*'
+                    regex+='.*'
+                fi
                 ;;
             //*) # '//' -> '/.*/'
-                regex="$regex/\\(.*/\\)*"
+                regex+='/\(.*/\)*'
                 glob="${glob#"${glob%%[!/]*}"}"
                 ;;
             \**) # '*' -> '[^/]*'
-                regex="${regex}[^/]*"
+                regex+='[^/]*'
                 glob="${glob:1}"
                 ;;
             \?*) # '?' -> '[^/]'
-                regex="${regex}[^/]"
+                regex+='[^/]'
                 glob="${glob:1}"
                 ;;
             \\\?*) # copy escaped char
-                regex="${regex}?"
+                regex+='?'
                 glob="${glob:2}"
                 ;;
             \\*) # copy escaped char
-                regex="$regex${glob:0:2}"
+                regex+="${glob:0:2}"
                 glob="${glob:2}"
                 ;;
             .*)
-                regex="$regex\\."
+                regex+='\.'
                 glob="${glob:1}"
                 ;;
             *)
-                regex="$regex${glob:0:1}"
+                regex+="${glob:0:1}"
                 glob="${glob:1}"
                 ;;
         esac
