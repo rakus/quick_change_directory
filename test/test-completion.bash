@@ -105,7 +105,7 @@ startTest "Completion"
 
 qc -U
 
-dstore :label testDirectory/Customer/ACME/Admin
+dstore :label "$TEST_DIRECTORY/Customer/ACME/Admin"
 
 test_completion A Ad -- Admin/
 test_completion YoYo -- YoYo/ YoYoDyne/
