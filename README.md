@@ -183,8 +183,11 @@ Qc can be configured with the following environment variables:
 * `QC_SORT_LENGTH` - Qc sorts the results alphabetically. When this variable is
   set, the result is sorted by length (shortest first).
 
-* `QC_FZF` - On multiple matches use `fzf` instead of the shells `select` to
-  choose a directory.
+* `QC_FZF` - If not empty use `fzf` instead of the shells `select` to
+  choose a directory on multiple matches.
+
+* `QC_USE_FIND` - By default qc prefers `fd` to `find` to scan  the directory
+  tree. By setting `QC_USE_FIND` to not empty the command `find` is used.
 
 ## Indexes
 

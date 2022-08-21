@@ -83,7 +83,14 @@ else
     exit 1
 fi
 printf "test.index entry count"
-if [ 14 -eq "$(wc -l < "$TEST_DIRECTORY/.qc/test.index")" ]; then
+if [ "$TEST_DIRECTORY" = "$(head -n1  "$TEST_DIRECTORY/.qc/test.index")" ]; then
+    # created with find
+    expected_cnt=14
+else
+    # created with fd
+    expected_cnt=13
+fi
+if [ $expected_cnt -eq "$(wc -l < "$TEST_DIRECTORY/.qc/test.index")" ]; then
     OK
 else
     ERROR
@@ -98,7 +105,14 @@ else
     exit 1
 fi
 printf "test.index.hidden entry count"
-if [ 4 -eq "$(wc -l < "$TEST_DIRECTORY/.qc/test.index.hidden")" ]; then
+if [ "$TEST_DIRECTORY" = "$(head -n1  "$TEST_DIRECTORY/.qc/test.index.hidden")" ]; then
+    # created with find
+    expected_cnt=5
+else
+    # created with fd
+    expected_cnt=4
+fi
+if [ $expected_cnt -eq "$(wc -l < "$TEST_DIRECTORY/.qc/test.index.hidden")" ]; then
     OK
 else
     ERROR
