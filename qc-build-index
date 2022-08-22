@@ -377,6 +377,7 @@ build_index_using_fd()
         *.index.hidden.$HOSTNAME)
             FD_ARGS+=( --hidden )
             FD_PATTERN='.*/\..*'
+            hidden_only=true
             ;;
         *)
             if [ -n "$include_hidden" ]; then
@@ -442,7 +443,18 @@ build_index_using_fd()
 
     # find all directories excluding those configured
     echo "Using fd command"
-    fd -I --full-path -s --type d "${FD_ARGS[@]}" "${IGNORE_DIRS[@]}" "${FD_PATTERN}" "${ROOTS[@]}" >> "$NEW_INDEX"
+    if [ -n "${hidden_only:-}" ]; then
+        for r in "${ROOTS[@]}"; do
+            if [[ "$r" = *"/."* ]]; then
+                echo "$r" >> "$NEW_INDEX"
+            fi
+        done
+    else
+        for r in "${ROOTS[@]}"; do
+            echo "$r" >> "$NEW_INDEX"
+        done
+    fi
+    fd -L -I --full-path -s --type d "${FD_ARGS[@]}" "${IGNORE_DIRS[@]}" "${FD_PATTERN}" "${ROOTS[@]}" >> "$NEW_INDEX"
 
     if [ -s "$NEW_INDEX" ]; then
         # replace .qc/index with new content

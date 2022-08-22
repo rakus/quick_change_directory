@@ -217,7 +217,7 @@ Example:
 
     home.index $HOME -- CVS
     home.index.hidden $HOME -- .git .cache
-    dev.index.extended /opt/dev
+    dev.index.ext /opt/dev
 
 This defines three indexes:
 * `home.index` (file: `~/.qc/home.index`) contains all directories below
