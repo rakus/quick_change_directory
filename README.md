@@ -253,18 +253,34 @@ BTW: If the variable $HOSTNAME is used:
 The script `qc-build-index` sets the host name in lower case.
 
 
+__Using `fd` vs `find`__
+
+The script `qc-build-index` uses the command `fd` or `find` to scan the
+directory tree. By default `fd` is preferred due to better performance. See
+below.
+
+The results are slightly different because of the handling of symbolic links.
+
+
 __Update Performance__
-
-My home directory contains ~170000 directories and my HD is a SSD.
-I have two indexes defined (see file qc-index.cfg).
-
-After dropping the file caches the first update takes about 55 seconds.
-Subsequent updates are much faster due to caching, they take about 10 seconds.
 
 Update performance depends on the number of indexes and their definition.
 
-BTW: Due to ignored dirs (like .git, .metadata, ...) only about 95000
+My home directory contains ~150000 directories and my HD is a SSD.
+I have two indexes defined (see file qc-index.cfg).
+Due to ignored dirs (like .git, .metadata, ...) only about 95000
 directories are stored in the indexes.
+
+Performance depends on the tool used to scan the directory tree.
+If available (and `QC_USE_FIND` is not set), the tool `fd` is preferred.
+
+| Tool | dropped fs-cache | filled fs-cache |
+|------|------------------|-----------------|
+| fd   | ~ 5 seconds      | ~ 1.7 seconds   |
+| find | ~ 40 seconds     | ~ 13  seconds   |
+
+Exact performance numbers depend on hardware (CPU, disk) and current load of the
+system.
 
 ### Manual Index
 

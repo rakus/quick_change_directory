@@ -286,9 +286,10 @@ build_index()
     # find all directories excluding those configured
     # echo >&2 find "${ROOTS[@]}" -xdev -type d "${ignDirs[@]}" -prune -o -xtype d "${filter[@]}" -print
     echo "Using find command"
-    find "${ROOTS[@]}" "${MAX_DEPTH[@]}" -xdev -type d "${ignDirs[@]}" -prune -o -xtype d "${filter[@]}" -print >> "$NEW_INDEX"
+    find -L "${ROOTS[@]}" "${MAX_DEPTH[@]}" -xdev -type d "${ignDirs[@]}" -prune -o -xtype d "${filter[@]}" -print >> "$NEW_INDEX"
     # Don't check exit code.
     # A "permission denied" in some subdir would kill the index
+    #sort "$NEW_INDEX" > "$INDEX_FILE.find"
 
     if [ -s "$NEW_INDEX" ]; then
         # replace .qc/index with new content
@@ -454,7 +455,8 @@ build_index_using_fd()
             echo "$r" >> "$NEW_INDEX"
         done
     fi
-    fd -L -I --full-path -s --type d "${FD_ARGS[@]}" "${IGNORE_DIRS[@]}" "${FD_PATTERN}" "${ROOTS[@]}" >> "$NEW_INDEX"
+    fd -L -I --xdev --full-path -s --type d "${FD_ARGS[@]}" "${IGNORE_DIRS[@]}" "${FD_PATTERN}" "${ROOTS[@]}" >> "$NEW_INDEX"
+    #sort "$NEW_INDEX" > "$INDEX_FILE.fd"
 
     if [ -s "$NEW_INDEX" ]; then
         # replace .qc/index with new content
