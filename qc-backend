@@ -247,13 +247,20 @@ dir_select()
     case $1 in
         :*)
             pattern=$1
-            [ $# -gt 1 ] && echo >&2 "WARNING: Extra arguments ignored"
             if [ ! -e "$QC_DSTORE_INDEX" ]; then
                 echo >&2 "qc: Dstore index file not found! Use 'dstore' to create it."
                 return 1
             fi
             # grep: -h: Suppress the prefixing of file names on output.
             mapfile -d$'\n' -t dl < <(grep -ahi -- "^${pattern}[^ ]* " "$QC_DSTORE_INDEX" | cut "-d " -f2- | sort -u)
+            if [[ $# -gt 1 && ${#dl[*]} -eq 1 ]]; then
+                shift
+                local bd="${dl[0]%%/}/"
+                dir_select "$grepOpt" "a" "$bd" "$@"
+                return
+            elif [ $# -gt 1 ]; then
+                echo >&2 "WARNING: Extra arguments ignored ($pattern returned more than on directory)"
+            fi
             ;;
         *)
             mapfile -d$'\n' -t idxFiles < <( get_indexes "$indexSelect")
@@ -373,6 +380,7 @@ updateIndex()
                 ARGS+=( "-i" "$d")
             fi
         done
+        echo "qc-build-index ${ARGS[*]}"
         qc-build-index "${ARGS[@]}"
     else
         echo "Updating index (internal update)..."
