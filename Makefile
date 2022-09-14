@@ -7,7 +7,9 @@
 QC_VERSION = 2.0
 
 ZIP_FILE = quick-change-directory.zip
-ZIP_CONTENT = README.md LICENSE INSTALL quick_change_directory.sh qc-backend qc-build-index qc-index.cfg dstore
+ZIP_CONTENT = README.md LICENSE INSTALL quick_change_directory.sh qc-backend qc-build-index qc-index.cfg dstore qc_mini
+
+
 
 help:
 	@cat $(MAKEFILE_LIST) | grep -E '^[a-zA-Z_-]+:.*?## .*$$' | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%s\033[0m\n    %s\n", $$1, $$2}'

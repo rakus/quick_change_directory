@@ -374,6 +374,7 @@ The following files are distributed:
 | `dstore`                    | Script to manage the manual index.               | `~/.qc/dstore`         |
 | `qc-build-index`            | Processes `qc-index.cfg` to create index files.  | `~/.qc/qc-build-index` |
 | `qc-index.cfg`              | Defines indexes to create.                       | `~/.qc/qc-index.cfg`   |
+| `qc_mini`                   | Minimal version of qc. See above.                | Not installed          |
 
 
 ### I don't want to install -- just test it
