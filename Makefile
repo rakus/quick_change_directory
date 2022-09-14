@@ -32,10 +32,32 @@ ${ZIP_FILE}: ${ZIP_CONTENT}
 	(cd build && zip -r ../$@ quick-change-dir)
 	rm -rf build
 
-html: README.html          ## Build README.html
+html: README.html          ## Build README.html for review
+
+define HTML_HEAD
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Quick Change Directory</title>
+    <style>
+      table, th, td {
+        border: 1px solid black;
+        border-collapse: collapse;
+      }
+    </style>
+  </head>
+  <body>
+endef
+
+define HTML_TAIL
+  </body>
+</html>
+endef
+
+export HTML_HEAD HTML_TAIL
 
 README.html: README.md
-	marked --gfm --tables $< > $@
+	( echo "$${HTML_HEAD}" && marked --gfm --tables $< && echo "$${HTML_TAIL}" ) > $@
 
 clean:                     ## Cleanup by removing README.html and zip file
 	rm -rf ${ZIP_FILE} README.html build/

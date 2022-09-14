@@ -141,7 +141,7 @@ Note that wildcard expansion is disabled for `qc`. No need to escape `*` etc.
 
 ### Command line completion
 
-Bash command line completion is supported for 'qc'. Just use <TAB> as you
+Bash command line completion is supported for 'qc'. Just use `<TAB>` as you
 would do for the cd commands.
 
 Like:
