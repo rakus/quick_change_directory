@@ -38,31 +38,61 @@ if [ -e "${QC_DIR:-$HOME/.qc}/dstore" ]; then
     alias 'dstore=${QC_DIR:-$HOME/.qc}/dstore'
 fi
 
-if [ -z "${BASH_VERSION:-}" ]; then
+if [ -z "${BASH_VERSION:-}${ZSH_VERSION:-}" ]; then
     return
-fi
+elif [ -n "${BASH_VERSION:-}" ]; then
 # the following lines are bash-specific
 
-__qc_complete()
-{
-    local PATH="${QC_DIR:-$HOME/.qc}:$PATH"
-    local cur words
+    __qc_complete()
+    {
+        local PATH="${QC_DIR:-$HOME/.qc}:$PATH"
+        local cur words
 
-    # special handling for :*
-    cur="${COMP_LINE##* }"
+        _get_comp_words_by_ref -n : cur
+        # fallback if _get_comp_words_by_ref is not available:
+        #cur="${COMP_WORDS[COMP_CWORD]}"
+        #if [ "${COMP_WORDS[COMP_CWORD-1]}" = ":" ]; then
+        #    cur=":$cur"
+        #fi
 
-    words=( "${COMP_WORDS[@]:1}" )
+        words=( "${COMP_WORDS[@]:1}" )
 
-    case "$cur" in
-        ':'*)
-            mapfile -d$'\n' -t COMPREPLY < <( qc-backend --complete "$cur" )
-            ;;
-        *)
-            mapfile -d$'\n' -t COMPREPLY < <( qc-backend --complete "${words[@]}" )
-            ;;
-    esac
-}
+        case "$cur" in
+            ':'*)
+                mapfile -d$'\n' -t COMPREPLY < <( qc-backend --complete "$cur" )
+                COMPREPLY=( "${COMPREPLY[@]#:}" )
+                ;;
+            *)
+                mapfile -d$'\n' -t COMPREPLY < <( qc-backend --complete "${words[@]}" )
+                ;;
+        esac
+    }
 
-complete -o nospace -F __qc_complete qc
+    complete -o nospace -F __qc_complete qc
+
+elif [ -n "${ZSH_VERSION:-}" ]; then
+
+    __qc_complete()
+    {
+        local PATH="${QC_DIR:-$HOME/.qc}:$PATH"
+        local cur="$PREFIX"
+        local -a comp
+
+        case "$cur" in
+            ':'*)
+                # weird syntax copies from stackoverflow
+                comp=("${(@f)$(qc-backend --complete "$cur")}")
+                ;;
+            *)
+                comp=("${(@f)$( qc-backend --complete "${words[@]:1}" )}")
+                ;;
+        esac
+        compadd "${comp[@]}"
+
+        return 0
+    }
+
+    compdef __qc_complete __qc qc
+fi
 
 # vim:ft=sh:et:ts=4:sw=4
