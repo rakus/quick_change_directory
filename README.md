@@ -353,11 +353,14 @@ machine that are reached via ssh and where only administrative tasks are
 performed. From my personal experience labeled directories are the most imported
 feature in that use case.
 
-Restrictions:
+Differences:
 
-* Only one index file (`$HOME/.dirstore`) used for normal and labeled entries
+* Main index file is `$HOME/.dirstore`, additional indexes are  `$HOME/.dirstore-*`.
+* `dstore` works with the main index
+* When searching by labels, all indexes are used.
 * No automatic index creation.
 * Limited expressions (`**` and `?` not supported)
+* Search is always case-sensitive (even labels)
 
 
 ## Installation

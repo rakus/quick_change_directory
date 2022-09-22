@@ -3,16 +3,19 @@
 #
 # This script implements minimal versions of dstore and qc as shell functions.
 #
-# Call `dstore --help` or qc `--help` to get invocation details.
+# Call `dstore -h` or qc `-h` to get invocation details.
 #
 # INDEX
 # -----
-# The index file is "$HOME/.dirstore".
-# This files contains entries created by the function dstore.
+# The main index files is "$HOME/.dirstore".
+# This file contains entries created by the function 'dstore'.
 # They are either normal directory names or labeled directories.
 # E.g.:
 #     /home/joe/documents/lyrics
 #     :scripts /home/joe/code/shell-scripts
+#
+# Additional index files are named "$HOME/.dirstore-*".
+# This indexes are not managed by 'dstore', but have to be created manually.
 #
 # CHANGING DIRECTORY BY NAME
 # --------------------------
@@ -47,6 +50,27 @@
 # To change to it execute 'qc :<LABEL>'.
 # Assuming the example content mentioned above, 'qc :scripts' brings you to
 # /home/joe/code/shell-scripts.
+#
+# MANAGING ~/.dirstore
+# --------------------
+# The file ~/.dirstore is managed with the command 'dstore'.
+# The following invocations are supported:
+#
+# dstore
+#     Stores the current directory in ~/.dirstore.
+# dstore dir [dir...]
+#     Stores the given directories in ~/.dirstore.
+# dstore :<lable>
+#     Stores the current directory with the given label in ~/.dirstore.
+# dstore :<lable> dir
+#     Stores the given directory with the given label in ~/.dirstore.
+# dstore -e
+#     Open ~/.dirstore in an editor (vi by default).
+# dstore -l
+#     List the content of ~/.dirstore.
+# dstore -h
+#     Display help.
+#
 #
 # PORTABILITY
 # -----------
@@ -89,11 +113,11 @@ dstore()
     # IMPORTANT: reset OPTIND
     typeset -i OPTIND=1
     typeset qcm_o
-    while  getopts "el" qcm_o "$@"; do
+    while  getopts "elh" qcm_o "$@"; do
         case "$qcm_o" in
             e) ${EDITOR:-vi} "$QC_DIRSTORE"; return $? ;;
             l) cat "$QC_DIRSTORE"; return $? ;;
-            *)
+            h | *)
                 echo >&2 "Usage:"
                 echo >&2 "  dstore"
                 echo >&2 "     Store current directory."
@@ -107,6 +131,10 @@ dstore()
                 echo >&2 "     Open index in editor."
                 echo >&2 "  dstore -l"
                 echo >&2 "     Display index."
+                echo >&2 "  dstore -h"
+                echo >&2 "     Show this help."
+                echo >&2 ""
+                echo >&2 "Index file: $QC_DIRSTORE"
                 echo >&2 ""
                 return 1
         esac
@@ -121,11 +149,11 @@ dstore()
         :*)
             if [ $# -eq 1 ]; then
                 qcm_dir="."
-            elif [ $# -ne 2 ]; then
-                echo >&2 "ERROR: Expected 2 parameters"
-                return 1
-            else
+            elif [ $# -eq 2 ]; then
                 qcm_dir="$2"
+            else
+                echo >&2 "ERROR: Expected max 2 arguments"
+                return 1
             fi
             if [ -d "$qcm_dir" ]; then
                 qcm_dir=$(cd "$qcm_dir" && /bin/pwd)
@@ -147,8 +175,8 @@ dstore()
     esac
 
     # delete duplicates
-    sort -u "$QC_DIRSTORE" > "$QC_DIRSTORE.tmp"
-    mv "$QC_DIRSTORE.tmp" "$QC_DIRSTORE"
+    sort -u "$QC_DIRSTORE" > "$QC_DIRSTORE.sorted"
+    mv "$QC_DIRSTORE.sorted" "$QC_DIRSTORE"
 }
 
 
@@ -156,35 +184,66 @@ if [ -n "${ZSH_VERSION:-}" ]; then
     alias qc='noglob __qc'
 else
     # bash, ksh, mksh, pdksh, dash
-    alias qc='set -f;rst_f=true __qc'
+    alias qc='set -f;qcm_rst_f=true __qc'
 fi
+
+__qc_glob_match()
+{
+    test -e "$1" -o -L "$1"
+}
 
 # shellcheck disable=SC3008,SC3044 # select and typeset are not POSIX
 __qc()
 {
-    [ -n "${rst_f:-}" ] && set +f
+    [ -n "${qcm_rst_f:-}" ] && set +f
+    unset qcm_rst_f
+
+    # locally no error message (and function exit) on not matching glob
+    [ -n "${ZSH_VERSION:-}" ] && setopt localoptions nonomatch
+
+    if [ ! -r "$QC_DIRSTORE" ]; then
+        echo >&2 "qc_mini: Index file does not exist/is not readable: $QC_DIRSTORE"
+        return 1
+    fi
+
     # IMPORTANT: reset OPTIND
     typeset -i OPTIND=1
     typeset qcm_o
-    while  getopts "l" qcm_o "$@"; do
+    while  getopts "lSh" qcm_o "$@"; do
         case "$qcm_o" in
             l) # list labeled directories
-                grep "^:" "$QC_DIRSTORE"
+                grep -h "^:[^ ]*" "$QC_DIRSTORE" "$QC_DIRSTORE"-* 2>/dev/null
                 return 0
                 ;;
-            *)
+            S) # show indexes
+                for qcm_fn in "$QC_DIRSTORE" "$QC_DIRSTORE"-*; do
+                    if [ -e "$qcm_fn" ]; then
+                        echo "$qcm_fn"
+                        echo "   Last Chg: $(stat -c "%y" "$qcm_fn")"
+                        printf "   Entries:  %'d (%'d bytes)\n" "$(wc -l < "$qcm_fn")" "$(wc -c < "$qcm_fn")"
+                        echo "   Labeled entries:  $(grep -c "^:" "$qcm_fn")"
+                    fi
+                done
+                return
+                ;;
+
+            h | *)
                 # unknown option
                 echo >&2 "Usage:"
                 echo >&2 "  qc dir"
                 echo >&2 "    Change to directory matching 'dir*'"
                 echo >&2 "  qc dir1 dir2"
                 echo >&2 "    Change to directory matching 'dir1*/dir2*'"
+                echo >&2 "  qc -l"
+                echo >&2 "    List labeled dirs."
+                echo >&2 "  qc -S"
+                echo >&2 "    Show used index files."
+                echo >&2 "  qc -h"
+                echo >&2 "    Show this help."
                 echo >&2 "  qc -"
                 echo >&2 "    Act like 'cd -'"
                 echo >&2 "  qc"
                 echo >&2 "    Act like 'cd'"
-                echo >&2 "  qc -l"
-                echo >&2 "    List labeled dirs."
                 return 1
                 ;;
         esac
@@ -211,7 +270,7 @@ __qc()
         *)
             typeset qcm_word
             for qcm_word in "$@"; do
-                # remove trailin '*', replace others with [^/]*
+                # remove trailing '*', replace others with [^/]*
                 qcm_word="$(echo "$qcm_word" | sed 's/\*\+$//;s%\*\+%[^/]*%')"
                 case "$qcm_word" in
                     */) qcm_pattern="$qcm_pattern/$qcm_word" ;;
@@ -224,12 +283,16 @@ __qc()
             ;;
     esac
 
-    oldIFS="$IFS"
+    qcm_oldIFS="$IFS"
     IFS="$(printf '\nx')" && IFS="${IFS%x}"
-    set --
-    # shellcheck disable=SC2046  # yes, dangerous
-    set -- $(grep -- "$qcm_pattern" "$QC_DIRSTORE" | sed 's/^:[^ ]* //' | sort -u)
-    IFS="$oldIFS"
+    # shellcheck disable=SC2046  # IFS is set
+    if __qc_glob_match "$QC_DIRSTORE"-*; then
+        set -- $(grep -h -- "$qcm_pattern" "$QC_DIRSTORE" "$QC_DIRSTORE"-* | sed 's/^:[^ ]* //' | sort -u)
+    else
+        set -- $(grep -h -- "$qcm_pattern" "$QC_DIRSTORE" | sed 's/^:[^ ]* //' | sort -u)
+    fi
+
+    IFS="$qcm_oldIFS"
     case $# in
         0 ) echo >&2 "Not found: '$qcm_call_param' ($qcm_pattern)" ;;
         1 )
@@ -241,8 +304,6 @@ __qc()
             typeset qcm_dir
             typeset qcm_rc
             qcm_rc=0
-            PS3safe=$PS3
-            PS3="# or 'q' to quit? "
             select qcm_dir in "$@"; do
                 if [ "$qcm_dir" = "" ]; then
                     [ "$REPLY" = "q" ] && break
@@ -253,30 +314,30 @@ __qc()
                     break
                 fi
             done
-            PS3=$PS3safe
-            unset PS3safe
             return $qcm_rc
             ;;
     esac
 }
 
-# Lots of shellcheck directives now as the following is BASH code
-# shellcheck disable=SC3003,SC3005,SC3018,SC3030,SC3043,SC3044,SC2207,SC3050,SC3054
-if [ -n "${BASH_VERSION:-}" ]; then
-
-
+if [ -z "${BASH_VERSION:-}${ZSH_VERSION:-}" ]; then
+    return
+elif [ -n "${BASH_VERSION:-}" ]; then
+    # Lots of shellcheck directives now as the following is BASH code
+    # shellcheck disable=SC2207,SC3003,SC3010,SC3030,SC3043,SC3044,SC3050,SC3054
     _qc_complete()
     {
-        local cur prev opts
+        local cur opts
         COMPREPLY=()
 
+        #_get_comp_words_by_ref -n : cur
         cur="${COMP_WORDS[COMP_CWORD]}"
+        if [ "${COMP_WORDS[COMP_CWORD-1]}" = ":" ]; then
+            cur=":$cur"
+        fi
 
-        prev="${COMP_WORDS[COMP_CWORD-1]}"
         if [ -n "$cur" ]; then
-            cur=$(eval "echo ${cur}")
-            if [ "$prev" = ":" ]; then
-                opts=$(grep "^:${cur}[^ ]* " "${QC_DIRSTORE}" | sed "s% .*%%" | sed "s%^:%%")
+            if [[ "$cur" = ":"* ]]; then
+                opts=$(grep "^${cur}[^ ]* " "${QC_DIRSTORE}" | sed "s% .*%%;s%^:%%")
             else
                 local qcm_pattern qcm_word
                 qcm_pattern=""
@@ -292,19 +353,53 @@ if [ -n "${BASH_VERSION:-}" ]; then
                 opts=$(grep "$qcm_pattern" "${QC_DIRSTORE}" | grep -o "${cur}[^/]*$")
             fi
             local IFS=$'\n'
-            COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+            COMPREPLY=( $(compgen -W "${opts}" -- "${cur#:}") )
             # Do escaping
-            if [ ${#COMPREPLY[@]} = 1 ]; then
-                COMPREPLY=( $(printf "%q" "${COMPREPLY[0]}") )
+            COMPREPLY=( $(printf '%q\n' "${COMPREPLY[@]}") )
+            return 0
+        fi
+    }
+    # shellcheck disable=SC3044 # bash only
+    complete -o nospace -F _qc_complete qc
+
+else
+
+    # Lots of shellcheck directives now as the following is ZSH code
+    # shellcheck disable=SC2154,SC2207,SC3003,SC3010,SC3030,SC3043,SC3054
+    _qc_complete()
+    {
+        local cur="$PREFIX"
+        local -a opts
+
+        if [ -n "$cur" ]; then
+            if [[ "$cur" == ":"* ]]; then
+                local IFS=$'\n'
+                opts=($(grep "^${cur}[^ ]* " "${QC_DIRSTORE}" | sed "s% .*%%"))
+                compadd "${opts[@]}"
             else
-                for ((i=0; i < ${#COMPREPLY[@]}; i++)); do
-                    COMPREPLY[$i]=$(printf "%q" "${COMPREPLY[$i]}")
+                local qcm_pattern qcm_word
+                qcm_pattern=""
+                for qcm_word in "${words[@]:1}"; do
+                    qcm_word="$(echo "$qcm_word" | sed 's/\*\+$//;s%\*\+%[^/]*%')"
+                    case "$qcm_word" in
+                        */) qcm_pattern="$qcm_pattern/$qcm_word" ;;
+                        *)  qcm_pattern="$qcm_pattern/${qcm_word}[^/]*" ;;
+                    esac
                 done
+                qcm_pattern="$(echo "$qcm_pattern" | sed 's%//\+%/\\(.*/\\)\\?%g;s%/\+$%%')"
+                qcm_pattern="$qcm_pattern$"
+                local IFS=$'\n'
+                opts=( $(grep "$qcm_pattern" "${QC_DIRSTORE}" | grep -o "${cur}[^/]*$") )
+                compadd "${opts[@]}"
+
             fi
             return 0
         fi
     }
-complete -F _qc_complete qc
+
+
+    compdef _qc_complete __qc qc
+
 fi
 
 # vim:ft=sh
