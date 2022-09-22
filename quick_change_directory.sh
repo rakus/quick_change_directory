@@ -43,17 +43,27 @@ if [ -z "${BASH_VERSION:-}${ZSH_VERSION:-}" ]; then
 elif [ -n "${BASH_VERSION:-}" ]; then
 # the following lines are bash-specific
 
+    if declare -F "_get_comp_words_by_ref" > /dev/null; then
+        qc_use_get_comp_words_by_ref=true
+    else
+        unset qc_use_get_comp_words_by_ref
+    fi
+
     __qc_complete()
     {
         local PATH="${QC_DIR:-$HOME/.qc}:$PATH"
         local cur words
 
-        _get_comp_words_by_ref -n : cur
-        # fallback if _get_comp_words_by_ref is not available:
-        #cur="${COMP_WORDS[COMP_CWORD]}"
-        #if [ "${COMP_WORDS[COMP_CWORD-1]}" = ":" ]; then
-        #    cur=":$cur"
-        #fi
+        if [ -n "$qc_use_get_comp_words_by_ref" ]; then
+            _get_comp_words_by_ref -n : cur
+        else
+            # fallback if _get_comp_words_by_ref is not available:
+            cur="${COMP_WORDS[COMP_CWORD]}"
+            if [ "${COMP_WORDS[COMP_CWORD-1]}" = ":" ]; then
+                cur=":$cur"
+            fi
+        fi
+
 
         words=( "${COMP_WORDS[@]:1}" )
 
