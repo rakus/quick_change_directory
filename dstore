@@ -185,8 +185,8 @@ while [ $# -gt 0 ]; do
         :*)
             typeset lbl=$1
             shift
-            if ! echo "$lbl" | grep "^[^[:space:]]*$" >/dev/null 2>&1; then
-                echo >&2 "Invalid label '$lbl'. Must not contain whitespaces."
+            if [ ${#lbl} -eq 1 ] || [ "${lbl//[-A-Za-z0-9_]/}" != ':' ]; then
+                echo >&2 "Invalid label '$lbl'."
                 exit 1
             fi
             if [ "$delete" = "true" ]; then

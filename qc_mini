@@ -71,6 +71,8 @@
 # dstore -h
 #     Display help.
 #
+# Note: A label starts with a colon and may only contains characters, digits,
+# dash and underscore.
 #
 # PORTABILITY
 # -----------
@@ -147,6 +149,11 @@ dstore()
 
     case "$1" in
         :*)
+            if [ ${#1} -eq 1 ] || [ "${1//[-A-Za-z0-9_]/}" != ':' ]; then
+                echo >&2 "ERROR: Invalid label '$1'."
+                return 1
+            fi
+
             if [ $# -eq 1 ]; then
                 qcm_dir="."
             elif [ $# -eq 2 ]; then
