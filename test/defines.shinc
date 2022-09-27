@@ -11,7 +11,13 @@ if [ -z "${script_dir:-}" ]; then
     exit 2
 fi
 
-
+if [ -n "${ZSH_VERSION:-}" ]; then
+    # init command line completion if not initialized yet
+    if ! command -v compdef; then
+        autoload -Uz compinit
+        compinit
+    fi
+fi
 
 command-v resize >/dev/null 2>&1 && eval "$(resize)"
 if [ -n "${COLUMNS:-}" ]; then
