@@ -90,10 +90,11 @@ elif [ -n "${ZSH_VERSION:-}" ]; then
 
         case "$cur" in
             ':'*)
-                # weird syntax copies from stackoverflow
+                # shellcheck disable=SC2296 # weird ZSH syntax copies from stackoverflow
                 comp=("${(@f)$(qc-backend --complete "$cur")}")
                 ;;
             *)
+                # shellcheck disable=SC2296 # weird ZSH syntax copies from stackoverflow
                 comp=("${(@f)$( qc-backend --complete "${words[@]:1}" )}")
                 ;;
         esac

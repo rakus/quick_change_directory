@@ -396,6 +396,7 @@ internalUpdateIndex()
     fi
 
     typeset INDEX_FILE=$QC_DIR/home.index
+    # shellcheck disable=SC2155 # Declare and assign separately
     typeset NEW_INDEX=$(mktemp "${INDEX_FILE}.XXXX")
 
     find "${HOME}" -xdev -type d \( -name '.*' -o -name CVS \) -prune -o -xtype d -print >> "$NEW_INDEX"
@@ -587,6 +588,7 @@ if [ "$*" = "" ]; then
 elif [ "$*" = "-" ]; then
     echo "-"
 else
+    # shellcheck disable=SC2155 # Declare and assign separately
     typeset tgt=$(dir_select "$grepOpt" "$indexSelect" "$@")
     if [ -n "${tgt:-}" ]; then
         echo "$tgt"
