@@ -141,7 +141,7 @@ Note that wildcard expansion is disabled for `qc`. No need to escape `*` etc.
 
 ### Command line completion
 
-Bash an zsh command line completion is supported for 'qc'. Just use `<TAB>` as
+Bash and zsh command line completion is supported for 'qc'. Just use `<TAB>` as
 you would do for the cd commands.
 
 Like:
@@ -259,7 +259,10 @@ The script `qc-build-index` uses the command `fd` or `find` to scan the
 directory tree. By default `fd` is preferred due to better performance. See
 below.
 
-The results are slightly different because of the handling of symbolic links.
+The results are different between fd and find. Fd handles symbolic links
+slightly different and it respects .gitignore etc by default. The index option
+'-I' can be used to disable this. See fd man page on '-I'/'--no-ignore'.
+Again: See comments in `qc-index.cfg`.
 
 
 __Update Performance__

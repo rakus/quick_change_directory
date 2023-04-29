@@ -126,7 +126,7 @@ build_index()
     typeset -a FILTER=()
     typeset -a INC_UPD=()
     typeset OPTARG OPTIND=0 d
-    while getopts ":f:i:d:h" o "$@"; do
+    while getopts ":f:i:d:hI" o "$@"; do
         case $o in
             f) FILTER=( "${FILTER[@]}" "$OPTARG" )
                 ;;
@@ -148,6 +148,9 @@ build_index()
                 ;;
             h)
                 include_hidden=true
+                ;;
+            I)
+                echo >&2 "WARNING: Index option '-I' ignored for 'find'"
                 ;;
             *)
                 return 1
@@ -326,7 +329,7 @@ build_index_using_fd()
     typeset -a INC_UPD=()
     typeset -a FD_ARGS=()
     typeset OPTARG OPTIND=0 d
-    while getopts ":f:i:d:h" o "$@"; do
+    while getopts ":f:i:d:hI" o "$@"; do
         case $o in
             f) FILTER=( "${FILTER[@]}" "$OPTARG" )
                 ;;
@@ -344,6 +347,9 @@ build_index_using_fd()
                 ;;
             h)
                 include_hidden=true
+                ;;
+            I)
+                FD_ARGS+=( --no-ignore )
                 ;;
             *)
                 return 1
@@ -455,7 +461,7 @@ build_index_using_fd()
             echo "$r" >> "$NEW_INDEX"
         done
     fi
-    fd -L -I --xdev --full-path -s --type d "${FD_ARGS[@]}" "${IGNORE_DIRS[@]}" "${FD_PATTERN}" "${ROOTS[@]}" >> "$NEW_INDEX"
+    fd -L --xdev --full-path -s --type d "${FD_ARGS[@]}" "${IGNORE_DIRS[@]}" "${FD_PATTERN}" "${ROOTS[@]}" | sed 's%/$%%' >> "$NEW_INDEX"
     #sort "$NEW_INDEX" > "$INDEX_FILE.fd"
 
     if [ -s "$NEW_INDEX" ]; then
