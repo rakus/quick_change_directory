@@ -112,6 +112,12 @@ g2re  'Admin[^/]*$'                            '**/Admin'
 g2re  'Admin[^/]*$'                            '*/Admin'
 g2re  'Admin[^/]*$'                            '*******/Admin'
 
+curDir="${PWD#/}"
+curDir="${curDir/./\\.}"
+g2re  "${curDir}"'/Admin[^/]*$'                './Admin'
+g2re  "${curDir}"'/Ad[^/]*/\(.*/\)*test[^/]*$' './Ad' '//test'
+g2re  "${curDir}"'/\(.*/\)*test[^/]*$' './' '//test'
+
 #------------------------------------------------------------------------------
 rm -f "${tmp_arg2regex}"
 endTest

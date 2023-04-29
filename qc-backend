@@ -110,11 +110,14 @@ args2regex()
         fi
     fi
 
+    # replace leading '/./' with current dir (without leading slash)
+    glob="${glob/#\/.\//$PWD/}"
+
     # Remove
     # - leading slashes
     # - than leading asterisks followed by slashes
     # - than trailing slashes
-    glob="$(echo "$glob" | sed 's%^//*%%;s%^\*\**//*%%;s%//*$%%')"
+    glob="$(echo "$glob" | sed 's%^/\+%%;s%^\*\+//*%%;s%/\+$%%')"
 
     while [ -n "$glob" ]; do
 
@@ -160,8 +163,6 @@ args2regex()
                 ;;
         esac
     done
-    #remove leading '/'
-    #regex="${regex:1}$"
     regex="${regex}$"
     echo "$regex"
 }
@@ -342,7 +343,7 @@ dir_select()
         dl=( "${dl[@]/#$HOME/\~}" )
 
         if [ -n "${QC_FZF:-}" ]; then
-            the_dir="$(printf "%s\n" "${dl[@]}" | fzf -i --ansi --reverse --height 50% )" # --preview='d={};ls --color ${d/#~/$HOME}')"
+            the_dir="$(printf "%s\n" "${dl[@]}" | fzf -i --ansi )" # --preview='d={};ls --color ${d/#~/$HOME}')"
             if [ -n "$the_dir" ]; then
                     echo "${the_dir/#\~/$HOME}" | sed -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]//g"
             fi
@@ -569,7 +570,7 @@ if ! check_initialized >&2; then
     exit 1
 fi
 
-# if args include hidden filename act like '-e' was given
+# if args include hidden filename act like '-h' was given
 if [[ " $*" = *[\ /].* ]] && [[ "$indexSelect" != [hH] ]]; then
     indexSelect="h"
 fi
