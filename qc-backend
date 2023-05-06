@@ -27,7 +27,7 @@ show_help()
     echo "Quick Change -- index based directory changer"
     echo ""
     echo "Usage:"
-    echo "  qc [-i] [-eE] <dir>"
+    echo "  qc [OPTION]... <dir-pattern>"
     echo "      Search for dir in index and cd to it."
     echo "      -i  Search case-insensitive (slower)."
     echo "      -h  Also search indexes of hidden dirs."
@@ -35,26 +35,28 @@ show_help()
     echo "      -e  Also search extended indexes."
     echo "      -E  Only search extended indexes."
     echo "      -a  Search all indexes."
+    echo "      dir-pattern:"
+    echo "          'Documents/Adm' searches for '**/Documents/Adm*'"
+    echo "          'Doc Adm' searches for '**/Doc*/Adm*'"
+    echo "          'Doc //Adm' searches for '**/Doc*/**/Adm*'"
     echo "  qc :name"
     echo "      Search for dir labeled with ':name' in index and cd to it."
     echo "      Use the command 'dstore' to manage labeled directories."
     echo "  qc -u [dir...]"
-    echo "      Updates index. If dirs are given only that directories are updated,"
-    echo "      This uses the external command 'qc-build-index'."
     echo "  qc -U [dir...]"
-    echo "      Like '-u', but also updates extended indexes."
+    echo "      Updates the indexes. '-U' also updates extended indexes. If dirs are"
+    echo "      given only that directories are updated,"
     echo "  qc -l"
     echo "      List labeled dirs."
     echo "  qc -S"
     echo "      Print statistics of index."
+    echo "  qc --edit"
+    echo "      Open index config file 'qc-index.cfg' in a editor. Uses \$VISUAL,"
+    echo "      \$EDITOR or vi."
     echo "  qc -"
     echo "      Act like 'cd -'."
     echo "  qc"
     echo "      Act like 'cd \$HOME'."
-    echo ""
-    echo "Note: qc automatically adds wildcards"
-    echo "  'qc Documents/Adm' searches for '**/Documents/Adm*'"
-    echo "  'qc Doc Adm' searches for '**/Doc*/Adm*'"
     echo ""
     echo "See also: dstore --help"
     echo ""
@@ -260,7 +262,7 @@ dir_select()
                 dir_select "$grepOpt" "a" "$bd" "$@"
                 return
             elif [ $# -gt 1 ]; then
-                echo >&2 "WARNING: Extra arguments ignored ($pattern returned more than on directory)"
+                echo >&2 "WARNING: Extra arguments ignored ($pattern returned none or more than one directory)"
             fi
             ;;
         *)
@@ -548,6 +550,14 @@ while getopts ":ieEhHauUSl-" o "$@"; do
                 exit 0
             elif [ "${!OPTIND:-}" = "--version" ]; then
                 echo "qc - Quick Change Directory v$qc_version" >&2
+                exit 0
+            elif [ "${!OPTIND:-}" = "--edit" ]; then
+                if [ ! -e "$QC_DIR/qc-index.cfg" ]; then
+                    echo >&2 "ERROR: $QC_DIR/qc-index.cfg does not exist."
+                    echo >&2 "       Use 'qc -u' to create a default config file."
+                    exit 1
+                fi
+                ${VISUAL:-${EDITOR:-vi}} "$QC_DIR/qc-index.cfg" </dev/tty >/dev/tty
                 exit 0
             else
                 echo >&2 "Invalid option '${!OPTIND:-}'"

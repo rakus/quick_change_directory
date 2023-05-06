@@ -10,10 +10,10 @@
 # Example qc-index.cfg:
 #
 #    # create index of $HOME
-#    test.index $HOME -- '.*' CVS
+#    home.index $HOME -- CVS
 #
 #    # create index of home that only containing hidden directories (and their childs)
-#    test.hidden.index.ext -f '*/.*' $HOME -- .settings .git .svn .hg '.jazz*' .bzr .qc .cp .cache CVS
+#    home.index.hidden $HOME -- .metadata .settings .git .svn .hg '.jazz*' .bzr .qc .cp .cache CVS
 #
 # AUTHOR: Ralf Schandl
 #
@@ -43,7 +43,7 @@ fi
 show_help()
 {
     echo "USAGE:"
-    echo "   $script_name [-E] [-i dir] [index...]"
+    echo "   $script_name [-H] [-E] [-i dir] [index...]"
     echo "   $script_name --cron [minutes]"
     echo ""
     echo "   -H      Don't update hidden index(es)."
@@ -501,9 +501,8 @@ copy_default_config()
         cat <<'EOF' > "$CFG"
 # simple default config
 
-# create index of $HOME that ignores all hidden directories and directories
-# named 'CVS'
-home.index $HOME -- '.*' CVS
+# create index of $HOME excluding hidden directories and directories named 'CVS'
+home.index $HOME -- CVS
 
 # create index of hidden directories below $HOME.
 # Ignores some 'useless' hidden dirs.

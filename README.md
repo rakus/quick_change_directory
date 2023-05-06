@@ -161,6 +161,7 @@ Like:
 * `-U` Update the normal, hidden and extended indexes.
 * `-l` List labeled directories.
 * `-S` Print statistics of index files.
+* `--edit` Open index config file 'qc-index.cfg' in a editor.
 * `--help` Shows help.
 
 Note:
