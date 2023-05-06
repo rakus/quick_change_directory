@@ -413,7 +413,11 @@ build_index_using_fd()
             for d in "${INC_UPD[@]}"; do
                 if [ -d "$d" ]; then
                     if is_descendant "$d" "${ROOTS[@]}"; then
-                        INC_ROOTS+=( "$d" )
+                        if [[ "$d" != */.* || -n "${hidden_only:-}${include_hidden:-}" ]]; then
+                            INC_ROOTS+=( "$d" )
+                        else
+                            echo "WARN: Ignore hidden root $d"
+                        fi
                         #else
                         #    echo "WARN: Index $IDX_NAME does not contain $d -- ignored"
                     fi
