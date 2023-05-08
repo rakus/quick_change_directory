@@ -15,7 +15,7 @@ index is configurable and multiple indexes can be created.
 
 ### Search by (part of the) directory name
 
-Example: `qc Pro`
+**Example:** `qc Pro`
 
 This searches for a directory named `Pro*`. It would match something like:
 
@@ -34,7 +34,7 @@ to quit.
     3) ~/Documents/private/Profile
     #?
 
-Example: `qc Project/Ser`
+**Example:** `qc Project/Ser`
 
 This searches for a directory path that ends with `.../Project/Ser*`. It would
 match something like:
@@ -43,13 +43,13 @@ match something like:
     ~/Documents/Customer/Project/Serial
 
 
-Example: `qc Project/Ser/`
+**Example:** `qc Project/Ser/`
 
 This searches for a directory path that ends with `.../Project/Ser`. Note, that
 there is no wildcard at the end.
 
 
-Example: `qc Documents//Cust`
+**Example:** `qc Documents//Cust`
 
 This searches for a directory named `Cust*` somewhere below a directory named
 `Documents`.
@@ -61,7 +61,7 @@ This searches for a directory named `Cust*` somewhere below a directory named
 
 ### Search with multiple parameters
 
-Example: `qc Project Ser`
+**Example:** `qc Project Ser`
 
 This searches for directory path that ends with `.../Project*/Ser*`
 It would match something like:
@@ -80,7 +80,7 @@ is equivalent to
 
 ### Search by label
 
-Example: `qc :apachelog`
+**Example:** `qc :apachelog`
 
 This searches for a entry that is labeled with ":apachelog".
 
@@ -161,7 +161,7 @@ Like:
 * `-U` Update the normal, hidden and extended indexes.
 * `-l` List labeled directories.
 * `-S` Print statistics of index files.
-* `--edit` Open index config file 'qc-index.cfg' in a editor.
+* `--config` Open index config file 'qc-index.cfg' in a editor.
 * `--help` Shows help.
 
 Note:

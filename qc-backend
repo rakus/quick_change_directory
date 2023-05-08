@@ -50,7 +50,7 @@ show_help()
     echo "      List labeled dirs."
     echo "  qc -S"
     echo "      Print statistics of index."
-    echo "  qc --edit"
+    echo "  qc --config"
     echo "      Open index config file 'qc-index.cfg' in a editor. Uses \$VISUAL,"
     echo "      \$EDITOR or vi."
     echo "  qc -"
@@ -553,7 +553,7 @@ while getopts ":ieEhHauUSl-" o "$@"; do
             elif [ "${!OPTIND:-}" = "--version" ]; then
                 echo "qc - Quick Change Directory v$qc_version" >&2
                 exit 0
-            elif [ "${!OPTIND:-}" = "--edit" ]; then
+            elif [ "${!OPTIND:-}" = "--config" ]; then
                 if [ ! -e "$QC_DIR/qc-index.cfg" ]; then
                     echo >&2 "ERROR: $QC_DIR/qc-index.cfg does not exist."
                     echo >&2 "       Use 'qc -u' to create a default config file."
