@@ -69,11 +69,12 @@ elif [ -n "${BASH_VERSION:-}" ]; then
 
         case "$cur" in
             ':'*)
-                mapfile -d$'\n' -t COMPREPLY < <( qc-backend --complete "$cur" )
+                mapfile -d$'\n' -t COMPREPLY < <(compgen -W "$(qc-backend --complete "$cur")" -- "$cur")
                 COMPREPLY=( "${COMPREPLY[@]#:}" )
                 ;;
             *)
-                mapfile -d$'\n' -t COMPREPLY < <( qc-backend --complete "${words[@]}" )
+                #mapfile -d$'\n' -t COMPREPLY < <( qc-backend --complete "${words[@]}" )
+                mapfile -d$'\n' -t COMPREPLY < <(compgen -W "$(qc-backend --complete "${words[@]}")" --  "$cur")
                 ;;
         esac
     }

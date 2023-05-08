@@ -121,6 +121,8 @@ test_completion Customer// A -- Admin/ ACME/
 test_completion "Customer/**/A" -- "Customer/**/Admin/" "Customer/**/ACME/"
 test_completion "Customer/*/A" -- "Customer/*/Admin/"
 
+test_completion "white" -- "whitespace dir/"
+
 test_completion NotThere
 
 test_completion :la -- "label"

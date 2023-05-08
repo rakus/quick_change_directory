@@ -85,11 +85,12 @@ fi
 printf "test.index entry count"
 if [ "$TEST_DIRECTORY" = "$(head -n1  "$TEST_DIRECTORY/.qc/test.index")" ]; then
     # created with find
-    expected_cnt=14
+    expected_cnt=15
 else
     # created with fd
-    expected_cnt=13
+    expected_cnt=14
 fi
+
 if [ $expected_cnt -eq "$(wc -l < "$TEST_DIRECTORY/.qc/test.index")" ]; then
     OK
 else

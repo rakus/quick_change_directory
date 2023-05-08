@@ -434,7 +434,7 @@ complete_index_dir()
     shift
 
     typeset IFS=$'\n'
-    typeset -a dl idxFiles
+    typeset -a dl idxFiles compl
     case $1 in
         :*)
             pattern=$1
@@ -463,7 +463,9 @@ complete_index_dir()
             #echo ">>$pattern<<"
             #echo ">>$clean_pattern<<"
             # shellcheck disable=SC2086  # grepOpt should split
-            grep --color=never -ah $grepOpt -- "/$pattern" "${idxFiles[@]}" | sed "s|^.*\($clean_pattern\)|$last_part|;s|$|/|" | sort -u
+            mapfile -d$'\n' -t compl < <(grep --color=never -ah $grepOpt -- "/$pattern" "${idxFiles[@]}" | sed "s|^.*\($clean_pattern\)|$last_part|;s|$|/|" | sort -u)
+
+            printf '%q\n' "${compl[@]}"
             ;;
     esac
 }
@@ -481,11 +483,11 @@ complete_option()
     if [[ " $*" = *--help* ]]; then
         exit 0
     elif [[ "$cur" = --* ]]; then
-        echo "--help"
+        printf "%s\n" --help --config --version  | grep -- "$cur"
     elif [[ "$cur" = -* ]]; then
         printf "%s\n" i e u U S l
         if [[ "$cur" != -?* ]]; then
-            echo "--help"
+            printf "%s\n" --help --config --version | grep -- "$cur"
         fi
         exit 1
     fi
@@ -560,6 +562,7 @@ while getopts ":ieEhHauUSl-" o "$@"; do
                 ${VISUAL:-${EDITOR:-vi}} "$QC_DIR/qc-index.cfg" </dev/tty >/dev/tty
                 exit 0
             else
+                [ -n "$cl_completion" ] && exit 1
                 echo >&2 "Invalid option '${!OPTIND:-}'"
                 echo >&2 "Try qc --help"
                 echo >&2 "Try 'qc --help' for more information."

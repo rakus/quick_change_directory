@@ -137,6 +137,7 @@ if [ -n "${BUILD_TEST_DIRS:-}" ]; then
     mkdir -p "$TEST_DIRECTORY/Customer/ACME/Admin"
     mkdir -p "$TEST_DIRECTORY/A_B"
     mkdir -p "$TEST_DIRECTORY/A.B"
+    mkdir -p "$TEST_DIRECTORY/whitespace dir"
 
     echo "test.index '$TEST_DIRECTORY' -- '.*'" > "$QC_DIR/qc-index.cfg"
     #echo "hidden.index.ext -f '*testDirectory/.*' '$TEST_DIRECTORY'" >> "$QC_DIR/qc-index.cfg"
