@@ -163,7 +163,6 @@ while getopts ":elcd-" o "$@"; do
                 echo >&2 "Try '$script_name --help' for more information."
                 exit 1
             fi
-            exit
             ;;
         *)
             echo >&2 "Invalid option '$OPTARG'"

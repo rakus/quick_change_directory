@@ -173,8 +173,8 @@ case "$(printf "%s\n" "$TEST_DIRECTORY/Customer/YoYo" "$TEST_DIRECTORY/Customer/
         ;;
 esac
 
-doQCselect "$TEST_DIRECTORY"/Customer/YoYoDyne $yoyoDyneIdx YoYo
-doQCselect "$TEST_DIRECTORY"/Customer/YoYo $yoyoIdx YoYo
+doQCselect "$TEST_DIRECTORY"/Customer/YoYoDyne "$yoyoDyneIdx" YoYo
+doQCselect "$TEST_DIRECTORY"/Customer/YoYo "$yoyoIdx" YoYo
 
 # For ksh the '| cat' is needed. Don't know why.
 NOT_EXIST_OUT="$(qc xx yy zz 2>&1 | cat)"
