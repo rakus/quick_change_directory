@@ -16,14 +16,12 @@ set -u
 # shellcheck source=./defines.shinc
 . "${script_dir}/defines.shinc"
 
-tmp_arg2regex="$TEST_DIRECTORY/args2regex"
-
 g2re()
 {
     expected="$1"
     shift
     printf "%s" "$* -> $expected"
-    actual="$(args2regex "$@")"
+    actual="$(qc-backend -R "$@" 2>&1)"
 
     if [ "$actual" = "$expected" ]; then
         OK
@@ -37,24 +35,6 @@ g2re()
 #---------[ TESTS ]------------------------------------------------------------
 
 startTest "args2regex"
-
-printf "Extracting function arg2regex"
-echo "#!/usr/bin/env bash" > "$tmp_arg2regex"
-sed -n '/^args2regex()/,/^}/p' ../qc-backend >> "${tmp_arg2regex}"
-if [ "$(wc -l <"$tmp_arg2regex")" -gt 1 ]; then
-    echo 'args2regex "$@"' >> "$tmp_arg2regex"
-    chmod +x "$tmp_arg2regex"
-    OK
-    export PATH="$TEST_DIRECTORY:$PATH"
-else
-    ERROR
-    rm -f "${tmp_arg2regex}"
-    echo >&2 "ERROR: Function args2regex not found in ../qc-backend"
-    endTest
-fi
-
-# shellcheck disable=SC1090
-#.   "${tmp_arg2regex}"
 
 g2re '[^/]*$' '*'
 g2re '[^/]*$' '*/'
@@ -119,6 +99,5 @@ g2re  "${curDir}"'/Ad[^/]*/\(.*/\)*test[^/]*$' './Ad' '//test'
 g2re  "${curDir}"'/\(.*/\)*test[^/]*$' './' '//test'
 
 #------------------------------------------------------------------------------
-rm -f "${tmp_arg2regex}"
 endTest
 

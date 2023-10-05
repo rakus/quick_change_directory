@@ -498,6 +498,7 @@ complete_option()
 
 typeset grepOpt=""
 typeset indexSelect=""
+typeset printRegex=""
 typeset OPTIND
 typeset o
 
@@ -510,7 +511,7 @@ if [ "${1:-}" = "--complete" ]; then
     complete_option "$@"
 fi
 
-while getopts ":ieEhHauUSl-" o "$@"; do
+while getopts ":ieEhHauUSlR-" o "$@"; do
     case $o in
         i) grepOpt="-i"
             ;;
@@ -546,6 +547,8 @@ while getopts ":ieEhHauUSl-" o "$@"; do
             grep --color=always '^:[^ ]* ' "$QC_DSTORE_INDEX" >&2
             exit 0
             ;;
+        R) printRegex=true
+            ;;
         -)
             if [ "${!OPTIND:-}" = "--help" ]; then
                 show_help >&2
@@ -579,12 +582,17 @@ done
 
 shift $((OPTIND-1))
 
+if [ -n "$printRegex" ]; then
+    args2regex "$@" >&2
+    exit 0
+fi
+
 if ! check_initialized >&2; then
     exit 1
 fi
 
 # if args include hidden filename act like '-h' was given
-if [[ " $*" = *[\ /].* ]] && [[ "$indexSelect" != [hH] ]]; then
+if [[ " $*" = *[\ /].[!/]* ]] && [[ "$indexSelect" != [hH] ]]; then
     indexSelect="h"
 fi
 
