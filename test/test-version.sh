@@ -2,7 +2,7 @@
 #
 # FILE: test-version.sh
 #
-# ABSTRACT:
+# ABSTRACT: test consistent version output
 #
 # AUTHOR: Ralf Schandl
 #
@@ -29,7 +29,7 @@ test_set()
     fi
 }
 
-startTest "Version Number"
+startTest "Version Output"
 
 make_version="$(grep "^QC_VERSION " ./Makefile | sed 's/^.* = //')"
 script_version="$(qc-backend --version 2>&1 | sed 's/^.* v//')"
@@ -38,8 +38,8 @@ build_idx_version="$(qc-build-index --version | sed 's/^.* v//')"
 
 test_set "Version in Makefile" "$make_version"
 test_set "Version from qc-backend --version" "$script_version"
-test_set "Version from quick_change_directory.sh --version" "$dstore_version"
 test_set "Version from qc-build-index --version" "$build_idx_version"
+test_set "Version from dstore --version" "$dstore_version"
 
 typeset -i count
 
@@ -48,31 +48,33 @@ count="$(printf '%s\n' "$make_version" "$script_version" "$dstore_version" "$bui
 echo -n "Test same version"
 if [ "$count" = 1 ]; then
     OK
+    echo "  Version is \"$make_version\""
 else
     ERROR
-    echo >&2 "    Makefile:                  $make_version"
-    echo >&2 "    quick_change_directory.sh: $dstore_version"
-    echo >&2 "    qc-backend:                $script_version"
-    echo >&2 "    qc-build-index:            $build_idx_version"
+    echo >&2 "    Makefile:         $make_version"
+    echo >&2 "    qc-backend:       $script_version"
+    echo >&2 "    qc-build-index:   $build_idx_version"
+    echo >&2 "    dstore:           $dstore_version"
 fi
 
-script_version_lbl="$(qc-backend --version 2>&1 | sed 's/^[^ ]*//')"
-dstore_version_lbl="$(dstore --version | sed 's/^[^ ]*//')"
-build_idx_version_lbl="$(qc-build-index --version | sed 's/^[^ ]*//')"
+script_version_lbl="$(qc-backend --version 2>&1 | sed 's/^[^ ]* - //;s/ v[0-9].*$//')"
+dstore_version_lbl="$(dstore --version | sed 's/^[^ ]* - //;s/ v[0-9].*$//')"
+build_idx_version_lbl="$(qc-build-index --version | sed 's/^[^ ]* - //;s/ v[0-9].*$//')"
 
 test_set "Product name from qc-backend --version" "$script_version_lbl"
-test_set "Product name from quick_change_directory.sh --version" "$dstore_version_lbl"
 test_set "Product name from qc-build-index --version" "$build_idx_version_lbl"
+test_set "Product name from dstore --version" "$dstore_version_lbl"
 
-count="$(printf '%s\n' "$script_version_lbl" "$dstore_version_lbl" "$build_idx_version_lbl" | sort -u | wc -l)"
+count="$(printf '%s\n' "${script_version_lbl#* - }" "${dstore_version_lbl#* - }" "${build_idx_version_lbl#* - }" | sort -u | wc -l)"
 echo -n "Test same product name"
 if [ "$count" = 1 ]; then
     OK
+    echo "  Product is \"${script_version_lbl#* - }\""
 else
     ERROR
-    echo >&2 "    quick_change_directory.sh: $dstore_version_lbl"
-    echo >&2 "    qc-backend:                $script_version_lbl"
-    echo >&2 "    qc-build-index:            $build_idx_version_lbl"
+    echo >&2 "    qc-backend:       $script_version_lbl"
+    echo >&2 "    qc-build-index:   $build_idx_version_lbl"
+    echo >&2 "    dstore:           $dstore_version_lbl"
 fi
 
 endTest
