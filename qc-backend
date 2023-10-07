@@ -567,7 +567,6 @@ while getopts ":ieEhHauUSlR-" o "$@"; do
             else
                 [ -n "$cl_completion" ] && exit 1
                 echo >&2 "Invalid option '${!OPTIND:-}'"
-                echo >&2 "Try qc --help"
                 echo >&2 "Try 'qc --help' for more information."
                 exit 1
             fi
