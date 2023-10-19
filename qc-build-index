@@ -518,7 +518,7 @@ configure_crontab()
         return 0
     fi
     if [ -n "${1//[0-9]/}" ]; then
-        echo >&2 "ERROR: Invalid minutes value for '--cron'"
+        echo >&2 "ERROR: Invalid minutes value for '--cron': '$1'"
         return 1
     fi
     typeset -i minutes=$1
@@ -548,42 +548,55 @@ configure_crontab()
 #---------[ MAIN ]-------------------------------------------------------------
 
 typeset -a INC_UPD=()
-while getopts ":HEi:-" o "$@"; do
-    case $o in
-        i)
+
+if ! _args="$(getopt -n "$script_name" -o "iHE" --long "help,version,cron" -- "$@")"; then
+    echo >&2 "Try '$script_name --help' for more information."
+    exit 1
+fi
+eval "set -- $_args"
+
+while true; do
+    case $1 in
+        -i)
             d=$OPTARG
             d="${d%"${d##*[!/]}"}"
             INC_UPD+=( -i "$d" )
             ;;
-        H)
+        -H)
             ignHidden=true
             ;;
-        E)
+        -E)
             ignExt=true
             ;;
-        -)
-            if [ "${!OPTIND}" = "--help" ]; then
-                show_help
-                exit 0
-            elif [ "${!OPTIND}" = "--version" ]; then
-                echo "$script_name - Quick Change Directory v$qc_version"
-                exit 0
-            elif [ "${!OPTIND}" = "--cron" ]; then
-                shift
-                configure_crontab "${!OPTIND:-}"
-                exit
-            else
-                echo >&2 "Invalid option '${!OPTIND:-}'" && echo >&2 ""
-                echo >&2 "Try '$script_name --help' for more information."
+        --help)
+            show_help
+            exit 0
+            ;;
+        --version)
+            echo "$script_name - Quick Change Directory v$qc_version"
+            exit 0
+            ;;
+        --cron)
+            shift
+            if [ "$1" != "--" ] || [ "$#" -gt 2 ]; then
+                echo >&2 "Error: Invalid arguments for --cron"
                 exit 1
             fi
+            shift
+            configure_crontab "${1:-}"
+            exit
+            ;;
+        --)
+            shift
+            break
             ;;
         *)
-            echo >&2 "Invalid option '$OPTARG'"
+            echo >&2 "Invalid option '$1'"
             echo >&2 "Try '$script_name --help' for more information."
             exit 1
             ;;
     esac
+    shift
 done
 
 shift $((OPTIND-1))

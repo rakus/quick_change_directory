@@ -378,6 +378,9 @@ updateIndex()
         for d in "$@"; do
             if [ "$d" = "-E" ]; then
                 ARGS+=( "-E" )
+            elif [ "$d" = "--" ]; then
+                # skip
+                :
             else
                 d="$(readlink -f "$d")"
                 ARGS+=( "-i" "$d")
@@ -499,8 +502,6 @@ complete_option()
 typeset grepOpt=""
 typeset indexSelect=""
 typeset printRegex=""
-typeset OPTIND
-typeset o
 
 PATH="$PATH:$QC_DIR"
 
@@ -511,75 +512,82 @@ if [ "${1:-}" = "--complete" ]; then
     complete_option "$@"
 fi
 
-while getopts ":ieEhHauUSlR-" o "$@"; do
-    case $o in
-        i) grepOpt="-i"
+if ! _args="$(getopt -n "qc" -o "ieEhHauUSlR" --long "help,version,config" -- "$@")"; then
+    echo >&2 "Try 'qc --help' for more information."
+    exit 1
+fi
+eval "set -- $_args"
+
+while true; do
+    case $1 in
+        -i) grepOpt="-i"
             ;;
-        a) indexSelect="${indexSelect}a"
+        -a) indexSelect="${indexSelect}a"
             ;;
-        h) indexSelect="${indexSelect}h"
+        -h) indexSelect="${indexSelect}h"
             ;;
-        H) indexSelect="${indexSelect}H"
+        -H) indexSelect="${indexSelect}H"
             ;;
-        e) indexSelect="${indexSelect}e"
+        -e) indexSelect="${indexSelect}e"
             ;;
-        E) indexSelect="${indexSelect}E"
+        -E) indexSelect="${indexSelect}E"
             ;;
-        u)
+        -u)
             [ -n "$cl_completion" ] && complete_local_dir "$@"
-            shift $((OPTIND-1))
+            shift
             updateIndex -E "$@" >&2
             exit 0
             ;;
-        U)
+        -U)
             [ -n "$cl_completion" ] && complete_local_dir "$@"
-            shift $((OPTIND-1))
+            shift
             updateIndex "$@" >&2
             exit 0
             ;;
-        S)
+        -S)
             [ -n "$cl_completion" ] && exit 1
             index_statistics
             exit 0
             ;;
-        l)
+        -l)
             [ -n "$cl_completion" ] && exit 1
             grep --color=always '^:[^ ]* ' "$QC_DSTORE_INDEX" >&2
             exit 0
             ;;
-        R) printRegex=true
+        -R) printRegex=true
             ;;
-        -)
-            if [ "${!OPTIND:-}" = "--help" ]; then
-                show_help >&2
-                exit 0
-            elif [ "${!OPTIND:-}" = "--version" ]; then
-                echo "qc - Quick Change Directory v$qc_version" >&2
-                exit 0
-            elif [ "${!OPTIND:-}" = "--config" ]; then
-                if [ ! -e "$QC_DIR/qc-index.cfg" ]; then
-                    echo >&2 "ERROR: $QC_DIR/qc-index.cfg does not exist."
-                    echo >&2 "       Use 'qc -u' to create a default config file."
-                    exit 1
-                fi
-                ${VISUAL:-${EDITOR:-vi}} "$QC_DIR/qc-index.cfg" </dev/tty >/dev/tty
-                exit 0
-            else
-                [ -n "$cl_completion" ] && exit 1
-                echo >&2 "Invalid option '${!OPTIND:-}'"
-                echo >&2 "Try 'qc --help' for more information."
+        --help)
+            [ -n "$cl_completion" ] && complete_local_dir "$@"
+            show_help >&2
+            exit 0
+            ;;
+        --version)
+            [ -n "$cl_completion" ] && complete_local_dir "$@"
+            echo "qc - Quick Change Directory v$qc_version" >&2
+            exit 0
+            ;;
+        --config)
+            [ -n "$cl_completion" ] && complete_local_dir "$@"
+            if [ ! -e "$QC_DIR/qc-index.cfg" ]; then
+                echo >&2 "ERROR: $QC_DIR/qc-index.cfg does not exist."
+                echo >&2 "       Use 'qc -u' to create a default config file."
                 exit 1
             fi
+            ${VISUAL:-${EDITOR:-vi}} "$QC_DIR/qc-index.cfg" </dev/tty >/dev/tty
+            exit 0
+            ;;
+        --) shift
+            break
             ;;
         *)
-                echo >&2 "Invalid option '$OPTARG'"
-                echo >&2 "Try 'qc --help' for more information."
-                exit 1
+            [ -n "$cl_completion" ] && exit 1
+            echo >&2 "Invalid option '$1'"
+            echo >&2 "Try 'qc --help' for more information."
+            exit 1
             ;;
     esac
+    shift
 done
-
-shift $((OPTIND-1))
 
 if [ -n "$printRegex" ]; then
     args2regex "$@" >&2

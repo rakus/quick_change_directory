@@ -133,43 +133,48 @@ __qc_fqname()
 [ ! -e "$QC_DSTORE_INDEX" ] && touch "$QC_DSTORE_INDEX"
 
 typeset delete=''
-typeset OPTIND o
 
-while getopts ":elcd-" o "$@"; do
-    case $o in
-        e)
+if ! _args="$(getopt -n "$script_name" -o "elcd" --long "help,version" -- "$@")"; then
+    echo >&2 "Try '$script_name --help' for more information."
+    exit 1
+fi
+eval "set -- $_args"
+
+while true; do
+    case $1 in
+        -e)
             ${VISUAL:-${EDITOR:-vi}} "$QC_DSTORE_INDEX"
             __dstore_clean warn
             exit
             ;;
-        l)
+        -l)
             cat "$QC_DSTORE_INDEX"
             exit
             ;;
-        c) __dstore_clean
+        -c) __dstore_clean
             exit
             ;;
-        d) delete=true
+        -d) delete=true
             ;;
-        -)
-            if [ "${!OPTIND}" = "--help" ]; then
-                show_help
-                exit 0
-            elif [ "${!OPTIND}" = "--version" ]; then
-                echo "$script_name - Quick Change Directory v$qc_version"
-                exit 0
-            else
-                echo >&2 "Invalid option '${!OPTIND:-}'" && echo >&2 ""
-                echo >&2 "Try '$script_name --help' for more information."
-                exit 1
-            fi
+        --help)
+            show_help
+            exit 0
+            ;;
+        --version)
+            echo "$script_name - Quick Change Directory v$qc_version"
+            exit 0
+            ;;
+        --)
+            shift
+            break
             ;;
         *)
-            echo >&2 "Invalid option '$OPTARG'"
+            echo >&2 "Invalid option '$1'"
             echo >&2 "Try '$script_name --help' for more information."
             exit 1
             ;;
     esac
+    shift
 done
 
 shift $((OPTIND-1))
