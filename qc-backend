@@ -484,8 +484,8 @@ complete_option()
         exit 0
     elif [[ "$cur" = --* ]]; then
         printf "%s\n" --help --config --version  | grep -- "$cur"
-    elif [[ "$cur" = -* ]]; then
-        printf "%s\n" i e u U S l
+    elif [[ "$cur" = - ]]; then
+        printf -- "-%s\n" i e u U S l
         if [[ "$cur" != -?* ]]; then
             printf "%s\n" --help --config --version | grep -- "$cur"
         fi
