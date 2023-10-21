@@ -29,7 +29,7 @@ show_help()
     echo "Usage:"
     echo "  qc [OPTION]... <dir-pattern>"
     echo "      Search for dir in index and cd to it."
-    echo "      -i  Search case-insensitive (slower)."
+    echo "      -i  Search case-insensitive."
     echo "      -h  Also search indexes of hidden dirs."
     echo "      -H  Only search indexes of hidden dirs."
     echo "      -e  Also search extended indexes."
@@ -45,11 +45,11 @@ show_help()
     echo "  qc -u [dir...]"
     echo "  qc -U [dir...]"
     echo "      Updates the indexes. '-U' also updates extended indexes. If dirs are"
-    echo "      given only that directories are updated,"
+    echo "      given only indexes containing any of those directories are updated."
     echo "  qc -l"
     echo "      List labeled dirs."
     echo "  qc -S"
-    echo "      Print statistics of index."
+    echo "      Print index statistics."
     echo "  qc --config"
     echo "      Open index config file 'qc-index.cfg' in a editor. Uses \$VISUAL,"
     echo "      \$EDITOR or vi."
@@ -65,14 +65,14 @@ show_help()
 
 check_initialized()
 {
-    local idx_files=( "$QC_DIR"/*.index )
-    if [ ${#idx_files[*]} -eq 0 ]; then
+    # shellcheck disable=SC2143
+    if [ -z "$(get_indexes a | grep -v "$QC_DSTORE_INDEX")" ]; then
         echo "==============================================================================="
         echo
         echo "Quick Change Directory not initialized."
         echo
         echo "Your home directory needs to be scanned to create a index. Depending on its"
-        echo "size this might take a few minutes."
+        echo "size this might take while."
         echo
         echo "Call 'qc -u' or 'qc -U' to create a index of your home directory."
         echo
@@ -234,9 +234,9 @@ get_indexes()
 
 }
 
-# Select directories found in ~/.qc/*.index.
+# Select a directory from the index(es).
 # $1: grep options (ignored for search by label)
-# $2: Search extended indexes? ("true" or "")
+# $2: index(es) select string, see comment on function get_indexes for details
 # $3-: text to search for. With leading ':' triggers search by label.
 dir_select()
 {
@@ -383,7 +383,7 @@ updateIndex()
                 ARGS+=( "-i" "$d")
             fi
         done
-        echo "qc-build-index ${ARGS[*]}"
+        echo "Executing qc-build-index ${ARGS[*]}"
         qc-build-index "${ARGS[@]}"
     else
         echo "Updating index (internal update)..."
