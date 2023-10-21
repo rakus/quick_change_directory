@@ -20,7 +20,7 @@ jobs:
 
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Install ksh, zsh, shellcheck
         run: sudo apt-get install -qq ksh zsh shellcheck
@@ -42,7 +42,7 @@ jobs:
 
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Run Tests
         shell: bash
