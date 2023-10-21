@@ -33,13 +33,6 @@ QC_DSTORE_INDEX=$QC_DIR/index.dstore
 
 CFG="$QC_DIR/qc-index.cfg"
 
-if [[ -n "${QC_USE_FIND:-}" || -z "$(command -v fd)" ]]; then
-    QC_USE_FIND=true
-else
-    unset QC_USE_FIND
-fi
-
-
 show_help()
 {
     echo "USAGE:"
@@ -287,7 +280,6 @@ build_index()
 
     # find all directories excluding those configured
     # echo >&2 find "${ROOTS[@]}" -xdev -type d "${ignDirs[@]}" -prune -o -xtype d "${filter[@]}" -print
-    echo "Using find command"
     find -L "${ROOTS[@]}" "${MAX_DEPTH[@]}" -xdev -type d "${ignDirs[@]}" -prune -o -xtype d "${filter[@]}" -print >> "$NEW_INDEX"
     # Don't check exit code.
     # A "permission denied" in some subdir would kill the index
@@ -452,7 +444,6 @@ build_index_using_fd()
     inc_start=$(wc -l < "$NEW_INDEX")
 
     # find all directories excluding those configured
-    echo "Using fd command"
     if [ -n "${hidden_only:-}" ]; then
         for r in "${ROOTS[@]}"; do
             if [[ "$r" = *"/."* ]]; then
@@ -607,6 +598,13 @@ if [ ! -e "$CFG" ]; then
     copy_default_config
 fi
 
+if [[ -n "${QC_USE_FIND:-}" || -z "$(command -v fd)" ]]; then
+    echo "Using find command"
+    QC_USE_FIND=true
+else
+    echo "Using fd command"
+    unset QC_USE_FIND
+fi
 
 export QC_LIST_UPD=true
 
