@@ -53,16 +53,16 @@ else
     ERROR
 fi
 
-printf "Fail adding 60 minutes"
-if ! qc-build-index --cron 60 >/dev/null 2>&1; then
+printf "Fail adding 31 minutes"
+if ! qc-build-index --cron 31 >/dev/null 2>&1; then
     OK
 else
     ERROR
 fi
 
-printf "Add cron entry all 43 minutes"
-qc-build-index --cron 43 >/dev/null
-if [[ "$(qc-build-index --cron | grep -v '^#')" = '*/43 '* ]]; then
+printf "Add cron entry all 20 minutes"
+qc-build-index --cron 20 >/dev/null
+if [[ "$(qc-build-index --cron | grep -v '^#')" = '*/20 '* ]]; then
     OK
 else
     ERROR

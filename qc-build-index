@@ -46,9 +46,9 @@ show_help()
     echo "   -i dir  Incremental update the given dir in the affected index(es)."
     echo "           Indexes that does not contain the dir are not touched."
     echo ""
-    echo "   index   Name of the indexes that should be updated. The given names"
-    echo "           are matched against the index names. So 'home' will match"
-    echo "           'home.index' and 'home.hidden.index.ext'."
+    echo "   index   Name of the indexes that should be updated. The given names are"
+    echo "           matched against the index names. So 'home' will match home.index"
+    echo "           and 'home.hidden.index.ext'."
     echo "           To only update extension indexes use '*.ext'."
     echo ""
     echo "   --cron [minutes]"
@@ -56,8 +56,9 @@ show_help()
     echo "           minutes:"
     echo "             not given: Lists current crontab config."
     echo "             0:         Removes $script_name from crontab."
-    echo "             1 - 59:    Configures to run every given minutes."
-    echo "                        A existing configuration is replaced."
+    echo "             1 - 30:    Configures to run on the full hour and every multiple"
+    echo "                        of given minutes. E.g. for '12' it will run at "
+    echo "                        *:00, *:12, *:24, *:36 and *:48."
     echo ""
 }
 
@@ -527,8 +528,8 @@ configure_crontab()
         echo "Removing $script_name from crontab"
         crontab -l 2>/dev/null | grep -v "$cron_label\|$script_name" | crontab -
         return
-    elif [ $minutes -lt 1 ] || [ $minutes -gt 59 ]; then
-        echo >&2 "ERROR: Minutes value for '--cron' out of range 1-59"
+    elif [ $minutes -lt 1 ] || [ $minutes -gt 30 ]; then
+        echo >&2 "ERROR: Minutes value for '--cron' out of range 1-30"
         return 1
     fi
 
