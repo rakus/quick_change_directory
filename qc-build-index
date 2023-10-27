@@ -550,7 +550,7 @@ configure_crontab()
 
 typeset -a INC_UPD=()
 
-if ! _args="$(getopt -n "$script_name" -o "iHE" --long "help,version,cron" -- "$@")"; then
+if ! _args="$(getopt -n "$script_name" -o "i:HE" --long "help,version,cron" -- "$@")"; then
     echo >&2 "Try '$script_name --help' for more information."
     exit 1
 fi
@@ -559,7 +559,8 @@ eval "set -- $_args"
 while true; do
     case $1 in
         -i)
-            d=$OPTARG
+            shift
+            d=$1
             d="${d%"${d##*[!/]}"}"
             INC_UPD+=( -i "$d" )
             ;;
