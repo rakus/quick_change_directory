@@ -169,6 +169,7 @@ build_index()
                 fd_ignore_ignores=true
                 ;;
             *)
+                echo >&2 "ERROR: Unknown index option $OPTARG"
                 return 1
                 ;;
         esac
@@ -252,6 +253,9 @@ build_index()
     # echo "FILTER:    [ ${FILTER[*]} ]"
 
     if [ -n "${QC_USE_FIND:-}" ]; then
+        build_index_using_find "$new_index" "$max_depth" "$hidden_only" "$include_hidden"
+    elif [ ${#FILTER[@]} -gt 0 ]; then
+        echo "Using 'find' for this index as it uses index filter option (-f)"
         build_index_using_find "$new_index" "$max_depth" "$hidden_only" "$include_hidden"
     else
         build_index_using_fd "$new_index" "$max_depth" "$hidden_only" "$include_hidden" "$fd_ignore_ignores"
@@ -356,7 +360,7 @@ build_index_using_find()
 # Uses global arrays:
 # - ROOTS
 # - IGNORE_DIRS
-# - FILTER
+# Does NOT use FILTER, as this is not supported with 'fd'.
 build_index_using_fd()
 {
     local new_index="$1"
