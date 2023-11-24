@@ -24,7 +24,7 @@ run_tests()
         test_shells="$test_shells$shell "
         echo "============================================================"
         echo "Testing with $shell ($($shell --version 2>&1 | head -n1))"
-        for fn in test-*.sh test-*."$shell"; do
+        for fn in shtest-*.sh shtest-*."$shell"; do
             if [ -e "$fn" ]; then
                 echo "Running $shell $fn"
                 if ! $shell "./$fn"; then
@@ -46,6 +46,16 @@ fi
 
 for shell in "$@"; do
     run_tests "$shell"
+done
+
+for fn in test-*.sh; do
+    if [ -e "$fn" ]; then
+        echo "Running $fn"
+        if ! "./$fn"; then
+            echo >&2 "Test FAILED"
+            exit 1
+        fi
+    fi
 done
 
 echo
