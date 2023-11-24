@@ -215,8 +215,8 @@ build_index()
     if [ ${#inc_upd_roots[@]} -gt 0 ]; then
         if [ -e "$index_file" ]; then
             for d in "${inc_upd_roots[@]}"; do
-                if [ -d "$d" ]; then
-                    if is_descendant "$d" "${ROOTS[@]}"; then
+                if [ -d "$d" ] && is_descendant "$d" "${ROOTS[@]}"; then
+                    if [ -n "${hidden_only:-}${include_hidden:-}" ] || [[ "$d" != *'/.'* ]]; then
                         inc_roots+=( "$d" )
                     fi
                 else
@@ -246,11 +246,14 @@ build_index()
     inc_start=$(wc -l < "$new_index")
 
     # echo "-------------------------------------"
-    # echo "INDEX:     $idx_name"
-    # echo "Tmp-INDEX: $new_index"
-    # echo "ROOTS:     ${ROOTS[*]}"
-    # echo "IGNORE:    [ ${IGNORE_DIRS[*]} ]"
-    # echo "FILTER:    [ ${FILTER[*]} ]"
+    # echo "INDEX:          $idx_name"
+    # echo "Tmp-INDEX:      $new_index"
+    # echo "ROOTS:          ${ROOTS[*]}"
+    # echo "IGNORE:         [ ${IGNORE_DIRS[*]} ]"
+    # echo "FILTER:         [ ${FILTER[*]} ]"
+    # echo "max_depth:      '$max_depth'"
+    # echo "hidden_only:    '$hidden_only'"
+    # echo "include_hidden: '$include_hidden'"
 
     if [ -n "${QC_USE_FIND:-}" ]; then
         build_index_using_find "$new_index" "$max_depth" "$hidden_only" "$include_hidden"
@@ -318,6 +321,8 @@ build_index_using_find()
             fi
         done
         ign_dirs+=( ")" )
+    elif [ -z "${include_hidden:-}${hidden_only:-}" ]; then
+        ign_dirs+=( -path '*/.*' )
     else
         # nothing to ignore
         ign_dirs=( '-false' )
@@ -375,6 +380,7 @@ build_index_using_fd()
         ign_dirs+=( --exclude "**/$d" --exclude "**/$d/**" )
     done
 
+    typeset -a fd_args=()
     # handle hidden_only and include_hidden
     if [ -n "$hidden_only$include_hidden" ]; then
         fd_args+=( --hidden )
