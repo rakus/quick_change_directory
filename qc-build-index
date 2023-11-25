@@ -33,6 +33,8 @@ QC_DSTORE_INDEX=$QC_DIR/index.dstore
 
 CFG="$QC_DIR/qc-index.cfg"
 
+typeset -a TMP_FILES=()
+
 show_help()
 {
     echo "USAGE:"
@@ -69,6 +71,14 @@ trim_str() {
     # remove trailing whitespaces
     str="${str%"${str##*[![:space:]]}"}"
     echo -n "$str"
+}
+
+# shellcheck disable=SC2317  # called via trap
+cleanup()
+{
+    for file in "${TMP_FILES[@]}"; do
+        rm -f "$file"
+    done
 }
 
 #
@@ -182,7 +192,9 @@ build_index()
             shift
             break
         fi
-        if d="$(readlink -e "$1")"; then
+        if [[ "$1" != '/'* ]]; then
+            echo >&2 "ERROR: Root directory is not a absolute path: $1"
+        elif d="$(readlink -e "$1")"; then
             ROOTS=( "${ROOTS[@]}" "$d" )
         else
             echo >&2 "ERROR: Root directory not found: $1"
@@ -190,7 +202,7 @@ build_index()
         shift
     done
     if [ ${#ROOTS[@]} -eq 0 ]; then
-        echo >&2 "ERROR: No root directory"
+        echo >&2 "ERROR: No root directory -- No index"
         return 1
     fi
 
@@ -211,37 +223,41 @@ build_index()
 
     typeset index_file=$QC_DIR/$idx_name
 
+    typeset new_index
+    new_index=$(mktemp "${index_file/.index/.updating-index}.XXXX")
+    TMP_FILES+=( "$new_index" )
+
     typeset -a inc_roots=()
     if [ ${#inc_upd_roots[@]} -gt 0 ]; then
         if [ -e "$index_file" ]; then
             for d in "${inc_upd_roots[@]}"; do
-                if [ -d "$d" ] && is_descendant "$d" "${ROOTS[@]}"; then
-                    if [ -n "${hidden_only:-}${include_hidden:-}" ] || [[ "$d" != *'/.'* ]]; then
-                        inc_roots+=( "$d" )
-                    fi
-                else
+                if [ ! -d "$d" ]; then
                     echo "WARN: $d does not exist -- ignored"
+                    continue
+                fi
+                if ! is_descendant "$d" "${ROOTS[@]}"; then
+                    continue
+                fi
+
+                if [ -n "${hidden_only:-}${include_hidden:-}" ] || [[ "$d" != *'/.'* ]]; then
+                    inc_roots+=( "$d" )
                 fi
             done
             if [ ${#inc_roots[@]} -eq 0 ]; then
                 echo "Skipping $idx_name: does not contain any of [ $(array2Str "${inc_upd_roots[@]}") ]"
                 return 0
+            else
+                # if incremental update set new ROOTS and prefill index file
+                ROOTS=( "${inc_roots[@]}" )
+                re=$(printf "%s|" "${ROOTS[@]}")
+                re=${re%|}
+                grep -aEv "^($re)(/|$)" "$index_file" > "$new_index"
             fi
         else
             echo "Index $idx_name does not exist -- ignoring incremental update"
         fi
     fi
 
-    typeset new_index
-    new_index=$(mktemp "${index_file/.index/.updating-index}.XXXX")
-
-    # if incremental update set new ROOTS and prefill index file
-    if [ ${#inc_roots[@]} -gt 0 ]; then
-        ROOTS=( "${inc_roots[@]}" )
-        re=$(printf "%s|" "${ROOTS[@]}")
-        re=${re%|}
-        grep -aEv "^($re)(/|$)" "$index_file" > "$new_index"
-    fi
     typeset inc_start
     inc_start=$(wc -l < "$new_index")
 
@@ -452,7 +468,7 @@ configure_crontab()
     fi
     local cron_label="# Quick Change Directory: update index"
 
-    if [ -z "$1" ]; then
+    if [ -z "${1:-}" ]; then
         crontab -l 2>/dev/null | grep "$cron_label\|$script_name"
         return 0
     fi
@@ -486,6 +502,8 @@ configure_crontab()
 
 #---------[ MAIN ]-------------------------------------------------------------
 
+trap "cleanup" EXIT
+
 typeset -a inc_upd=()
 
 if ! _args="$(getopt -n "$script_name" -o "i:HE" --long "help,version,cron" -- "$@")"; then
@@ -500,7 +518,12 @@ while true; do
             shift
             d=$1
             d="${d%"${d##*[!/]}"}"
-            inc_upd+=( -i "$d" )
+            if [ -d "$d" ]; then
+                inc_upd+=( -i "$d" )
+            else
+                echo >&2 "ERROR: Not a (existing) directory: $d"
+                exit 1
+            fi
             ;;
         -H)
             ignHidden=true
