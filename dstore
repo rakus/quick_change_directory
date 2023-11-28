@@ -44,6 +44,8 @@ show_help()
     echo "      '-l'  list directory index"
     echo "      '-c'  clean up duplicate/none-existing entries"
     echo ""
+    echo "Note: Labels are case-insensitive and are always stored in lower case."
+    echo ""
     echo "See also: qc --help"
     echo ""
 }
@@ -187,7 +189,7 @@ fi
 while [ $# -gt 0 ]; do
     case $1 in
         :*)
-            typeset lbl=$1
+            typeset -l lbl=$1
             shift
             if [ ${#lbl} -eq 1 ] || [ "${lbl//[-A-Za-z0-9_]/}" != ':' ]; then
                 echo >&2 "Invalid label '$lbl'."

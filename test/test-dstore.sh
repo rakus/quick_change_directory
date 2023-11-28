@@ -71,18 +71,18 @@ dstore :A Customer/ACME
 
 checkSize 4
 labelExists ":loc"
-labelExists ":D"
-labelExists ":A"
+labelExists ":d"
+labelExists ":a"
 
 echo "Delete label :D"
 dstore -d :D
-labelGone ":D"
+labelGone ":d"
 checkSize 3
 
 echo "Try adding not existing dir"
 dstore :A hallo
-labelExists ":A"
-entryExists "^:A .*Customer/ACME"
+labelExists ":a"
+entryExists "^:a .*Customer/ACME"
 checkSize 3
 
 echo "Check cleanup"

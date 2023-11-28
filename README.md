@@ -308,6 +308,8 @@ Example:
     /opt/servers/apache/config
     :qc /home/joedoe/tools/quick_change_directory
 
+Note that labels are case-insensitive and are always stored in lower case.
+
 The content of `index.dstore` is managed with the command `dstore`.
 
 | Command              | Description                                          |
