@@ -91,8 +91,8 @@ Dstore and labels are explained in the section [Manual Index](#manual-index).
 
 ### Details on Expression
 
-The expression is case-sensitive. Use `qc -i ...` to switch to case-insensitive
-matching.
+The expression is case-sensitive. With the option  `-i`  or the environment
+variable `QC_NO_CASE`, qc can be switch to non case-sensitive search.
 
 Every parameter, that does not end with a `/` gets a `*` appended before it
 is joined with the next word with a `/`.
@@ -151,7 +151,9 @@ Like:
 
 ### Other qc option:
 
-* `-i` Search is case-insensitive. Only when searching by name.
+* `-i` Search case-insensitive. Default when `QC_NO_CASE` is set.
+* `-c` Search case-sensitive. Default when `QC_NO_CASE` is not set.
+* `-c` Search is case-sensitive.
 * `-h` Also search index files of hidden directories.
 * `-H` Only search index files of hidden directories.
 * `-e` Also search extended index files.
@@ -176,6 +178,10 @@ Qc can be configured with the following environment variables:
   file (`qc-index.cfg`) and the created indexes. For local installation this
   directory also contains all scripts. Important: If `qc-build-index` is run
   via crontab, make sure the correct variable is set in that context too.
+
+* `QC_NO_CASE` - Switches qc search to case-insensitive by default. Qc acts as
+  if the option `-i` is always given. With `-c` case-sensitive search can be
+  forced.
 
 * `QC_SKIP_FILTER_EXISTING` - By default qc filters out all not existing
   directories. By setting this variable this can be skipped. Useful when

@@ -29,7 +29,8 @@ show_help()
     echo "Usage:"
     echo "  qc [OPTION]... <dir-pattern>"
     echo "      Search for dir in index and cd to it."
-    echo "      -i  Search case-insensitive."
+    echo "      -i  Search case-insensitive. Default when QC_NO_CASE is set."
+    echo "      -c  Search case-sensitive. Default when QC_NO_CASE is not set."
     echo "      -h  Also search indexes of hidden dirs."
     echo "      -H  Only search indexes of hidden dirs."
     echo "      -e  Also search extended indexes."
@@ -240,8 +241,6 @@ get_indexes()
 # $3-: text to search for. With leading ':' triggers search by label.
 dir_select()
 {
-    typeset grepOpt="$1"
-    shift
     typeset indexSelect="$1"
     shift
 
@@ -259,7 +258,7 @@ dir_select()
             if [[ $# -gt 1 && ${#dl[*]} -eq 1 ]]; then
                 shift
                 local bd="${dl[0]%%/}/"
-                dir_select "$grepOpt" "a" "$bd" "$@"
+                dir_select "a" "$bd" "$@"
                 return
             elif [ $# -gt 1 ]; then
                 echo >&2 "WARNING: Extra arguments ignored ($pattern returned none or more than one directory)"
@@ -272,8 +271,11 @@ dir_select()
                 return 1
             fi
             pattern=$(args2regex "$@")
-            # shellcheck disable=SC2086  # grepOpt should split
-            mapfile -d$'\n' -t dl < <(grep --color=always -ah $grepOpt -- "/$pattern" "${idxFiles[@]}" | sed "s/^:[^ ]* //" | sort -u)
+            typeset -a grepOpt
+            if [ -n "${QC_NO_CASE:-}" ]; then
+                grepOpt+=( "-i" )
+            fi
+            mapfile -d$'\n' -t dl < <(grep --color=always -ah "${grepOpt[@]}" -- "/$pattern" "${idxFiles[@]}" | sed "s/^:[^ ]* //" | sort -u)
             ;;
     esac
 
@@ -431,8 +433,6 @@ index_statistics()
 
 complete_index_dir()
 {
-    typeset grepOpt="$1"
-    shift
     typeset indexSelect="$1"
     shift
 
@@ -465,8 +465,11 @@ complete_index_dir()
             fi
             #echo ">>$pattern<<"
             #echo ">>$clean_pattern<<"
-            # shellcheck disable=SC2086  # grepOpt should split
-            mapfile -d$'\n' -t compl < <(grep --color=never -ah $grepOpt -- "/$pattern" "${idxFiles[@]}" | sed "s|^.*\($clean_pattern\)|$last_part|;s|$|/|" | sort -u)
+            typeset -a grepOpt
+            if [ -n "${QC_NO_CASE:-}" ]; then
+                grepOpt+=( "-i" )
+            fi
+            mapfile -d$'\n' -t compl < <(grep --color=never -ah "${grepOpt[@]}" -- "/$pattern" "${idxFiles[@]}" | sed "s|^.*\($clean_pattern\)|$last_part|;s|$|/|" | sort -u)
 
             printf '%q\n' "${compl[@]}"
             ;;
@@ -499,7 +502,6 @@ complete_option()
 
 #---------[ MAIN ]-------------------------------------------------------------
 
-typeset grepOpt=""
 typeset indexSelect=""
 typeset printRegex=""
 
@@ -520,7 +522,9 @@ eval "set -- $_args"
 
 while true; do
     case $1 in
-        -i) grepOpt="-i"
+        -i) QC_NO_CASE=true
+            ;;
+        -c) QC_NO_CASE=
             ;;
         -a) indexSelect="${indexSelect}a"
             ;;
@@ -608,7 +612,7 @@ if [ -n "${cl_completion:-}" ]; then
         exit 0
     fi
 
-    complete_index_dir "$grepOpt" "$indexSelect" "$@"
+    complete_index_dir "$indexSelect" "$@"
     exit 0
 fi
 
@@ -618,7 +622,7 @@ elif [ "$*" = "-" ]; then
     echo "-"
 else
     # shellcheck disable=SC2155 # Declare and assign separately
-    typeset tgt=$(dir_select "$grepOpt" "$indexSelect" "$@")
+    typeset tgt=$(dir_select "$indexSelect" "$@")
     if [ -n "${tgt:-}" ]; then
         echo "$tgt"
     else
