@@ -500,6 +500,62 @@ configure_crontab()
     (crontab -l 2>/dev/null | grep -v "$cron_label" | grep -v "$script_name"; echo "$cron_label"; echo "$cron_entry") | crontab -
 }
 
+check_unknown_index_files()
+{
+    typeset -a find_args
+    find_args+=( \( -not -name \*~ \) )
+    find_args+=( -and )
+    find_args+=( -type f )
+    find_args+=( -and )
+    find_args+=( \( -name \*.index -o -name \*.index.hidden -o -name \*.index.ext )
+    find_args+=( -o -name \*.index.host.\* -o -name \*.index.hidden.host.\* -o -name \*.index.ext.host.\* \) )
+
+    mapfile -d$'\n' -t existing_idx_files < <( find "$QC_DIR" -maxdepth 1 "${find_args[@]}" -printf "%f\n" )
+
+    mapfile -d$'\n' -t configured_idx_files < <( grep -v '^[[:space:]]*\(#.*\)\?$' "$QC_DIR/qc-index.cfg" | sed 's/^[[:space:]]*//' | cut -d' ' -f1 )
+
+    for c in "${configured_idx_files[@]}"; do
+        c="${c/%\$HOSTNAME/*}"
+        for idx in "${!existing_idx_files[@]}"; do
+            # shellcheck disable=SC2053
+            if [[ "${existing_idx_files[$idx]}" = $c ]]; then
+                unset 'existing_idx_files[idx]'
+            fi
+        done
+    done
+
+    if [ "${#existing_idx_files[@]}" -ne 0 ]; then
+        echo
+        echo "NOTICE: Index files found, that are not managed via qc-index.cfg."
+        for d in "${existing_idx_files[@]}"; do
+            echo "  - $d"
+        done
+    fi
+
+    find_args=()
+    find_args+=( \( )
+    for c in "${configured_idx_files[@]}"; do
+        c="${c/%\$HOSTNAME/*}"
+        find_args+=( -name "$c" )
+        find_args+=( -o )
+    done
+    unset "find_args[-1]"
+    find_args+=( \) )
+
+
+    mapfile -d$'\n' -t old_idx_files < <( find "$QC_DIR" -maxdepth 1 "${find_args[@]}" -mtime +7 -printf "%f\n" )
+
+    if [ "${#old_idx_files[@]}" -ne 0 ]; then
+        echo
+        echo "NOTICE: Index files last updated more than 7 days ago:"
+        for d in "${old_idx_files[@]}"; do
+            echo "  - $d"
+        done
+    fi
+
+}
+
+
 #---------[ MAIN ]-------------------------------------------------------------
 
 trap "cleanup" EXIT
@@ -659,10 +715,11 @@ while IFS= read -r line; do
 done < "$CFG"
 IFS="$oifs"
 
-if [ "$idxCount" -gt 0 ]; then
-    exit 0
-else
+check_unknown_index_files
+
+if [ "$idxCount" -eq 0 ]; then
     echo >&2 "ERROR: No index defined in $CFG"
     exit 1
 fi
+
 
