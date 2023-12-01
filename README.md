@@ -11,135 +11,133 @@ It creates a index file with all directories from a directory tree and
 then searches this index to find the directory to change to. The creation of the
 index is configurable and multiple indexes can be created.
 
+
 ## Searching and changing directories
 
-### Search by (part of the) directory name
+Prerequisite for searching for directories is that an index is created. The
+following sections contain a short outline about the required index(es). More
+details can be found in the chapter [The Index](#the-index).
 
-**Example:** `qc Pro`
+A search might return multiple matching directories. In this case a shell select
+dialog is displayed. Like:
 
-This searches for a directory named `Pro*`. It would match something like:
+    $ qc test
+    1) ~/code/quick-change-directory/test
+    2) ~/code/parseargs/tests
+    # or 'q' to quit?
 
-    ~/Documents/Customer/Project
-    ~/Documents/Customer/YoYo/Protocols
-    ~/Documents/private/Profile
+If [fzf] is available and the environment variable `QC_FZF` is set, `fzf` is
+used instead of the shell select command.
 
-If only one name matches, the directory is changed immediately.
-If multiple entries matches, a list of possible target directories is
-displayed. Choose one by number and the directory is changed or enter `q`
-to quit.
+### Searching by Name
 
-    ~ > qc Pro
-    1) ~/Documents/Customer/Project
-    2) ~/Documents/Customer/YoYo/Protocols
-    3) ~/Documents/private/Profile
-    #?
+Searching by name requires that an index is created. This can be done by calling
+`qc -u`. By default two index files are created. One containing all directories,
+excluding hidden directories (and their descendants) and one containing only
+hidden directories and their descendants (hidden or not).
 
-**Example:** `qc Project/Ser`
+The command `qc` can be called with one or more arguments. This arguments are
+joined together to form a search string to search for matching directories.
 
-This searches for a directory path that ends with `.../Project/Ser*`. It would
-match something like:
+The all arguments, except those ending with `/`, get an asterisk appended and
+then the arguments are joined together with `/` characters.
 
-    ~/Documents/Customer/Project/Server
-    ~/Documents/Customer/Project/Serial
+So: `qc Proj` searches for `Proj*` and `qc test Proj` search for `test*/Proj*`.
 
+As a trailing slash prevents the appending of an asterisk, the  command `qc
+test/ case` searches for `test/case*` and `qc lyrics/` searches for a directory
+with the exact name `lyrics`.
 
-**Example:** `qc Project/Ser/`
+Additionally an argument can be prefixed with two slashes to search for a name
+somewhere below the previous name.
 
-This searches for a directory path that ends with `.../Project/Ser`. Note, that
-there is no wildcard at the end.
+So: `qc Proj //quick` searches for `Proj*/**/quick*`. This searches for a
+directory named `quick*` one or more levels below a directory named `Proj*`.
 
-
-**Example:** `qc Documents//Cust`
-
-This searches for a directory named `Cust*` somewhere below a directory named
-`Documents`.
-
-    .../Documents/Customer
-    .../Documents/Test/Customer
-    .../Documents/Stuff/YoYo/Test/Customer
-
-
-### Search with multiple parameters
-
-**Example:** `qc Project Ser`
-
-This searches for directory path that ends with `.../Project*/Ser*`
-It would match something like:
-
-    ~/Documents/Customer/Project/Server
-    ~/Documents/Customer/Project/Serial
-    ~/Documents/Customer/Project-Test/Server
-
-Note: Trailing '/' prevents appending wildcards.  So:
-
-    qc Project/ Ser
-
-is equivalent to
-
-    qc Project/Ser
-
-### Search by label
-
-**Example:** `qc :apachelog`
-
-This searches for a entry that is labeled with ":apachelog".
-
-Qc works with an additional command named `dstore` (like "directory store") that
-is able to create a label (aka  bookmark) for a directory.
-
-Dstore and labels are explained in the section [Manual Index](#manual-index).
-
-### Details on Expression
-
-The expression is case-sensitive. With the option  `-i`  or the environment
-variable `QC_NO_CASE`, qc can be switch to non case-sensitive search.
-
-Every parameter, that does not end with a `/` gets a `*` appended before it
-is joined with the next word with a `/`.
-So:
+Summary:
 * `Hello World`  -> `Hello*/World*`
 * `Hello/ World` -> `Hello/World*`
 * `Hello/World`  -> `Hello/World*`
 * `Hello/World/` -> `Hello/World`
+* `Hello //World` -> `Hello*/**/World*`
+* `Hello//World` -> `Hello*/**/World*`
 
-Supported Wildcards:
+The following wildcards can be used in the arguments. _Note that wildcard
+expansion is disabled for `qc`, so no escaping is needed._
 
-|Wildcard| Matches                                 | Regular Expression |
-| ------ | --------------------------------------- | ------------------ |
-| `*`    | Zero or more characters excluding '/'   | `[^/]*`            |
-| `?`    | A single character excluding '/'        | `[^/]`             |
-| `**`   | Zero or more characters (including '/') | `.*`               |
-| `//`   | Zero or more intermediate directories   | `\(.*/\)*`         |
+| Wildcard | Matches                                   | Regular Expression |
+| -------- | ----------------------------------------- | ------------------ |
+|  `*`     | Zero or more characters excluding '/'     | `[^/]*`            |
+|  `?`     | A single character excluding '/'          | `[^/]`             |
+|  `**`    | Zero or more characters (_including_ '/') | `.*`               |
+|  `//`    | Zero or more intermediate directories     | `\(.*/\)*`         |
 
-Note: More than two consecutive `*` are handled as `**`. The same is true for
-`/`. So:
-* `***`    is equivalent to `**`
-* `*****`  is equivalent to `**`
-* `/////`  is equivalent to `//`
 
-BTW: If a directory name contains non-text bytes, qc can't find this
-directory. This is due to the way `grep` handles binary data.
+All searches are case-sensitive by default. Case-insensitive search can be
+enabled with the option `-i` or by setting the environment variable
+`QC_NO_CASE`.
 
-### Multiple ways
 
-Assume you have a directory
+#### `qc` Option for Search By Name
 
-    ~/Documents/Customer/YoYo/MyProject/Admin
+* `-i`  Search case-insensitive. Default when `QC_NO_CASE` is set.
+* `-c`  Search case-sensitive. Default when `QC_NO_CASE` is not set.
+* `-h`  Also search indexes of hidden directories.
+* `-H`  Only search indexes of hidden directories.
+* `-e`  Also search extended indexes.
+* `-E`  Only search extended indexes.
+* `-a`  Search all indexes.
 
-Examples to change to that directory:
+BTW: If the search term given to `qc` contain a pattern that leads to a hidden
+directory, the option `-h` is automatically enabled. E.g. `qc test .h case`.
 
-    qc C Y M A
-    qc MyPr Adm
-    qc MyProject/Ad
-    qc Customer//Admin      # "Admin" somewhere below "Customer"
-    qc YoYo/*/Admin         # '*' matches on subdirs
-    qc Customer/**/Admin    # '**' matches multiple subdirs
-    qc YoYo * Admin
-    qc Cust ** Admin
 
-Note that wildcard expansion is disabled for `qc`. No need to escape `*` etc.
+### Search by Label
 
-### Command line completion
+Searching by label requires the special "manual index". This is an index that is
+manually managed by the user using the command `dstore`.  Directories can simply
+be added to it or can be added with a label (aka a bookmark).
+
+E.g. The command `dstore :test` adds the current directory to the manual index
+and label it with ":test". A label always starts with a colon and may only contain
+characters, digits, dash and underscore. _Labels are case-insensitive and always
+stored in lower case._
+
+A label can then be used with `qc` to change to the labeled directory.
+
+The command `qc :test` changes to the directory labeled with `:test`.
+
+BTW: If there is really a directory name starting with a colon _and_ it is the
+first argument to `qc`, then it must be prefixed with a slash. Like: `qc /:test`
+
+**Search by Label and Name**
+
+It is possible to change to a sub-directory of a labeled directory like this:
+
+    qc :qc test
+
+This changes to the sub-directory `test` of the directory labeled as `:qc`.
+The sub-directory must also be listed in an index (manual or managed).
+
+The wildcards etc from the search by name also apply here. So `qc :label //data`
+searches for a directory `data` somewhere below the directory labeled with
+`:label`.
+
+#### `qc` Option for Search By Label
+
+With `qc -l` a list of the labeled directories are printed:
+
+    $ qc -l
+    :qc /home/rks/code/quick-change-directory
+    :pa /home/rks/code/parseargs
+
+For "Search by Label and Name" the case related options can be used:
+
+* `-i`  Search case-insensitive. Default when `QC_NO_CASE` is set.
+* `-c`  Search case-sensitive. Default when `QC_NO_CASE` is not set.
+
+
+## Command Line Completion
 
 Bash and zsh command line completion is supported for 'qc'. Just use `<TAB>` as
 you would do for the cd commands.
@@ -149,26 +147,10 @@ Like:
     > qc  Documents//Y<TAB>
     > qc  Documents//YoYo/
 
-### Other qc option:
+When using bash, make sure that [bash-completion] is installed. Just execute
+`declare -F "_get_comp_words_by_ref"`. If this prints the function name, it is
+already installed. Else check your package manager or install it manually.
 
-* `-i` Search case-insensitive. Default when `QC_NO_CASE` is set.
-* `-c` Search case-sensitive. Default when `QC_NO_CASE` is not set.
-* `-c` Search is case-sensitive.
-* `-h` Also search index files of hidden directories.
-* `-H` Only search index files of hidden directories.
-* `-e` Also search extended index files.
-* `-E` Only search extended index files.
-* `-a` Search all index files.
-* `-u` Update the normal & hidden indexes.
-* `-U` Update the normal, hidden and extended indexes.
-* `-l` List labeled directories.
-* `-S` Print statistics of index files.
-* `--config` Open index config file 'qc-index.cfg' in a editor.
-* `--help` Shows help.
-
-Note:
-* calling `qc` without parameter acts like calling `cd` without parameter
-* calling `qc -` acts like calling `cd -`
 
 ## Configuration
 
@@ -196,127 +178,189 @@ Qc can be configured with the following environment variables:
 * `QC_USE_FIND` - By default qc prefers `fd` to `find` to scan  the directory
   tree. By setting `QC_USE_FIND` to not empty the command `find` is used.
 
-## Indexes
+Note that all boolean configuration variables are enabled if they are set to any
+non-empty value. E.g. `QC_FZF=false` in fact enabled fzf support, because the
+variable has a non-empty value.
 
-The qc universe knows four type of indexes. Three of those types can be created
-automatically (via script), the fourth one is for manual management.
 
-All index files are held in the directory `~/.qc` (or whatever `QC_DIR` is set
-to).
+## The Index
 
-**Note:**
+The index of quick-change-directory consists of multiple indexes, or to be more
+precise, multiple index files.
 
-* Directory names with newline are ignore and not added to the index.
-* Directories names with with encoding errors are added to the index, but qc is
-  not able to find them. This is a restriction of `grep`.
+The "Managed Indexes" are index files that are configured and created and
+updated via script.
 
-### Normal, Hidden and Extended Indexes
+The "Manual Index" is a file that is managed by the user using the command
+`dstore`.
 
-This indexes are normal text files with one directory name per line.
+Some directory names cannot be handled correctly. See [Unusual Directory
+Names](#unusual-directory-names),
 
-Normal indexes have the file extension `.index` and are searched by qc by
-default.
+### The Managed Indexes
 
-Hidden indexes have the file extension `.index.hidden` and only contain
-hidden directories and their descendants. They are searched when the options
-`-h`, `-H` or `-a` are given
+The managed indexes are one or multiple index files that are configured and
+created using the script `qc-build-index`. This script is either invoked via
+`qc` or via a crontab entry. The script is located in `~/.qc`.
 
-Extended indexes have the file extension `.index.ext` and are only searched when
-qc is called with the option `-e`, `-E` or `-a`.
+#### Configuring the Managed Index
 
-The indexes are defined in the file `~/.qc/qc-index.cfg`.
+The configuration is in the file `~/.qc/qc-index.cfg`. This files contains
+definition of index files. Comment lines start with `#`. Trailing comments are
+not supported. Empty lines are ignored.
 
-Example:
+Environment variables can be used in index definitions. Note, that the value of
+the variable `$HOSTNAME` is automatically changed to lower case.
 
+Quoting rules are like for the command line.
+
+The easiest way to open the configuration file is with the command `qc
+--config`.
+
+Example entries:
+
+    # Create normal index of $HOME that ignores all hidden directories and
+    # directories named 'CVS'
     home.index $HOME -- CVS
-    home.index.hidden $HOME -- .git .cache
-    dev.index.ext /opt/dev
 
-This defines three indexes:
-* `home.index` (file: `~/.qc/home.index`) contains all directories below
-  `$HOME` excluding hidden dirs. It also excludes directories named `CVS`.
-* `home.index.hidden` (file: `~/.qc/home.index.hidden`) contains all hidden
-  directories and their descendants below `$HOME`, but excludes `.git` and
-  `.cache`.
-* `dev.index.ext` (file: `~/.qc/dev.index.ext`) contains all directories below
-  `/opt/dev` excluding hidden directories.
+    # Create index of $HOME only containing hidden directories.
+    # Ignores some 'useless' hidden dirs.
+    home.index.hidden $HOME -- .metadata .settings .git .svn .hg .bzr .cache
 
-The comments in the file `qc-index.cfg` contains more details and examples.
+A line in the configuration file has the following structure:
 
-The file `qc-index.cfg` is processed using the script `qc-build-index`.
+    <index-file-name> [OPTIONS] <root-dir>... [ -- <ignore>...]
 
-__Host-Local Indexes__
+##### Index File Name
 
-Sometimes the home directory of a user is used on different host. Then also the
-QC configuration is shared. If a index should only be used on a special host,
-the index name can get "host." followed by the hosts name as extension. The host
-name **must be written in LOWER case**.
+The index file name is a plain file name that follows certain rules. The content
+of the index and it's usage depends on the extension. The index files are
+created in `~/.qc/index`.
 
-Examples (assuming hosts "pluto" and "mars"):
+* `*.index` - Normal Index - Files with this extensions contains directory names
+  excluding hidden directories and their descendants. Hidden files can be
+  included by option (see below).<br>
+  Normal index files are always searched, except when they are explicitly
+  disabled with `-H` or `-E`.
 
-    dev.index.host.pluto
-    dev.index.ext.host.pluto
-    dev.index.host.mars
-    dev.index.ext.host.mars
+* `*.index.hidden` - Hidden Index - This files contains hidden directories and
+  their descendants.<br>
+  Hidden index files are only searched when the option `-h`, `-H` or `-a` are
+  used. They are also searched, if one the arguments to qc starts with a dot.
 
-BTW: If the variable $HOSTNAME is used:
+* `*.index.ext` - Extended Index - They are like normal index files, but are
+  typically used to create an index of a directory that is rarely changed to or
+  only need seldom update.<br>
+  Extended index files are searched when the option `-e`, `-E` or `-a` is
+  used.
 
-    dev.index.host.$HOSTNAME
+_Host-Local Index Files_
 
-The script `qc-build-index` sets the host name in lower case.
+All the above index file types can also be defined as being host-local. This is
+useful if the home directory is shared between different machines and an index
+should only be created and searched on a special host.
 
+The name of a host-local index is like mentioned above, but with
+`.host.<hostname>` appended. The host name must be given in lower case. It is
+also possible to use the environment variable `$HOSTNAME` here.
 
-__Using `fd` vs `find`__
-
-The script `qc-build-index` uses the command `fd` or `find` to scan the
-directory tree. By default `fd` is preferred due to better performance. See
-below.
-
-The results are different between fd and find. Fd handles symbolic links
-slightly different and it respects .gitignore etc by default. The index option
-'-I' can be used to disable this. See fd man page on '-I'/'--no-ignore'.
-Again: See comments in `qc-index.cfg`.
+E.g. The index file named `data.index.host.pluto` is only updated and searched
+on a machine with the host name "pluto".
 
 
-__Update Performance__
+##### Options
 
-Update performance depends on the number of indexes and their definition.
+* `-h` - Also include hidden directories and their descendants in an index that
+  would normally exclude them.
 
-My home directory contains ~150000 directories and my HD is a SSD.
-I have two indexes defined (see file qc-index.cfg).
-Due to ignored dirs (like .git, .metadata, ...) only about 95000
-directories are stored in the indexes.
+* `-d depth` -  Limits the depth of the created index.<br>
+    1 only includes the immediate sub-directories of the root-dir(s)<br>
+    2 includes two levels of directories<br>
+    ...
 
-Performance depends on the tool used to scan the directory tree.
-If available (and `QC_USE_FIND` is not set), the tool `fd` is preferred.
+* `-f filter` -  Only include directories which full path match the given filter.
+  The filter will contain wildcards and must be quoted.  E.g.: `-f '*/logs/*'`
+  only include directories named 'logs' and their descendants.<br>
+  A index with this option is always created using 'find', as it is _not
+  supported_ for 'fd'.<br>
+  **Note: This option is under scrutiny for removal.**
 
-| Tool | dropped fs-cache | filled fs-cache |
-|------|------------------|-----------------|
-| fd   | ~ 5 seconds      | ~ 1.7 seconds   |
-| find | ~ 40 seconds     | ~ 13  seconds   |
+* `-I` - Only relevant if index is build with 'fd', else silently ignored.
+  Don't ignore files from `.gitignore` etc. By default, fd ignores directories
+  listed in several ignore files. See man page of `fd` for details.
 
-Exact performance numbers depend on hardware (CPU, disk) and current load of the
-system.
+##### Root Directories
 
-### Manual Index
+The index is build for one or more root directories. If a root directory does
+not exist, a warning is printed, but processing continues. As long as at least
+one root directory exists, the index is created.
 
-The manual index is stored in the file `~/.qc/index.dstore`. It is used by qc
-during normal searches and while searching for labeled directories.
+It is possible to use a environment variable here. Like `$HOME`.
 
-The file contains two types of entries (lines):
+##### Ignores
 
-1. Normal entries, that are just a directory name. (Like for the previous
-   indexes.)
-2. Labeled entries, where the directory name is prefixed with a label.
+After a `--` a list of directory names to ignore can be given. It can be simple
+names like `tmp` or path fragments like `target/classes`. If wildcards are used,
+the name has to be quoted (e.g. `"tmp*"`).
+
+The ignored directory and its descendants are excluded from the index.
+
+#### Creating or Updating the Index Files
+
+The index files are created and updated with the script `qc-build-index`. This
+uses the tool [fd] to scan the directory tree. If `fd` is not available or the
+environment variable `QC_USE_FIND` is set, the tool `find` is used. The index
+files created by this tools might be different, as `fd` uses certain ignore
+files (like `.gitignore`) and the handling of symbolic links is slightly
+different.
+
+The performance with `fd` is much better than with `find`.
+
+BTW: On Debian based systems, the fd executable is called `fdfind`.
+
+##### Updating via Command
+
+The command `qc` can be called with the option `-u` or `-U` to update the
+indexes. With `-u` normal and hidden indexes are updated, with `-U` also the
+extended indexes are updated.
+
+It is also possible to start a partial update by providing directory names. Then
+only the given directories are updated and only index files containing those
+directories are affected.
+
+E.g. To updates the directory `$PWD/data` use
+
+    qc -u data
+
+##### Updating via Cron
+
+It is possible to update the index via cron. The script `qc-build-index` has a
+own option to manipulate the crontab. Executing `qc-build-index --cron 10` adds
+a crontab entry to update the index every 10 minutes.
+
+Example entry in the `crontab`:
+
+    # Quick Change Directory: update index
+    */10 * * * * ${HOME}/.qc/qc-build-index >${HOME}/.qc/index/qc-build-index.log 2>&1
+
+The current cron configuration can be displayed with `qc-build-index --cron`.
+
+See `qc-build-index --help` for other supported options.
+
+### The Manual Index
+
+The manual index is stored in the single file `~/.qc/index.dstore`. This file is
+managed with the command `dstore`. It contains plain directory paths or labeled
+directories.
 
 Example:
 
     /opt/servers/apache/config
-    :qc /home/joedoe/tools/quick_change_directory
+    :qc /home/rks/code/quick-change-directory
 
-Note that labels are case-insensitive and are always stored in lower case.
+The second entry is a labeled directory with the label `qc`.
 
-The content of `index.dstore` is managed with the command `dstore`.
+The command `dstore` can be used to add or remove entries from the manual index.
 
 | Command              | Description                                          |
 | -------------------- | ---------------------------------------------------- |
@@ -328,27 +372,23 @@ The content of `index.dstore` is managed with the command `dstore`.
 |`dstore :lbl dirname` | Adds the named dir with the label ':lbl' to index.   |
 |`dstore -d :lbl`      | Removes the entry labeled with ':lbl' from index.    |
 
-Other usage of `dstore`:
+Additional the option `-l` can be used to list the content of the manual index
+and `-e` opens the index file in an editor.
 
-| Command        | Description                                    |
-| -------------- | ---------------------------------------------- |
-|`dstore --help` | Shows help.                                    |
-|`dstore -l`     | Lists content.                                 |
-|`dstore -e`     | Opens `index.dstore` in a editor (default vi). |
-|`dstore -c`     | Cleans up by removing none-existing or duplicate entries or entries already contained in another index file. It also warns about duplicate labels. |
+With `-c` the manual index is cleaned up. This removes entries that are already
+contained in other indexes or entries of directories that do not exist anymore.
 
-The editor used for `dstore -e` is either the value of `$VISUAL` or the value
-of `$EDITOR` or defaults to `vi`.
+Also see `dstore --help`.
 
-### Information about the existing indexes
+### Information about the Existing Indexes
 
 Just call `qc` with the option `-S`.
 
     > qc -S
-    /home/rks/.qc/home.index
+    /home/rks/.qc/index/home.index
        Last Upd: 2021-07-30 06:40:04.780054251 +0200
        Entries:  54.266 (5.642.960 bytes)
-    /home/rks/.qc/home.index.hidden
+    /home/rks/.qc/index/home.index.hidden
        Last Upd: 2021-07-30 06:40:10.237055890 +0200
        Entries:  42.004 (4.789.003 bytes)
     /home/rks/.qc/index.dstore
@@ -359,26 +399,28 @@ Just call `qc` with the option `-S`.
 This only lists indexes that could be used on the current machine.  Host-local
 indexes of other hosts are not shown.
 
+### Unusual Directory Names
 
-## QC Mini
+File names (and hence directory names) may contain a surprising range of
+characters on a Unix systems. The "surprising characters" might be newlines or
+just file names that contains binary data like encoding errors (e.g. a byte
+sequence, that is not a valid UTF-8 character). This names are _normally_ not
+intentionally chosen by the user, but are the result of some mistake or maybe of
+some copy operation between systems that use different character sets to
+represent file names.
 
-The file `qc_mini` provides a minimal variant of `qc` and `dstore` as shell
-functions. It is intended to be sourced during shell initialization.
+Quick Change Directory is not able to find directories with those unusual names.
 
-The idea is to have a limited `qc` on some machine where one can't (or don't
-want to) install the full featured quick change directory. Typically some remote
-machine that are reached via ssh and where only administrative tasks are
-performed. From my personal experience labeled directories are the most imported
-feature in that use case.
+Directory names that contain a newline are ignored when building the index. This
+means that not only the directory itself is ignored, but also the tree below
+that directory.
 
-Differences:
+Directories with names containing binary data (like an encoding error) are added
+to the index, but they cannot be found by the `qc` tool. Sub-directories might
+be found, but only if the name with invalid encoding is not part of the search
+term.
 
-* Main index file is `$HOME/.dirstore`, additional indexes are  `$HOME/.dirstore-*`.
-* `dstore` works with the main index
-* When searching by labels, all indexes are used.
-* No automatic index creation.
-* Limited expressions (`**` and `?` not supported)
-* Search is always case-sensitive (even labels)
+Summary: Directories with unusual names cannot be found and changed to by `qc`.
 
 
 ## Installation
@@ -395,20 +437,26 @@ The following files are distributed:
 | `dstore`                    | Script to manage the manual index.               | `~/.qc/dstore`         |
 | `qc-build-index`            | Processes `qc-index.cfg` to create index files.  | `~/.qc/qc-build-index` |
 | `qc-index.cfg`              | Defines indexes to create.                       | `~/.qc/qc-index.cfg`   |
-| `qc_mini`                   | Minimal version of qc. See above.                | Not installed          |
+| `qc_mini`                   | Minimal version of qc. See [QC Mini](#qc-mini).  | Not installed          |
 
 
 ### I don't want to install -- just test it
 
-This is easy. Just do:
+This is easy. Just clone the git repository or download the source and do:
 
-    export PATH="$PATH:$PWD"
+    export QC_DIR="$PWD"
     . ./quick_change_directory.sh
 
-As no index exist, `qc` will complain on first usage. Run `qc -u` to create a
-default index of all directories in your home directory (excluding hidden dirs).
+This configures the current shell and makes the commands `qc` and `dstore`
+available. As no index exist, `qc` will complain on first usage. Run `qc -u` to
+create a default index. The index files will be stored in the sub-directory
+`index`.
 
 ### Manual Installation
+
+This describes the installation to `$HOME/.qc`. It can be installed to any other
+directory, but then the environment variable `QC_DIR` must be set to that
+directory.
 
 1. Create the directory `$HOME/.qc`.
 
@@ -418,7 +466,7 @@ default index of all directories in your home directory (excluding hidden dirs).
   * `qc-build-index`
   * `qc-index.cfg`
 
-3. Add the following line to your `.bashrc`:
+3. Add the following line to your `.bashrc` (or `.kshrc` or ...):
 
    `[ -f "$HOME/.qc/quick_change_directory.sh" ] && . "$HOME/.qc/quick_change_directory.sh"`
 
@@ -431,24 +479,34 @@ default index of all directories in your home directory (excluding hidden dirs).
 
    ```
    # Quick Change Directory: update index
-   */10 * * * * ${HOME}/.qc/qc-build-index >${HOME}/.qc/qc-build-index.log 2>&1
+   */10 * * * * ${HOME}/.qc/qc-build-index >${HOME}/.qc/index/qc-build-index.log 2>&1
    ```
 
-   Every execution will write its output to `~/.qc/qc-build-index.log`. This log file
-   is always overwritten, so it only contains the log of the last execution.
+   Every execution will write its output to `~/.qc/index/qc-build-index.log`.
+   This log file is always overwritten, so it only contains the log of the last
+   execution.
 
 5. Now source `quick_change_directory.sh` by executing `.
    $HOME/.qc/quick_change_directory.sh` or just start a new shell.
 
-6. Run `qc -U` to create the index files.
+6. Run `qc -u` to create the index files.
 
 ### Installation Script
 
-The installation script `INSTALL` automates the steps described in the
-section "Manual Installation" above. This includes the change to your local
-crontab and updates to .bashrc.
+The installation script `INSTALL` automates the steps described in the section
+"Manual Installation" above. This includes the change to your local `crontab`
+and updates to `.bashrc` (both can be disabled).
 
-If the script is called with out parameter it shows some help.
+If the script is called without parameter it shows some help.
+
+    $ ./INSTALL -h
+    Usage: INSTALL [-nfCSh] [-t target-dir] <copy|symlink>
+       -n             Just print what would be done.
+       -f             force overwrite existing files
+       -C             skip cron - don't configure cronjob
+       -S             skip shell config - don't change bashrc
+       -h             Show this help.
+       -t target-dir  install to target-dir instead of ~/.qc
 
 To copy the files install call:
 
@@ -461,10 +519,9 @@ To create symbolic links to the files in the current directory call:
 NOTE: You can add the option '-n', so the script will just print what would be
 done.
 
-If you installed it before, you will need either '-f' (to overwrite) or '-b' (to
-create backup files using the current time stamp).
+If you installed it before, you will need the option '-f' to overwrite.
 
-The file `qc-index.cfg` will always be copied. Even if `symlink` is used for
+The file `qc-index.cfg` will always be copied, even if `symlink` is used for
 install. The file is typically changed by the user. If the file is already
 installed, the new version is copied to `~/.qc/qc-index.cfg.new`.
 
@@ -474,8 +531,36 @@ Then source `quick_change_directory.sh` by executing
 
 or just start a new shell.
 
-Finally run `qc -U` to create the index files.
+Finally run `qc -u` to create the index files.
 
+----
+
+## QC Mini
+
+The file `qc_mini` provides a minimal variant of `qc` and `dstore` as shell
+functions. It is intended to be sourced during shell initialization.
+
+The idea is to have a limited `qc` on some machine where one can't (or don't
+want to) install the full featured quick change directory. Typically some remote
+machine that are reached via ssh and where only administrative tasks are
+performed. From my personal experience labeled directories are the most imported
+feature in that use case.
+
+Differences:
+
+* Main index file is `$HOME/.dirstore`, additional indexes are  `$HOME/.dirstore-*`.
+* `dstore` works with the main index file
+* No automatic index creation.
+* Limited expressions (`**` not supported).
+* Search is always case-sensitive (even labels).
+* Command line completion had little testing.
+* Help for `qc` and `dstore` can be displayed with `-h`.
+
+----
+
+[fzf]: https://github.com/junegunn/fzf
+[fd]: https://github.com/sharkdp/fd
+[bash-completion]: https://github.com/scop/bash-completion
 
 [//]:  vim:ft=markdown:et:ts=4:spelllang=en_us:spell:tw=80
 

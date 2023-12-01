@@ -2,3 +2,5 @@ README.html
 *.zip
 qc-local-install.sh
 build/
+index.dstore
+index/
