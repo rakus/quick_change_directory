@@ -204,6 +204,12 @@ automatically (via script), the fourth one is for manual management.
 All index files are held in the directory `~/.qc` (or whatever `QC_DIR` is set
 to).
 
+**Note:**
+
+* Directory names with newline are ignore and not added to the index.
+* Directories names with with encoding errors are added to the index, but qc is
+  not able to find them. This is a restriction of `grep`.
+
 ### Normal, Hidden and Extended Indexes
 
 This indexes are normal text files with one directory name per line.

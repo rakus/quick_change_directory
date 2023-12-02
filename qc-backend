@@ -597,6 +597,11 @@ while true; do
     shift
 done
 
+if [ 1 -ne "$(echo "$*" | wc -l)" ]; then
+    echo >&2 "ERROR: Search string contains line break -- not supported"
+    exit 1
+fi
+
 if [ -n "$PRINT_EXPR" ]; then
     args2regex "$@" >&2
     exit 0

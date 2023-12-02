@@ -67,7 +67,7 @@ startTest "qc-build-index"
 do_test()
 {
     clear_test_dirs
-    create_dirs a/{a,b,c}/{a,b,c} h/{a,.b,.c}/{a,.b,.c,ignore}/s d/t/x
+    create_dirs a/{a,b,c}/{a,b,c} h/{a,.b,.c}/{a,.b,.c,ignore}/s d/t/x a/N$'\n'L
     cat <<EOF > "$TEST_DIRECTORY/.qc/qc-index.cfg"
 test.index "$TEST_DIRECTORY" -- ignore
 test.index.hidden "$TEST_DIRECTORY" -- .qc ignore

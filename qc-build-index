@@ -214,10 +214,10 @@ build_index()
         *) : ;;
     esac
 
-    while [ $# -gt 0 ]; do
-        IGNORE_DIRS=( "${IGNORE_DIRS[@]}" "$1" )
-        shift
-    done
+    IGNORE_DIRS=( "$@" )
+
+    # Always ignore directories with line breaks in their name.
+    IGNORE_DIRS+=( \*$'\n'\* )
 
     [ ! -d "$QC_DIR" ] && mkdir "$QC_DIR"
 
