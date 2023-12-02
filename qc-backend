@@ -421,8 +421,7 @@ internalUpdateIndex()
 # Show statistics of indexes. List index.dstore last.
 index_statistics()
 {
-    mapfile -d$'\n' -t idx_list < <(get_indexes "a" | grep -v "$QC_DSTORE_INDEX")
-    [ -e "$QC_DSTORE_INDEX" ] && idx_list+=( "$QC_DSTORE_INDEX" )
+    mapfile -d$'\n' -t idx_list < <(get_indexes "a")
     for fn in "${idx_list[@]}"; do
         echo >&2 "$fn"
         echo >&2 "   Last Upd: $(stat -c "%y" "$fn")"
@@ -494,8 +493,9 @@ complete_option()
         exit 0
     elif [[ "$cur" = --* ]]; then
         printf "%s\n" --help --config --version  | grep -- "$cur"
-    elif [[ "$cur" = - ]]; then
-        printf -- "-%s\n" i e u U S l
+        exit 0
+    elif [[ "$cur" = -* ]]; then
+        printf -- "-%s\n" i e E h H a u U S l
         if [[ "$cur" != -?* ]]; then
             printf "%s\n" --help --config --version | grep -- "$cur"
         fi
@@ -518,8 +518,8 @@ if [ "${1:-}" = "--complete" ]; then
     complete_option "$@"
 fi
 
-if ! _args="$(getopt -n "qc" -o "ieEhHauUSlR" --long "help,version,config" -- "$@")"; then
-    echo >&2 "Try 'qc --help' for more information."
+if ! _args="$(getopt ${cl_completion:+-q} -n "qc" -o "ieEhHauUSl" --long "help,version,config,print-expr" -- "$@")"; then
+    [ -z "$cl_completion" ] && echo >&2 "Try 'qc --help' for more information."
     exit 1
 fi
 eval "set -- $_args"
