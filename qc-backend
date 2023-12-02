@@ -122,6 +122,10 @@ args2regex()
     # - than trailing slashes
     glob="$(echo "$glob" | sed 's%^/\+%%;s%^\*\+//*%%;s%/\+$%%')"
 
+    if [ -n "$PRINT_EXPR" ]; then
+        echo "$glob"
+    fi
+
     while [ -n "$glob" ]; do
 
         case "$glob" in
@@ -503,7 +507,7 @@ complete_option()
 #---------[ MAIN ]-------------------------------------------------------------
 
 typeset indexSelect=""
-typeset printRegex=""
+typeset PRINT_EXPR=""
 
 PATH="$PATH:$QC_DIR"
 
@@ -558,7 +562,7 @@ while true; do
             grep --color=always '^:[^ ]* ' "$QC_DSTORE_INDEX" >&2
             exit 0
             ;;
-        -R) printRegex=true
+        --print-expr) PRINT_EXPR=true
             ;;
         --help)
             [ -n "$cl_completion" ] && complete_local_dir "$@"
@@ -566,12 +570,12 @@ while true; do
             exit 0
             ;;
         --version)
-            [ -n "$cl_completion" ] && complete_local_dir "$@"
+            [ -n "$cl_completion" ] && exit 1
             echo "qc - Quick Change Directory v$qc_version" >&2
             exit 0
             ;;
         --config)
-            [ -n "$cl_completion" ] && complete_local_dir "$@"
+            [ -n "$cl_completion" ] && exit 1
             if [ ! -e "$QC_DIR/qc-index.cfg" ]; then
                 echo >&2 "ERROR: $QC_DIR/qc-index.cfg does not exist."
                 echo >&2 "       Use 'qc -u' to create a default config file."
@@ -593,7 +597,7 @@ while true; do
     shift
 done
 
-if [ -n "$printRegex" ]; then
+if [ -n "$PRINT_EXPR" ]; then
     args2regex "$@" >&2
     exit 0
 fi

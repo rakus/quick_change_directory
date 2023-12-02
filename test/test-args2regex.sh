@@ -21,7 +21,7 @@ g2re()
     expected="$1"
     shift
     printf "%s" "$* -> $expected"
-    actual="$(qc-backend -R "$@" 2>&1)"
+    actual="$(qc-backend --print-expr "$@" 2>&1 | tail -n1)"
 
     if [ "$actual" = "$expected" ]; then
         OK
