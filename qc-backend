@@ -239,11 +239,11 @@ get_indexes()
 
 }
 
-# Select a directory from the index(es).
-# $1: grep options (ignored for search by label)
-# $2: index(es) select string, see comment on function get_indexes for details
-# $3-: text to search for. With leading ':' triggers search by label.
-dir_select()
+# Searches the index.
+# Used by dir_select and by completion
+# $1: index(es) select string, see comment on function get_indexes for details
+# $2-: text to search for. With leading ':' triggers search by label.
+search_dirs()
 {
     typeset indexSelect="$1"
     shift
@@ -262,7 +262,7 @@ dir_select()
             if [[ $# -gt 1 && ${#dl[*]} -eq 1 ]]; then
                 shift
                 local bd="${dl[0]%%/}/"
-                dir_select "a" "$bd" "$@"
+                search_dirs "a" "$bd" "$@"
                 return
             elif [ $# -gt 1 ]; then
                 echo >&2 "WARNING: Extra arguments ignored ($pattern returned none or more than one directory)"
@@ -282,6 +282,20 @@ dir_select()
             mapfile -d$'\n' -t dl < <(grep --color=always -ah "${grepOpt[@]}" -- "/$pattern" "${idxFiles[@]}" | sed "s/^:[^ ]* //" | sort -u)
             ;;
     esac
+    if [ ${#dl[*]} -gt 0 ]; then
+        printf "%s\n" "${dl[@]}"
+    fi
+}
+
+# Select a directory from the index(es).
+# $1: index(es) select string, see comment on function get_indexes for details
+# $2-: text to search for. With leading ':' triggers search by label.
+dir_select()
+{
+    mapfile -d$'\n' -t dl < <(search_dirs "$@")
+
+    # we don't need index select string anymore
+    shift
 
     typeset cnt=${#dl[*]}
 
@@ -291,7 +305,7 @@ dir_select()
         return 1
     elif [ "$cnt" -eq 1 ]; then
         # echo and remove color codes
-        echo "${dl[@]}" | sed -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]//g"
+        echo "${dl[0]}" | sed -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]//g"
         return 0
     else
         # If selection list needs more than terminal hight lines
@@ -441,42 +455,41 @@ complete_index_dir()
 
     typeset IFS=$'\n'
     typeset -a dl idxFiles compl
-    case $1 in
-        :*)
-            pattern=$1
-            [ $# -gt 1 ] && exit 0
-            if [ ! -e "$QC_DSTORE_INDEX" ]; then
-                return 1
-            fi
-            # grep: -h: Suppress the prefixing of file names on output.
-            grep -ahi -- "^${pattern}[^ ]* " "$QC_DSTORE_INDEX" | cut "-d " -f1 | sort -u
-            ;;
-        *)
-            mapfile -d$'\n' -t idxFiles < <( get_indexes "$indexSelect")
-            if [ ${#idxFiles[@]} = 0 ]; then
-                return 1
-            fi
-            # shellcheck disable=SC2124 # this expands to one element
-            last_part="${@:$#}"
-            last_part="${last_part%%*(\*)}"
-            pattern=$(args2regex "$@")
-            if [[ ! "$pattern" =~ .*\*\$$ ]]; then
-                clean_pattern="${pattern/%\$//}"
-                pattern="${pattern/%\$/\/[^/]*\$}"
-            else
-                clean_pattern="${pattern/%\[^\/\]\*\$/}"
-            fi
-            #echo ">>$pattern<<"
-            #echo ">>$clean_pattern<<"
-            typeset -a grepOpt
-            if [ -n "${QC_NO_CASE:-}" ]; then
-                grepOpt+=( "-i" )
-            fi
-            mapfile -d$'\n' -t compl < <(grep --color=never -ah "${grepOpt[@]}" -- "/$pattern" "${idxFiles[@]}" | sed "s|^.*\($clean_pattern\)|$last_part|;s|$|/|" | sort -u)
+    typeset last_part last_part_re grps
 
+    if [[ $# -eq 1 && $1 = ':'* ]]; then
+        if [ ! -e "$QC_DSTORE_INDEX" ]; then
+            return 1
+        fi
+        # grep: -h: Suppress the prefixing of file names on output.
+        grep -ahi -- "^${1}[^ ]* " "$QC_DSTORE_INDEX" | cut "-d " -f1 | sort -u
+    else
+        # shellcheck disable=SC2124 # this expands to one element
+        last_part="${@:$#}"
+        last_part_re="$(args2regex "$last_part")"
+        last_part_re="${last_part_re%[*}"
+        last_part_re="${last_part_re/%\$/\/}"
+        grps="${last_part_re//[^(]/}"
+        grps=$(( ${#grps} + 1))
+
+        if [[ "$last_part" = *'/' ]]; then
+            set -- "$@" ""
+        fi
+
+        #{
+        #    echo "$QC_DIR"
+        #    echo "last_part >>$last_part<<"
+        #    echo "last_part_re >>$last_part_re<<"
+        #    echo "grps >>$grps<<"
+        #    search_dirs "$indexSelect" "$@"
+        #} >&2
+
+        mapfile -d$'\n' -t compl < <(search_dirs "$indexSelect" "$@" | sed -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]//g" | sed "s|^.*/${last_part_re}\([^/]*/\?\)$|$last_part\\$grps|;s|$|/|" | sort -u)
+
+        if [ "${#compl[*]}" -gt 0 ]; then
             printf '%q\n' "${compl[@]}"
-            ;;
-    esac
+        fi
+    fi
 }
 
 complete_local_dir()

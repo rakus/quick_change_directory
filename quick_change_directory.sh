@@ -44,9 +44,25 @@ elif [ -n "${BASH_VERSION:-}" ]; then
 # the following lines are bash-specific
 
     if declare -F "_get_comp_words_by_ref" > /dev/null; then
-        qc_use_get_comp_words_by_ref=true
+        __qc_complete_get_words_by_ref()
+        {
+            _get_comp_words_by_ref "$@"
+            words=( "${words[@]:1}" )
+        }
     else
-        unset qc_use_get_comp_words_by_ref
+        __qc_complete_get_words_by_ref()
+        {
+            # fallback if _get_comp_words_by_ref is not available:
+            cur="${COMP_WORDS[COMP_CWORD]}"
+            if [ "${COMP_WORDS[COMP_CWORD-1]}" = ":" ]; then
+                cur=":$cur"
+            fi
+            words=( "${COMP_WORDS[@]:1}" )
+            if [[ "${words[0]}" = ":" ]]; then
+                words[0]=":${words[1]}"
+                unset 'words[1]'
+            fi
+        }
     fi
 
     __qc_complete()
@@ -54,18 +70,7 @@ elif [ -n "${BASH_VERSION:-}" ]; then
         local PATH="${QC_DIR:-$HOME/.qc}:$PATH"
         local cur words
 
-        if [ -n "$qc_use_get_comp_words_by_ref" ]; then
-            _get_comp_words_by_ref -n : cur
-        else
-            # fallback if _get_comp_words_by_ref is not available:
-            cur="${COMP_WORDS[COMP_CWORD]}"
-            if [ "${COMP_WORDS[COMP_CWORD-1]}" = ":" ]; then
-                cur=":$cur"
-            fi
-        fi
-
-
-        words=( "${COMP_WORDS[@]:1}" )
+        __qc_complete_get_words_by_ref -n : cur words
 
         case "$cur" in
             ':'*)
@@ -73,7 +78,6 @@ elif [ -n "${BASH_VERSION:-}" ]; then
                 COMPREPLY=( "${COMPREPLY[@]#:}" )
                 ;;
             *)
-                #mapfile -d$'\n' -t COMPREPLY < <( qc-backend --complete "${words[@]}" )
                 mapfile -d$'\n' -t COMPREPLY < <(compgen -W "$(qc-backend --complete "${words[@]}")" --  "$cur")
                 ;;
         esac
