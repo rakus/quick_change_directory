@@ -63,6 +63,7 @@ check_lines()
 
 startTest "qc-build-index"
 
+typeset -l LC_HOSTNAME="$HOSTNAME"
 
 do_test()
 {
@@ -74,6 +75,8 @@ test.index.hidden "$TEST_DIRECTORY" -- .qc ignore
 test.index.ext "$TEST_DIRECTORY"
 test-with-hidden.index.ext -h "$TEST_DIRECTORY"
 ignore.index -f '*/ignore' -f '*/ignore/*'  "$TEST_DIRECTORY"
+host-local.index.ext.host.\$HOSTNAME -h "$TEST_DIRECTORY"
+host-local.index.hidden.host.\$HOSTNAME "$TEST_DIRECTORY" -- .qc ignore
 EOF
 
 
@@ -88,6 +91,8 @@ EOF
     check_lines "extended index" "test.index.ext" 23
     check_lines "extended index with hidden" "test-with-hidden.index.ext" 46
     check_lines "filtered index" "ignore.index" 2
+    check_lines "host-local extended index" "host-local.index.ext.host.$LC_HOSTNAME" 46
+    check_lines "host-local hidden index" "host-local.index.hidden.host.$LC_HOSTNAME" 18
 
     echo
     echo "Incremental update index"
@@ -101,10 +106,16 @@ EOF
 
     echo
     echo "Don't update extended index"
-    rm   "$TEST_DIRECTORY/.qc/"*.index.ext
+    rm   "$TEST_DIRECTORY/.qc/"*.index.ext*
     build_index -E
     echo -n "Extended index not created"
     if [ -e "$TEST_DIRECTORY/.qc/test.index.ext" ]; then
+        ERROR
+    else
+        OK
+    fi
+    echo -n "Host-local extended index not created"
+    if [ -e "$TEST_DIRECTORY/.qc/host-local.index.ext.host.$LC_HOSTNAME" ]; then
         ERROR
     else
         OK
@@ -112,7 +123,7 @@ EOF
 
     echo
     echo "Don't create hidden index"
-    rm   "$TEST_DIRECTORY/.qc/"*.index.hidden
+    rm   "$TEST_DIRECTORY/.qc/"*.index.hidden*
     build_index -H
     echo -n "Hidden index not created"
     if [ -e "$TEST_DIRECTORY/.qc/test.index.hidden" ]; then
@@ -120,13 +131,8 @@ EOF
     else
         OK
     fi
-
-    echo
-    echo "Don't create extended index"
-    rm   "$TEST_DIRECTORY/.qc/"*.index.ext
-    build_index -E
-    echo -n "Extended index not created"
-    if [ -e "$TEST_DIRECTORY/.qc/test.index.ext" ]; then
+    echo -n "Host-local hidden index not created"
+    if [ -e "$TEST_DIRECTORY/.qc/host-local.index.hidden.host.$LC_HOSTNAME" ]; then
         ERROR
     else
         OK

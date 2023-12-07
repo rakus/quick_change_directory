@@ -219,7 +219,7 @@ build_index()
 
     case "$idx_name" in
         *.index.hidden) ;&
-        *.index.hidden.$HOSTNAME)
+        *.index.hidden.host.$HOSTNAME)
             hidden_only=true
             ;;
         *) : ;;
@@ -681,14 +681,14 @@ while IFS= read -r line; do
     if [ -n "${ignExt:-}" ]; then
         case "${idx_args[0]}" in
             *.index.ext) continue ;;
-            *.index.ext.$HOSTNAME) continue ;;
+            *.index.ext.host.$HOSTNAME) continue ;;
         esac
     fi
 
     if [ -n "${ignHidden:-}" ]; then
         case "${idx_args[0]}" in
             *.index.hidden) continue ;;
-            *.index.hidden.$HOSTNAME) continue ;;
+            *.index.hidden.host.$HOSTNAME) continue ;;
         esac
     fi
 
