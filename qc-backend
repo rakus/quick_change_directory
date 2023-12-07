@@ -259,11 +259,13 @@ search_dirs()
             fi
             # grep: -h: Suppress the prefixing of file names on output.
             mapfile -d$'\n' -t dl < <(grep -ahi -- "^${pattern}[^ ]* " "$QC_DSTORE_INDEX" | cut "-d " -f2- | sort -u)
-            if [[ $# -gt 1 && ${#dl[*]} -eq 1 ]]; then
+            if [[ $# -gt 1  ]]; then
                 shift
-                local bd="${dl[0]%%/}/"
-                search_dirs "a" "$bd" "$@"
-                return
+                for bd in "${dl[@]}"; do
+                    local bd="${bd%/}/"
+                    ABSOLUTE_SEARCH=true search_dirs "a" "$bd" "$@"
+                done
+                return 0
             elif [ $# -gt 1 ]; then
                 echo >&2 "WARNING: Extra arguments ignored ($pattern returned none or more than one directory)"
             fi
@@ -274,12 +276,16 @@ search_dirs()
                 echo >&2 "qc: No index file found! Use 'qc -u' or 'dstore' to create it."
                 return 1
             fi
-            pattern=$(args2regex "$@")
+            pattern="/$(args2regex "$@")"
+            if [ -n "${ABSOLUTE_SEARCH:-}" ]; then
+                pattern="^$pattern"
+            fi
+
             typeset -a grepOpt
             if [ -n "${QC_NO_CASE:-}" ]; then
                 grepOpt+=( "-i" )
             fi
-            mapfile -d$'\n' -t dl < <(grep --color=always -ah "${grepOpt[@]}" -- "/$pattern" "${idxFiles[@]}" | sed "s/^:[^ ]* //" | sort -u)
+            mapfile -d$'\n' -t dl < <(grep --color=always -ah "${grepOpt[@]}" -- "$pattern" "${idxFiles[@]}" | sed "s/^:[^ ]* //" | sort -u)
             ;;
     esac
     if [ ${#dl[*]} -gt 0 ]; then
@@ -521,6 +527,9 @@ complete_option()
 
 typeset indexSelect=""
 typeset PRINT_EXPR=""
+
+# absolute search is needed when a sub-dir of a labeled dir is searched.
+typeset ABSOLUTE_SEARCH=""
 
 PATH="$PATH:$QC_DIR"
 

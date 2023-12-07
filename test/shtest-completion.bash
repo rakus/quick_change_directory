@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# FILE: test-completion.bash
+# FILE: shtest-completion.bash
 #
 # ABSTRACT:
 #
@@ -31,7 +31,7 @@ declare -F _completion_loader &>/dev/null || {
 
 TEST_STATUS=0
 
-# Prints maven completions, pipe separated
+# Prints completions, one per line
 # $*: mvn command line
 get_completions(){
     local COMP_CWORD COMP_LINE COMP_POINT COMP_WORDS COMPREPLY=()
@@ -52,10 +52,8 @@ get_completions(){
     # execute completion function
     __qc_complete > "$COMP_LOG_FILE" 2>&1
 
-
-
     # print completions to stdout
-    printf '%s\n' "${COMPREPLY[@]}" | LC_ALL=C sort # | paste -sd ','
+    printf '%s\n' "${COMPREPLY[@]}" | LC_ALL=C sort
 }
 
 #export -f get_completions __qc_complete
@@ -97,15 +95,13 @@ test_completion()
         echo "   Expected: ${expected[*]}"
         echo "   Got:      ${result[*]}"
     fi
-
-
 }
 
-startTest "Completion"
+startTest "BASH Completion"
 
 qc -U
 
-dstore :label "$TEST_DIRECTORY/Customer/ACME/Admin"
+dstore :label "$TEST_DIRECTORY/Customer/ACME"
 
 test_completion A Ad -- Admin/
 test_completion YoYo -- YoYo/ YoYoDyne/
@@ -126,6 +122,8 @@ test_completion "white" -- "whitespace dir/"
 test_completion NotThere
 
 test_completion :la -- "label"
+
+test_completion :la A -- "Admin/"
 
 endTest
 

@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# FILE: test-index-qc.sh
+# FILE: shtest-index-qc.sh
 #
 # ABSTRACT: qc tests with indexes
 #
@@ -20,6 +20,7 @@ fi
 export BUILD_TEST_DIRS=true
 # shellcheck source=./defines.shinc
 . "${script_dir}/defines.shinc"
+
 
 doQC()
 {
@@ -71,7 +72,7 @@ startTest "index & qc"
 
 qc -U
 
-dstore :label "$TEST_DIRECTORY/Customer/ACME/Admin"
+dstore :label "$TEST_DIRECTORY/Customer/ACME"
 
 echo ""
 printf "test.index exists"
@@ -151,8 +152,11 @@ doQC "$TEST_DIRECTORY"/A.B A.B
 
 doQC "$TEST_DIRECTORY"/Customer '[cC]ustomer'
 
-doQC "$TEST_DIRECTORY"/Customer/ACME/Admin :label
-doQC "$TEST_DIRECTORY"/Customer/ACME/Admin :l
+doQC "$TEST_DIRECTORY"/Customer/ACME :label
+doQC "$TEST_DIRECTORY"/Customer/ACME :l
+
+doQC "$TEST_DIRECTORY"/Customer/ACME/Admin :label A
+doQC "$TEST_DIRECTORY"/Customer/ACME/Admin :l A
 
 doQC "$TEST_DIRECTORY"/Customer/YoYo -i yOyO/
 doQC "$TEST_DIRECTORY"/.config/localhost -h local
@@ -222,4 +226,4 @@ cd "${script_dir}" || exit 1
 endTest
 
 
-#---------[ END OF FILE test-index-qc.sh ]-------------------------------------
+#---------[ END OF FILE shtest-index-qc.sh ]-----------------------------------

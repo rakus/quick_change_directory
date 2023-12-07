@@ -11,6 +11,13 @@ if [ -z "${script_dir:-}" ]; then
     exit 2
 fi
 
+# reset all configuration parameter
+unset QC_NO_CASE
+unset QC_SKIP_FILTER_EXISTING
+unset QC_SORT_LENGTH
+unset QC_FZF
+unset QC_USE_FIND
+
 if [ -n "${ZSH_VERSION:-}" ]; then
     # init command line completion if not initialized yet
     if ! command -v compdef; then
