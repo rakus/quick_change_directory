@@ -174,8 +174,8 @@ EOF
 FD_CMD="$(command -v fdfind)"
 if [ -z "$FD_CMD" ]; then
     FD_CMD="$(command -v fd)"
-    if ! fd --help 2>&1 | grep -q sharkdp; then
-        # fd seems not to be fd file finder - clear FD_CMD
+    if ! "$FD_CMD" -X 2>&1 | grep -q -- '--help'; then
+        # fd seems to be from FDclone - clear FD_CMD to use 'find'
         FD_CMD=
     fi
 fi

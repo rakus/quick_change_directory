@@ -24,15 +24,22 @@ jobs:
 
       - name: Install ksh, zsh, shellcheck
         run: |
-          sudo apt-get install -qq ksh zsh shellcheck
+          sudo apt-get install -qq ksh zsh shellcheck fd-find
           sudo apt-get install -qq fd-find || true
+          sudo apt-get install -qq fdclone || true
 
       - name: Print Tool Versions
         run: |
+          echo "bash --version"
           bash --version
+          echo "ksh --version"
           ksh --version || true
+          echo "zsh --version"
           zsh --version
+          echo "shellcheck --version"
           shellcheck --version
+          echo "fdfind --version"
+          fdfind --version
 
       - name: Run make check
         run: make check
