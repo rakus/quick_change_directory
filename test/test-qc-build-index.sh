@@ -171,8 +171,16 @@ EOF
     fi
 }
 
+FD_CMD="$(command -v fdfind)"
+if [ -z "$FD_CMD" ]; then
+    FD_CMD="$(command -v fd)"
+    if ! fd --help 2>&1 | grep -q sharkdp; then
+        # fd seems not to be fd file finder - clear FD_CMD
+        FD_CMD=
+    fi
+fi
 
-if [ -n "$(command -v fd)" ]; then
+if [ -n "$FD_CMD" ]; then
     echo
     echo "====[ Testing with fd ]======================================================"
     # Test with fd

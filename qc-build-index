@@ -35,6 +35,17 @@ CFG="$QC_DIR/qc-index.cfg"
 
 typeset -a TMP_FILES=()
 
+# Detect the fd executable name. On Debian/Ubuntu the executable is named
+# 'fdfind' to prevent a name clash with another tool (package fdclone).
+FD_CMD="$(command -v fdfind)"
+if [ -z "$FD_CMD" ]; then
+    FD_CMD="$(command -v fd)"
+    if ! fd --help 2>&1 | grep -q sharkdp; then
+        # fd seems not to be fd file finder - clear FD_CMD
+        FD_CMD=
+    fi
+fi
+
 show_help()
 {
     echo "USAGE:"
@@ -429,7 +440,7 @@ build_index_using_fd()
         fd_args+=("--no-ignore")
     fi
 
-    fd --follow --xdev --full-path --case-sensitive --type d "${fd_args[@]}" "${ign_dirs[@]}" "${fd_pattern}" "${ROOTS[@]}" | sed 's%/$%%' >> "$new_index"
+    "$FD_CMD" --follow --xdev --full-path --case-sensitive --type d "${fd_args[@]}" "${ign_dirs[@]}" "${fd_pattern}" "${ROOTS[@]}" | sed 's%/$%%' >> "$new_index"
 }
 
 
@@ -630,11 +641,11 @@ if [ ! -e "$CFG" ]; then
     copy_default_config
 fi
 
-if [[ -n "${QC_USE_FIND:-}" || -z "$(command -v fd)" ]]; then
+if [[ -n "${QC_USE_FIND:-}" || -z "$FD_CMD" ]]; then
     echo "Using find command"
     QC_USE_FIND=true
 else
-    echo "Using fd command"
+    echo "Using fd command ($FD_CMD)"
     unset QC_USE_FIND
 fi
 
