@@ -13,15 +13,14 @@ script_name="$(basename "$0")"
 cd "$script_dir" || exit 1
 
 ts=$(date "+%Y-%m-%dT%H.%M.%S")
-bin_target_dir="$HOME/.qc"
-rc_target_dir="$HOME"
+QC_DIR="$HOME/.qc"
 
 execute()
 {
     if [ "$execute" == "true" ]; then
         "$@"
     else
-        echo "    $@"
+        echo "    $*"
     fi
 }
 
@@ -52,6 +51,7 @@ do_install()
                 echo >&2 "       Use either '-b' or '-f'."
                 echo >&2 ""
                 usage
+                # shellcheck disable=SC2317  # safety net - usage already calls exit
                 exit 1
                 ;;
         esac
@@ -71,6 +71,7 @@ install_rcfile()
     typeset fn="$1"
     typeset tgt_dir="$2"
     typeset bn="${fn#_}"
+    # shellcheck disable=SC2155 # expect no error from realpath
     typeset fqfn="$(realpath "$fn")"
     typeset tgt="$tgt_dir/.$bn"
 
@@ -82,6 +83,7 @@ install_file()
 {
     typeset fn="$1"
     typeset tgt_dir="$2"
+    # shellcheck disable=SC2155 # expect no error from realpath
     typeset fqfn="$(realpath "$fn")"
     typeset tgt="$tgt_dir/$fn"
 
@@ -102,21 +104,33 @@ add_to_init_file()
         grep "quick_change_directory.sh" "$file" | sed "s/^/    /"
     else
         echo "Adding quick_change_directory.sh to $file..."
+
+        typeset dir="${QC_DIR/#$HOME/\$HOME}"
+
         # to complex for run_cmd (because of redir)
         if [ "$execute" = "true" ]; then
-            echo "[ -f \"\$HOME/.qc/quick_change_directory.sh\" ] && . \$HOME/.qc/quick_change_directory.sh" >> "$file"
+            if [ "$QC_DIR" != "$HOME/.qc" ]; then
+                echo "export QC_DIR=\"$dir\"" >> "$file"
+            fi
+            echo "[ -f \"$dir/quick_change_directory.sh\" ] && . \"$dir/quick_change_directory.sh\"" >> "$file"
         else
-            echo "echo \"[ -f \"\$HOME/.qc/quick_change_directory.sh\" ] && . \$HOME/.qc/quick_change_directory.sh\" >> $file"
+            if [ "$QC_DIR" != "$HOME/.qc" ]; then
+                echo "echo \"export QC_DIR=\\\"$dir\\\"\" >> $file"
+            fi
+            echo "echo \"[ -f \\\"$dir/quick_change_directory.sh\\\" ] && . \\\"$dir/.qc/quick_change_directory.sh\\\"\" >> $file"
         fi
     fi
 }
 
 usage()
 {
-    echo >&2 "Usage: $script_name [-nfb] <copy|symlink>"
-    echo >&2 "   -n  Just print what would be done."
-    echo >&2 "   -f  force - overwrite existing files"
-    echo >&2 "   -b  backup - backup existing files (with time stamp)"
+    echo >&2 "Usage: $script_name [-nfbC] [-t target-dir] <copy|symlink>"
+    echo >&2 "   -n             Just print what would be done."
+    echo >&2 "   -f             force - overwrite existing files"
+    echo >&2 "   -b             backup - backup existing files (with time stamp)"
+    echo >&2 "   -C             skip cron - don't configure cronjob"
+    echo >&2 "   -S             skip shell config - don't change bashrc"
+    echo >&2 "   -t target-dir  install to target-dir instead of ~/.qc"
     exit 1
 }
 
@@ -124,17 +138,17 @@ usage()
 
 execute="true"
 exit_handling=""
-while getopts "nfb" o "$@"; do
+skip_cron=
+skip_shell_cfg=
+while getopts "nfbCSt:" o "$@"; do
     case $o in
-        n) execute="false"
-            ;;
-        f) exit_handling="overwrite"
-            ;;
-        b) exit_handling="backup"
-            ;;
-        *)
-            usage
-            ;;
+        n) execute="false" ;;
+        f) exit_handling="overwrite" ;;
+        b) exit_handling="backup" ;;
+        C) skip_cron="true" ;;
+        S) skip_shell_cfg="true" ;;
+        t) QC_DIR="$OPTARG" ;;
+        *) usage ;;
     esac
 done
 shift $((OPTIND-1))
@@ -142,6 +156,7 @@ shift $((OPTIND-1))
 if [ $# -ne 1 ]; then
     echo >&2 "ERROR: one argument needed"
     usage
+    # shellcheck disable=SC2317  # safety net - usage already calls exit
     exit 1
 fi
 
@@ -155,9 +170,9 @@ case "$1" in
         ;;
 esac
 
-
-if [ ! -d "$bin_target_dir" ]; then
-    execute mkdir -p "$bin_target_dir"
+echo "Installing to $QC_DIR (mode $mode)"
+if [ ! -d "$QC_DIR" ]; then
+    execute mkdir -p "$QC_DIR"
 fi
 
 for fn in quick_change_directory.sh qc-backend qc-build-index dstore; do
@@ -165,23 +180,28 @@ for fn in quick_change_directory.sh qc-backend qc-build-index dstore; do
         echo >&2 "ERROR: Missing file: $fn"
         exit 1
     fi
-    install_file "$fn" "$bin_target_dir"
+    install_file "$fn" "$QC_DIR"
 done
 
-if [ -e "$bin_target_dir/qc-index.cfg" ]; then
-    echo "Copying qc-index.cfg -> $bin_target_dir/qc-index.cfg.new"
-    execute cp -f qc-index.cfg "$bin_target_dir/qc-index.cfg.new"
+if [ -e "$QC_DIR/qc-index.cfg" ]; then
+    echo "Copying qc-index.cfg -> $QC_DIR/qc-index.cfg.new"
+    execute cp -f qc-index.cfg "$QC_DIR/qc-index.cfg.new"
 else
-    echo "Copying qc-index.cfg -> $bin_target_dir/qc-index.cfg"
-    execute cp qc-index.cfg "$bin_target_dir/qc-index.cfg"
+    echo "Copying qc-index.cfg -> $QC_DIR/qc-index.cfg"
+    execute cp qc-index.cfg "$QC_DIR/qc-index.cfg"
 fi
 
-echo ""
-execute $bin_target_dir/qc-build-index --cron 10
-echo ""
+if [ -z "$skip_cron" ]; then
+    echo ""
+    execute "$QC_DIR"/qc-build-index --cron 10
+    echo ""
+fi
 
-add_to_init_file "$HOME/.bashrc"
-#add_to_init_file "$HOME/.kshrc"
+if [ -z "$skip_shell_cfg" ]; then
+    add_to_init_file "$HOME/.bashrc"
+    #add_to_init_file "$HOME/.kshrc"
+    #add_to_init_file "$HOME/.zshrc"
+fi
 
 
 
