@@ -48,11 +48,16 @@ g2re 'dir/subdir[^/]*$' dir/ subdir
 g2re 'dir[^/]*/subdir[^/]*$' dir subdir
 g2re 'dir[^/]*/subdir$' dir subdir/
 
+g2re 'dir[^/]*/subdir[^/]*$' dir /subdir
+g2re 'dir[^/]*/subdir$' dir /subdir/
+
 g2re 'dir/\(.*/\)*subdir$' dir//subdir/
 g2re 'dir/\(.*/\)*subdir$' dir///subdir/
 g2re 'dir/\(.*/\)*subdir$' dir////////subdir/
 g2re 'dir/\(.*/\)*subdir[^/]*$' dir/ // subdir
 g2re 'dir/\(.*/\)*subdir[^/]*$' dir/ //subdir
+g2re 'dir[^/]*/\(.*/\)*subdir[^/]*$' dir // subdir
+g2re 'dir[^/]*/\(.*/\)*subdir[^/]*$' dir //subdir
 
 g2re 'dir/[^/]*/subdir$' 'dir/*/subdir/'
 g2re 'dir/\(.*/\)*subdir$' 'dir/**/subdir/'

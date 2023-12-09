@@ -96,7 +96,9 @@ args2regex()
     regex=''
 
     for w in "$@"; do
-        # w="${w//+/*}"
+        if [[ "$w" = /* ]]; then
+            w="${w#/}"
+        fi
         case "$w" in
             */) # don't append '*' if word ends with '/'
                 w="${w%?}";;
@@ -262,7 +264,7 @@ search_dirs()
             if [[ $# -gt 1  ]]; then
                 shift
                 for bd in "${dl[@]}"; do
-                    local bd="${bd%/}/"
+                    bd="${bd%/}/"
                     ABSOLUTE_SEARCH=true search_dirs "a" "$bd" "$@"
                 done
                 return 0
