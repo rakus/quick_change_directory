@@ -280,14 +280,14 @@ search_dirs()
             fi
             pattern="/$(args2regex "$@")"
             if [ -n "${ABSOLUTE_SEARCH:-}" ]; then
-                pattern="^$pattern"
+                pattern="^\\(:[^ ]* \\+\\)\\?$pattern"
             fi
 
             typeset -a grepOpt
             if [ -n "${QC_NO_CASE:-}" ]; then
                 grepOpt+=( "-i" )
             fi
-            mapfile -d$'\n' -t dl < <(grep --color=always -ah "${grepOpt[@]}" -- "$pattern" "${idxFiles[@]}" | sed "s/^:[^ ]* //" | sort -u)
+            mapfile -d$'\n' -t dl < <(grep --color=always -ah "${grepOpt[@]}" -- "$pattern" "${idxFiles[@]}" | sed 's/^:[^ ]* //;s/^\(\x1B\[..\;..m.\[K\):[^ ]* /\1/' | sort -u)
             ;;
     esac
     if [ ${#dl[*]} -gt 0 ]; then
