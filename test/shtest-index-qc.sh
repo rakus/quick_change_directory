@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 #
 # FILE: shtest-index-qc.sh
 #
