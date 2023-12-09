@@ -16,8 +16,7 @@ script_dir="$(cd "$(dirname "$0")" && pwd)" || exit 1
 # shellcheck source=./defines.shinc
 . "${script_dir}/defines.shinc"
 
-cd "$script_dir/.." || exit 1
-
+export PATH="$QC_DIR:$PATH"
 
 test_set()
 {
@@ -31,7 +30,7 @@ test_set()
 
 startTest "Version Output"
 
-make_version="$(grep "^QC_VERSION " ./Makefile | sed 's/^.* = //')"
+make_version="$(grep "^QC_VERSION " "$script_dir/../Makefile" | sed 's/^.* = //')"
 script_version="$(qc-backend --version 2>&1 | sed 's/^.* v//')"
 dstore_version="$(dstore --version | sed 's/^.* v//')"
 build_idx_version="$(qc-build-index --version | sed 's/^.* v//')"

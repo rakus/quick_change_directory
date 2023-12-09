@@ -20,7 +20,7 @@ export BUILD_TEST_DIRS=true
 build_index()
 {
     echo "Calling: qc-build-index $*"
-    if ! "$script_dir/../qc-build-index" "$@"; then
+    if ! "$QC_DIR/qc-build-index" "$@"; then
         ERROR
     fi
 
@@ -28,14 +28,17 @@ build_index()
 
 clear_test_dirs()
 {
-    if [ -d "$TEST_DIRECTORY" ]; then
-        rm -rf "${TEST_DIRECTORY:?}"/.* "${TEST_DIRECTORY:?}"/*
+    if [ -d "$TEST_DIRECTORY/tree" ]; then
+        rm -rf "${TEST_DIRECTORY:?}"/tree
+    fi
+    if [ -d "$QC_DIR" ]; then
+        rm "$QC_DIR"/*.index*
     fi
 }
 create_dirs()
 {
     for d in "$@"; do
-        mkdir -p "$TEST_DIRECTORY/$d"
+        mkdir -p "$TEST_DIRECTORY/tree/$d"
     done
     mkdir -p "$TEST_DIRECTORY/.qc"
 }
@@ -70,13 +73,13 @@ do_test()
     clear_test_dirs
     create_dirs a/{a,b,c}/{a,b,c} h/{a,.b,.c}/{a,.b,.c,ignore}/s d/t/x a/N$'\n'L
     cat <<EOF > "$TEST_DIRECTORY/.qc/qc-index.cfg"
-test.index "$TEST_DIRECTORY" -- ignore
-test.index.hidden "$TEST_DIRECTORY" -- .qc ignore
-test.index.ext "$TEST_DIRECTORY"
-test-with-hidden.index.ext -h "$TEST_DIRECTORY"
-ignore.index -f '*/ignore' -f '*/ignore/*'  "$TEST_DIRECTORY"
-host-local.index.ext.host.\$HOSTNAME -h "$TEST_DIRECTORY"
-host-local.index.hidden.host.\$HOSTNAME "$TEST_DIRECTORY" -- .qc ignore
+test.index "$TEST_DIRECTORY/tree" -- ignore
+test.index.hidden "$TEST_DIRECTORY/tree" -- .qc ignore
+test.index.ext "$TEST_DIRECTORY/tree"
+test-with-hidden.index.ext -h "$TEST_DIRECTORY/tree"
+ignore.index -f '*/ignore' -f '*/ignore/*'  "$TEST_DIRECTORY/tree"
+host-local.index.ext.host.\$HOSTNAME -h "$TEST_DIRECTORY/tree"
+host-local.index.hidden.host.\$HOSTNAME "$TEST_DIRECTORY/tree" -- .ignore ignore
 EOF
 
 
@@ -89,19 +92,19 @@ EOF
     check_lines "normal index" "test.index" 21
     check_lines "hidden index" "test.index.hidden" 18
     check_lines "extended index" "test.index.ext" 23
-    check_lines "extended index with hidden" "test-with-hidden.index.ext" 46
+    check_lines "extended index with hidden" "test-with-hidden.index.ext" 45
     check_lines "filtered index" "ignore.index" 2
-    check_lines "host-local extended index" "host-local.index.ext.host.$LC_HOSTNAME" 46
+    check_lines "host-local extended index" "host-local.index.ext.host.$LC_HOSTNAME" 45
     check_lines "host-local hidden index" "host-local.index.hidden.host.$LC_HOSTNAME" 18
 
     echo
     echo "Incremental update index"
-    create_dirs h/.b/X h/a/.b/X
-    build_index -i "$TEST_DIRECTORY/h/a"
+    create_dirs h/.b/X h/a/.b/X .ignore/test
+    build_index -i "$TEST_DIRECTORY/tree/h/a"
     check_lines "normal index" "test.index" 21
     check_lines "hidden index" "test.index.hidden" 19
     check_lines "extended index" "test.index.ext" 23
-    check_lines "extended index with hidden" "test-with-hidden.index.ext" 47
+    check_lines "extended index with hidden" "test-with-hidden.index.ext" 46
     check_lines "filtered index" "ignore.index" 2
 
     echo
@@ -158,7 +161,7 @@ EOF
         mkdir -p "$TEST_DIRECTORY/.git"
         build_index
         check_lines "normal index" "test.index" 5
-        check_lines "hidden index" "test.index.hidden" 12
+        check_lines "hidden index" "test.index.hidden" 13
         check_lines "extended index" "test.index.ext" 5
         check_lines "extended index with hidden" "test-with-hidden.index.ext" 22
         check_lines "filtered index" "ignore.index" 2
@@ -170,7 +173,7 @@ EOF
 
         build_index
         check_lines "normal index" "test.index" 21
-        check_lines "hidden index" "test.index.hidden" 21
+        check_lines "hidden index" "test.index.hidden" 22
         check_lines "extended index" "test.index.ext" 23
         check_lines "extended index with hidden" "test-with-hidden.index.ext" 49
         check_lines "filtered index" "ignore.index" 2

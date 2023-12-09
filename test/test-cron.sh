@@ -18,6 +18,7 @@ set -u
 # shellcheck source=./defines.shinc
 . "${script_dir}/defines.shinc"
 
+export PATH="$QC_DIR:$PATH"
 
 startTest "qc-build-index --cron"
 

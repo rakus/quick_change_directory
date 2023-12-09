@@ -18,6 +18,8 @@ set -u
 # shellcheck source=./defines.shinc
 . "${script_dir}/defines.shinc"
 
+export PATH="$QC_DIR:$PATH"
+
 #
 # Adjust to different versions of /bin/getopt
 # Maybe it is a bad idea to check for this error messages

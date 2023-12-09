@@ -13,21 +13,18 @@ script_dir="$(cd "$(dirname "$0")" && pwd)" || exit 1
 
 shopt -s expand_aliases
 
-export BUILD_TEST_DIRS=true
-# shellcheck source=./defines.shinc
-. "${script_dir}/defines.shinc"
-
-# disable -u because of bash completion functions
-set +u
-
 # load bash-completion if necessary
 declare -F _completion_loader &>/dev/null || {
     # shellcheck disable=SC1091
     [ -e /usr/share/bash-completion/bash_completion ] && source /usr/share/bash-completion/bash_completion
 }
 
+export BUILD_TEST_DIRS=true
+# shellcheck source=./defines.shinc
+. "${script_dir}/defines.shinc"
 
-. ../quick_change_directory.sh
+# disable -u because of bash completion functions
+set +u
 
 TEST_STATUS=0
 
