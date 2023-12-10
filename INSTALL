@@ -12,15 +12,14 @@ script_name="$(basename "$0")"
 
 cd "$script_dir" || exit 1
 
-ts=$(date "+%Y-%m-%dT%H.%M.%S")
 QC_DIR="$HOME/.qc"
 
 execute()
 {
-    if [ "$execute" == "true" ]; then
-        "$@"
-    else
+    if [ -n "$NO_OP" ]; then
         echo "    $*"
+    else
+        "$@"
     fi
 }
 
@@ -37,27 +36,16 @@ do_install()
                 return 0
             fi
         fi
-        case "$exit_handling" in
-            backup)
-                # create backup copy
-                echo "Backing up existing file: $tgt"
-                execute mv "$tgt" "$tgt.$ts"
-                ;;
-            overwrite)
-                # do nothing
-                ;;
-            *)
+        if [ -z "$FORCE" ]; then
                 echo >&2 "ERROR: File exists: $tgt"
-                echo >&2 "       Use either '-b' or '-f'."
+                echo >&2 "       Use '-f' to force overwrite."
+                echo >&2 "       Or try '-h' to get help."
                 echo >&2 ""
-                usage
-                # shellcheck disable=SC2317  # safety net - usage already calls exit
                 exit 1
-                ;;
-        esac
+        fi
     fi
 
-    if [ "$mode" == "copy" ]; then
+    if [ "$mode" = "copy" ]; then
         echo "Copying $fqfn -> $tgt"
         execute cp -f "$fqfn" "$tgt"
     else
@@ -96,67 +84,73 @@ add_to_init_file()
 
     if [ ! -e "$file" ]; then
         echo "SKIPPED: File does not exist: $file"
+        echo
         return
     fi
 
     if grep "quick_change_directory.sh" "$file" >/dev/null 2>&1; then
         echo "SKIPPED: The file quick_change_directory.sh seems to be already sourced from $file:"
         grep "quick_change_directory.sh" "$file" | sed "s/^/    /"
+        echo "Please check that the path to the file is correct."
+        echo
     else
         echo "Adding quick_change_directory.sh to $file..."
 
         typeset dir="${QC_DIR/#$HOME/\$HOME}"
 
-        # to complex for run_cmd (because of redir)
-        if [ "$execute" = "true" ]; then
+        # to complex for execute function (because of redir)
+        if [ -n "$NO_OP" ]; then
+            if [ "$QC_DIR" != "$HOME/.qc" ]; then
+                echo "    echo \"export QC_DIR=\\\"$dir\\\"\" >> $file"
+            fi
+            echo "    echo \"[ -f \\\"$dir/quick_change_directory.sh\\\" ] && . \\\"$dir/.qc/quick_change_directory.sh\\\"\" >> $file"
+        else
             if [ "$QC_DIR" != "$HOME/.qc" ]; then
                 echo "export QC_DIR=\"$dir\"" >> "$file"
             fi
             echo "[ -f \"$dir/quick_change_directory.sh\" ] && . \"$dir/quick_change_directory.sh\"" >> "$file"
-        else
-            if [ "$QC_DIR" != "$HOME/.qc" ]; then
-                echo "echo \"export QC_DIR=\\\"$dir\\\"\" >> $file"
-            fi
-            echo "echo \"[ -f \\\"$dir/quick_change_directory.sh\\\" ] && . \\\"$dir/.qc/quick_change_directory.sh\\\"\" >> $file"
         fi
     fi
 }
 
 usage()
 {
-    echo >&2 "Usage: $script_name [-nfbC] [-t target-dir] <copy|symlink>"
+    echo >&2 "Usage: $script_name [-nfCSh] [-t target-dir] <copy|symlink>"
     echo >&2 "   -n             Just print what would be done."
-    echo >&2 "   -f             force - overwrite existing files"
-    echo >&2 "   -b             backup - backup existing files (with time stamp)"
+    echo >&2 "   -f             force overwrite existing files"
     echo >&2 "   -C             skip cron - don't configure cronjob"
     echo >&2 "   -S             skip shell config - don't change bashrc"
+    echo >&2 "   -h             Show this help."
     echo >&2 "   -t target-dir  install to target-dir instead of ~/.qc"
-    exit 1
 }
 
 #---------[ MAIN ]-------------------------------------------------------------
 
-execute="true"
-exit_handling=""
+if [ $# -eq 0 ]; then
+    usage
+    exit 0
+fi
+
+NO_OP=
+FORCE=
 skip_cron=
 skip_shell_cfg=
-while getopts "nfbCSt:" o "$@"; do
+while getopts "nfCSht:" o "$@"; do
     case $o in
-        n) execute="false" ;;
-        f) exit_handling="overwrite" ;;
-        b) exit_handling="backup" ;;
+        n) NO_OP="false" ;;
+        f) FORCE=true ;;
         C) skip_cron="true" ;;
         S) skip_shell_cfg="true" ;;
         t) QC_DIR="$OPTARG" ;;
-        *) usage ;;
+        h) usage; exit 0 ;;
+        *) usage; exit 1 ;;
     esac
 done
 shift $((OPTIND-1))
 
 if [ $# -ne 1 ]; then
-    echo >&2 "ERROR: one argument needed"
+    echo >&2 "ERROR: exactly one argument needed ('copy' or 'symlink')"
     usage
-    # shellcheck disable=SC2317  # safety net - usage already calls exit
     exit 1
 fi
 
@@ -167,6 +161,7 @@ case "$1" in
         ;;
     *) echo >&2 "Unknown mode: $1"
         usage
+        exit 1
         ;;
 esac
 
@@ -192,15 +187,21 @@ else
 fi
 
 if [ -z "$skip_cron" ]; then
-    echo ""
+    echo "Configuring cronjob"
     execute "$QC_DIR"/qc-build-index --cron 10
     echo ""
 fi
 
 if [ -z "$skip_shell_cfg" ]; then
     add_to_init_file "$HOME/.bashrc"
-    #add_to_init_file "$HOME/.kshrc"
-    #add_to_init_file "$HOME/.zshrc"
+    add_to_init_file "$HOME/.zshrc"
+    add_to_init_file "$HOME/.kshrc"
+fi
+
+if [ -n "$NO_OP" ]; then
+    echo
+    echo "SIMULATION MODE - NOTHING DONE"
+    echo
 fi
 
 
