@@ -41,7 +41,7 @@
 # search for dir name starting with "some" and containing "dir"
 #     qc some*dir      .*/some[^/]*dir[^/]*$
 #
-# NOTE: Pathname expansion is disabled for qc. So '*' doesn't have to be
+# NOTE: Wildcard expansion is disabled for qc. So '*' doesn't have to be
 # escaped on the qc command line.
 #
 # CHANGING DIRECTORY BY LABEL
@@ -149,7 +149,7 @@ dstore()
 
     case "$1" in
         :*)
-            if [ ${#1} -eq 1 ] || [ "${1//[-A-Za-z0-9_]/}" != ':' ]; then
+            if [ ${#1} -eq 1 ] || [ "$(echo "$1" | tr -d -- -A-Za-z0-9_)" != ':' ]; then
                 echo >&2 "ERROR: Invalid label '$1'."
                 return 1
             fi
@@ -198,6 +198,32 @@ __qc_glob_match()
 {
     test -e "$1" -o -L "$1"
 }
+
+## PATTERN_BUILD-START
+# shellcheck disable=SC3044 # typeset is not POSIX
+__qc_create_pattern()
+{
+    typeset qcm_pattern=""
+    case "$1" in
+        :*) echo "^$1";;
+        *)
+            typeset qcm_word
+            for qcm_word in "$@"; do
+                # remove trailing '*', replace others with [^/]*
+                qcm_word="$(echo "$qcm_word" | sed 's%^\*\**/%%;s/\*\+$//;s%\*\+%[^/]*%;s%///*$%//%')"
+                qcm_word="${qcm_word#/}"
+                case "$qcm_word" in
+                    */) qcm_pattern="$qcm_pattern/${qcm_word%/}" ;;
+                    *)  qcm_pattern="$qcm_pattern/${qcm_word}[^/]*" ;;
+                esac
+
+            done
+            qcm_pattern="$(echo "$qcm_pattern" | sed 's%//\+%/\\(.*/\\)*%g;s%?%[^/]%g;s%/\+$%%')"
+            echo "$qcm_pattern\$"
+            ;;
+    esac
+}
+## PATTERN_BUILD-END
 
 # shellcheck disable=SC3008,SC3044 # select and typeset are not POSIX
 __qc()
@@ -271,24 +297,8 @@ __qc()
 
     typeset qcm_call_param="$*"
 
-    typeset qcm_pattern=""
-    case "$1" in
-        :*) qcm_pattern="^$1";;
-        *)
-            typeset qcm_word
-            for qcm_word in "$@"; do
-                # remove trailing '*', replace others with [^/]*
-                qcm_word="$(echo "$qcm_word" | sed 's/\*\+$//;s%\*\+%[^/]*%')"
-                case "$qcm_word" in
-                    */) qcm_pattern="$qcm_pattern/$qcm_word" ;;
-                    *)  qcm_pattern="$qcm_pattern/${qcm_word}[^/]*" ;;
-                esac
-
-            done
-            qcm_pattern="$(echo "$qcm_pattern" | sed 's%//\+%/\\(.*/\\)\\?%g;s%/\+$%%')"
-            qcm_pattern="$qcm_pattern$"
-            ;;
-    esac
+    typeset qcm_pattern
+    qcm_pattern="$(__qc_create_pattern "$@")"
 
     qcm_oldIFS="$IFS"
     IFS="$(printf '\nx')" && IFS="${IFS%x}"
@@ -330,10 +340,10 @@ if [ -z "${BASH_VERSION:-}${ZSH_VERSION:-}" ]; then
     return
 elif [ -n "${BASH_VERSION:-}" ]; then
     # Lots of shellcheck directives now as the following is BASH code
-    # shellcheck disable=SC2207,SC3003,SC3010,SC3030,SC3043,SC3044,SC3050,SC3054
+    # shellcheck disable=SC2207,SC3003,SC3010,SC3030,SC3044,SC3050,SC3054
     _qc_complete()
     {
-        local cur opts
+        typeset cur opts
         COMPREPLY=()
 
         #_get_comp_words_by_ref -n : cur
@@ -346,23 +356,17 @@ elif [ -n "${BASH_VERSION:-}" ]; then
             if [[ "$cur" = ":"* ]]; then
                 opts=$(grep "^${cur}[^ ]* " "${QC_DIRSTORE}" | sed "s% .*%%;s%^:%%")
             else
-                local qcm_pattern qcm_word
-                qcm_pattern=""
-                for qcm_word in "${COMP_WORDS[@]:1}"; do
-                    qcm_word="$(echo "$qcm_word" | sed 's/\*\+$//;s%\*\+%[^/]*%')"
-                    case "$qcm_word" in
-                        */) qcm_pattern="$qcm_pattern/$qcm_word" ;;
-                        *)  qcm_pattern="$qcm_pattern/${qcm_word}[^/]*" ;;
-                    esac
-                done
-                qcm_pattern="$(echo "$qcm_pattern" | sed 's%//\+%/\\(.*/\\)\\?%g;s%/\+$%%')"
-                qcm_pattern="$qcm_pattern$"
-                opts=$(grep "$qcm_pattern" "${QC_DIRSTORE}" | grep -o "${cur}[^/]*$")
+                typeset qcm_pattern
+                qcm_pattern="$(__qc_create_pattern "${COMP_WORDS[@]:1}")"
+                qcm_pattern="${qcm_pattern%\$}\\(/\\|$\\)"
+                opts=$(grep "$qcm_pattern" "${QC_DIRSTORE}"  | sed 's/^:[^ ]* //' | grep -o "${cur}[^/]*/\\?")
             fi
-            local IFS=$'\n'
-            COMPREPLY=( $(compgen -W "${opts}" -- "${cur#:}") )
-            # Do escaping
-            COMPREPLY=( $(printf '%q\n' "${COMPREPLY[@]}") )
+            if [ -n "$opts" ]; then
+                typeset IFS=$'\n'
+                COMPREPLY=( $(compgen -W "${opts}" -- "${cur#:}") )
+                # Do escaping
+                COMPREPLY=( $(printf '%q\n' "${COMPREPLY[@]}") )
+            fi
             return 0
         fi
     }
@@ -371,8 +375,9 @@ elif [ -n "${BASH_VERSION:-}" ]; then
 
 else
 
-    # Lots of shellcheck directives now as the following is ZSH code
-    # shellcheck disable=SC2154,SC2207,SC3003,SC3010,SC3030,SC3043,SC3054
+    # Lots of shellcheck directives now as the following is not posix sh code
+    # Would need a real ZSH programmer to improve this function.
+    # shellcheck disable=SC2207,SC3003,SC3010,SC3030,SC3043,SC3044,SC3054
     _qc_complete()
     {
         local cur="$PREFIX"
@@ -384,26 +389,17 @@ else
                 opts=($(grep "^${cur}[^ ]* " "${QC_DIRSTORE}" | sed "s% .*%%"))
                 compadd "${opts[@]}"
             else
-                local qcm_pattern qcm_word
-                qcm_pattern=""
-                for qcm_word in "${words[@]:1}"; do
-                    qcm_word="$(echo "$qcm_word" | sed 's/\*\+$//;s%\*\+%[^/]*%')"
-                    case "$qcm_word" in
-                        */) qcm_pattern="$qcm_pattern/$qcm_word" ;;
-                        *)  qcm_pattern="$qcm_pattern/${qcm_word}[^/]*" ;;
-                    esac
-                done
-                qcm_pattern="$(echo "$qcm_pattern" | sed 's%//\+%/\\(.*/\\)\\?%g;s%/\+$%%')"
-                qcm_pattern="$qcm_pattern$"
+                typeset qcm_pattern
+                qcm_pattern="$(__qc_create_pattern "${COMP_WORDS[@]:1}")"
+                qcm_pattern="${qcm_pattern%\$}\\(/\\|$\\)"
                 local IFS=$'\n'
-                opts=( $(grep "$qcm_pattern" "${QC_DIRSTORE}" | grep -o "${cur}[^/]*$") )
+                opts=( $(grep "$qcm_pattern" "${QC_DIRSTORE}" | sed 's/^:[^ ]* //' | grep -o "${cur}[^/]*/\\?") )
                 compadd "${opts[@]}"
 
             fi
             return 0
         fi
     }
-
 
     compdef _qc_complete __qc qc
 

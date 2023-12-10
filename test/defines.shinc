@@ -1,4 +1,12 @@
 # shellcheck shell=bash
+#
+# Common functions for tests functionallity for test
+#
+# Creates a test directory. The name is exported as TEST_DIRECTOR.
+#
+# If "BUILD_TEST_DIRS" is set, creates a test directory tree.
+# If "SKIP_QC_INSTALL" is set, qc is not installed and quick_change_directory.sh not sources.
+#
 
 export __QC_TEST__=true
 
@@ -130,7 +138,9 @@ mkdir -p "$TEST_DIRECTORY"
 mkdir -p "$TEST_DIRECTORY/.qc"
 export QC_DIR="$TEST_DIRECTORY"/.qc
 
-"$script_dir"/../INSTALL -fSC -t "$QC_DIR" copy
+if [ -z "${SKIP_QC_INSTALL:-}" ]; then
+    "$script_dir"/../INSTALL -fSC -t "$QC_DIR" copy
+fi
 
 # IF BUILD_TEST_DIRS is set ....
 if [ -n "${BUILD_TEST_DIRS:-}" ]; then
@@ -155,8 +165,9 @@ if [ -n "${BUILD_TEST_DIRS:-}" ]; then
     touch "$QC_DIR/test.index"
 fi
 
-# shellcheck source=./../quick_change_directory.sh
-. "${QC_DIR}/quick_change_directory.sh"
-#export PATH="$script_dir/..:$PATH"
+if [ -z "${SKIP_QC_INSTALL:-}" ]; then
+    # shellcheck source=./../quick_change_directory.sh
+    . "${QC_DIR}/quick_change_directory.sh"
+fi
 
 # vim:ft=sh

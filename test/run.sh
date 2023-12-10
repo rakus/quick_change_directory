@@ -24,6 +24,7 @@ run_tests()
         test_shells="$test_shells$shell "
         echo "============================================================"
         echo "Testing with $shell ($($shell --version 2>&1 | head -n1))"
+        export TEST_SHELL="$shell"
         for fn in shtest-*.sh shtest-*."$shell"; do
             if [ -e "$fn" ]; then
                 echo "Running $shell $fn"
