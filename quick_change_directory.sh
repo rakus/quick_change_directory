@@ -43,22 +43,26 @@ elif [ -n "${BASH_VERSION:-}" ]; then
 # the following lines are bash-specific
 
     if declare -F "_get_comp_words_by_ref" > /dev/null; then
-        __qc_complete_get_words_by_ref()
+        __qc_complete_get_cur_and_words()
         {
-            _get_comp_words_by_ref "$@"
+            _get_comp_words_by_ref -n : cur words
             words=( "${words[@]:1}" )
         }
     else
-        __qc_complete_get_words_by_ref()
+        # Fallback implementation if _get_comp_words_by_ref is not availabel
+        # Hit that in bash from "Git for Windows", as it comes without
+        # bash-completion by default.
+        # This is not perfect, as ':' is only handled for the first parameter
+        # and even that is guessing.
+        __qc_complete_get_cur_and_words()
         {
-            # fallback if _get_comp_words_by_ref is not available:
             cur="${COMP_WORDS[COMP_CWORD]}"
             if [ "${COMP_WORDS[COMP_CWORD-1]}" = ":" ]; then
                 cur=":$cur"
             fi
             words=( "${COMP_WORDS[@]:1}" )
             if [[ "${words[0]}" = ":" ]]; then
-                words[0]=":${words[1]}"
+                words[0]=":${words[1]:-}"
                 unset 'words[1]'
             fi
         }
@@ -69,7 +73,7 @@ elif [ -n "${BASH_VERSION:-}" ]; then
         local PATH="${QC_DIR:-$HOME/.qc}:$PATH"
         local cur words
 
-        __qc_complete_get_words_by_ref -n : cur words
+        __qc_complete_get_cur_and_words
 
         case "$cur" in
             ':'*)
