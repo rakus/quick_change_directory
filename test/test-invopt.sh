@@ -20,60 +20,25 @@ set -u
 
 export PATH="$QC_DIR:$PATH"
 
-#
-# Adjust to different versions of /bin/getopt
-# Maybe it is a bad idea to check for this error messages
-#
-if getopt "o" -D 2>&1 | grep -q invalid; then
-    # "newer version e.g 2.37.4
-    invShortOpt="invalid option -- '%c'"
-    invLongOpt="unrecognized option '--%s'"
-else
-    invShortOpt="unknown option -- %c"
-    invLongOpt="unknown option -- %s"
-fi
-
-
-
+# just check if the option was detected as unknown
+# $*: the command line to execute
+check_inv_opt_detected()
+{
+    printf "%s " "$@"
+    if "$@" 2>&1 | grep -q "Try '[^ ]* --help' for more information."; then
+        OK
+    else
+        ERROR
+    fi
+}
 
 startTest "Invalid option detection"
 
-printf "qc -Z"
-if qc-backend -Z 2>&1 | grep -q "$(printf "$invShortOpt" Z)"; then
-    OK
-else
-    ERROR
-fi
-printf "dstore -Z"
-if dstore -Z 2>&1 | grep -q "$(printf "$invShortOpt" Z)"; then
-    OK
-else
-    ERROR
-fi
-printf "qc-build-index -Z"
-if qc-build-index -Z 2>&1 | grep -q "$(printf "$invShortOpt" Z)"; then
-    OK
-else
-    ERROR
-fi
-
-printf "qc --wrong"
-if qc-backend --wrong 2>&1 | grep -q "$(printf "$invLongOpt" wrong)"; then
-    OK
-else
-    ERROR
-fi
-printf "dstore --wrong"
-if dstore --wrong 2>&1 | grep -q "$(printf "$invLongOpt" wrong)"; then
-    OK
-else
-    ERROR
-fi
-printf "qc-build-index --wrong"
-if qc-build-index --wrong 2>&1 | grep -q "$(printf "$invLongOpt" wrong)"; then
-    OK
-else
-    ERROR
-fi
+check_inv_opt_detected qc-backend -Z
+check_inv_opt_detected dstore -Z
+check_inv_opt_detected qc-build-index -Z
+check_inv_opt_detected qc-backend --wrong
+check_inv_opt_detected dstore --wrong
+check_inv_opt_detected qc-build-index --wrong
 
 endTest
