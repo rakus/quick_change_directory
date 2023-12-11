@@ -12,6 +12,19 @@ export __QC_TEST__=true
 
 set -u
 
+if [ "$(uname)" = "Darwin" ]; then
+    if [ -n "${BASH_VERSION:-}" ]; then
+        # shellcheck disable=SC3044 # only executed in bash
+        shopt -s expand_aliases
+    fi
+
+    alias grep=ggrep
+    alias sed=gsed
+    alias find=gfind
+    alias readlink=greadlink
+    alias wc=gwc
+fi
+
 if [ -z "${script_dir:-}" ]; then
     echo ""
     echo "ERROR: required variable \$script_dir\" is not set"
@@ -144,6 +157,10 @@ trap "onExit" EXIT
 TEST_DIRECTORY="/tmp/qc-testDirectory"
 [ -d "$TEST_DIRECTORY" ] && rm -rf "$TEST_DIRECTORY"
 mkdir -p "$TEST_DIRECTORY"
+
+# On macOS this directory might be mapped to another location
+TEST_DIRECTORY="$(readlink -e "$TEST_DIRECTORY")"
+
 mkdir -p "$TEST_DIRECTORY/.qc"
 export QC_DIR="$TEST_DIRECTORY"/.qc
 export QC_DIR_INDEX="$QC_DIR/index"

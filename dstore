@@ -23,6 +23,23 @@ QC_DIR_INDEX="$QC_DIR/index"
 # file is managed using the command 'dstore'.
 QC_DSTORE_INDEX=$QC_DIR_DATA/index.dstore
 
+if [ "$(uname)" = "Darwin" ]; then
+    if [ -z "${HOMEBREW_PREFIX:-}" ]; then
+        HOMEBREW_PREFIX="$(dirname "$(dirname "$(command -v brew)")")"
+        if [ ! -d "$HOMEBREW_PREFIX/Cellar" ]; then
+            # Ok, call brew as last resort (slow)
+            HOMEBREW_PREFIX="$(brew --prefix)"
+        fi
+    fi
+    PATH="$HOMEBREW_PREFIX/opt/gnu-getopt/bin:$PATH"
+    export PATH
+
+    shopt -s expand_aliases
+
+    alias grep=ggrep
+    alias sed=gsed
+fi
+
 show_help()
 {
     echo "Manually manage content of $QC_DSTORE_INDEX for usage with 'qc'."
@@ -239,7 +256,7 @@ done
 if cmp -s "$QC_DSTORE_INDEX.org" "$QC_DSTORE_INDEX"; then
     echo "No change"
 else
-    diff -N "$QC_DSTORE_INDEX.org" "$QC_DSTORE_INDEX" | grep -a -- "^[<>]" | sed "s/^</Removed:/;s/^>/Added:  /"
+    diff -N "$QC_DSTORE_INDEX.org" "$QC_DSTORE_INDEX" | sed "s/^</Removed:/;s/^>/Added:  /"
 fi
 
 rm "$QC_DSTORE_INDEX.org"
