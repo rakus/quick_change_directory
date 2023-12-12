@@ -45,8 +45,7 @@ elif [ -n "${BASH_VERSION:-}" ]; then
     if declare -F "_get_comp_words_by_ref" > /dev/null; then
         __qc_complete_get_cur_and_words()
         {
-            _get_comp_words_by_ref -n : cur words
-            words=( "${words[@]:1}" )
+            _get_comp_words_by_ref -n : cur words cword
         }
     else
         # Fallback implementation if _get_comp_words_by_ref is not availabel
@@ -60,10 +59,21 @@ elif [ -n "${BASH_VERSION:-}" ]; then
             if [ "${COMP_WORDS[COMP_CWORD-1]}" = ":" ]; then
                 cur=":$cur"
             fi
-            words=( "${COMP_WORDS[@]:1}" )
-            if [[ "${words[0]}" = ":" ]]; then
-                words[0]=":${words[1]:-}"
-                unset 'words[1]'
+            cword=$COMP_CWORD
+            words=( "${COMP_WORDS[@]}" )
+            if [[ "${words[1]:-}" = ":" ]]; then
+                words[1]=":${words[2]:-}"
+                unset 'words[2]'
+                if [[ $cword -ge 2 ]]; then
+                    cword=$(( cword - 1 ))
+                fi
+            fi
+        }
+        # Inspired by bash-completion package
+        __ltrim_colon_completions()
+        {
+            if [[ $1 == *:* && $COMP_WORDBREAKS == *:* ]]; then
+                COMPREPLY=( "${COMPREPLY[@]#"${1%"${1##*:}"}"}" )
             fi
         }
     fi
@@ -75,15 +85,13 @@ elif [ -n "${BASH_VERSION:-}" ]; then
 
         __qc_complete_get_cur_and_words
 
-        case "$cur" in
-            ':'*)
-                mapfile -d$'\n' -t COMPREPLY < <(compgen -W "$(qc-backend --complete "$cur")" -- "$cur")
-                COMPREPLY=( "${COMPREPLY[@]#:}" )
-                ;;
-            *)
-                mapfile -d$'\n' -t COMPREPLY < <(compgen -W "$(qc-backend --complete "${words[@]}")" --  "$cur")
-                ;;
-        esac
+        # if completion is in the middle, we need to get rid of the words after
+        # the cursor
+        #words=( "${words[@]:0:$((cword+1))}" )
+        words=( "${words[@]:1:cword}" )
+
+        mapfile -d$'\n' -t COMPREPLY < <(compgen -W "$(qc-backend --complete "${words[@]}")" --  "$cur")
+        __ltrim_colon_completions "$cur"
     }
 
     complete -o nospace -F __qc_complete qc
@@ -93,19 +101,15 @@ elif [ -n "${ZSH_VERSION:-}" ]; then
     __qc_complete()
     {
         local PATH="${QC_DIR:-$HOME/.qc}:$PATH"
-        local cur="$PREFIX"
         local -a comp
 
-        case "$cur" in
-            ':'*)
-                # shellcheck disable=SC2296 # weird ZSH syntax copies from stackoverflow
-                comp=("${(@f)$(qc-backend --complete "$cur")}")
-                ;;
-            *)
-                # shellcheck disable=SC2296 # weird ZSH syntax copies from stackoverflow
-                comp=("${(@f)$( qc-backend --complete "${words[@]:1}" )}")
-                ;;
-        esac
+        # if completion is in the middle, we need to get rid of the words after
+        # the cursor
+        words=( "${words[@]:0:$CURRENT}" )
+
+        # shellcheck disable=SC2296 # ZSH syntax copied from stackoverflow
+        comp=("${(@f)$( qc-backend --complete "${words[@]:1}" )}")
+
         compadd "${comp[@]}"
 
         return 0
