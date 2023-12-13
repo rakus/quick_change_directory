@@ -76,7 +76,7 @@ dstore :label "$TEST_DIRECTORY/Customer/ACME"
 
 echo ""
 printf "test.index exists"
-if [ -e  "$TEST_DIRECTORY/.qc/test.index" ]; then
+if [ -e  "$QC_DIR_INDEX/test.index" ]; then
     OK
 else
     ERROR
@@ -84,7 +84,7 @@ else
     exit 1
 fi
 printf "test.index entry count"
-if [ "$TEST_DIRECTORY" = "$(head -n1  "$TEST_DIRECTORY/.qc/test.index")" ]; then
+if [ "$TEST_DIRECTORY" = "$(head -n1  "$QC_DIR_INDEX/test.index")" ]; then
     # created with find
     expected_cnt=15
 else
@@ -92,14 +92,14 @@ else
     expected_cnt=14
 fi
 
-if [ $expected_cnt -eq "$(wc -l < "$TEST_DIRECTORY/.qc/test.index")" ]; then
+if [ $expected_cnt -eq "$(wc -l < "$QC_DIR_INDEX/test.index")" ]; then
     OK
 else
     ERROR
 fi
 
 printf "test.index.hidden exists"
-if [ -e "$TEST_DIRECTORY/.qc/test.index.hidden" ]; then
+if [ -e "$QC_DIR_INDEX/test.index.hidden" ]; then
     OK
 else
     ERROR
@@ -107,21 +107,21 @@ else
     exit 1
 fi
 printf "test.index.hidden entry count"
-if [ "$TEST_DIRECTORY" = "$(head -n1  "$TEST_DIRECTORY/.qc/test.index.hidden")" ]; then
+if [ "$TEST_DIRECTORY" = "$(head -n1  "$QC_DIR_INDEX/test.index.hidden")" ]; then
     # created with find
-    expected_cnt=5
+    expected_cnt=6
 else
     # created with fd
-    expected_cnt=4
+    expected_cnt=5
 fi
-if [ $expected_cnt -eq "$(wc -l < "$TEST_DIRECTORY/.qc/test.index.hidden")" ]; then
+if [ $expected_cnt -eq "$(wc -l < "$QC_DIR_INDEX/test.index.hidden")" ]; then
     OK
 else
     ERROR
 fi
 
 printf "index.dstore exists"
-if [ -e  "$TEST_DIRECTORY/.qc/index.dstore" ]; then
+if [ -e  "$QC_DIR/index.dstore" ]; then
     OK
 else
     ERROR
@@ -129,7 +129,7 @@ else
     exit 1
 fi
 printf "index.dstore entry count"
-if [ 1 -eq "$(wc -l < "$TEST_DIRECTORY/.qc/index.dstore")" ]; then
+if [ 1 -eq "$(wc -l < "$QC_DIR/index.dstore")" ]; then
     OK
 else
     ERROR
@@ -215,7 +215,7 @@ fi
 
 
 printf "test-fail.index NOT created"
-if [ ! -e  "$TEST_DIRECTORY/.qc/test-fail.index" ]; then
+if [ ! -e  "$QC_DIR_INDEX/test-fail.index" ]; then
     OK
 else
     ERROR

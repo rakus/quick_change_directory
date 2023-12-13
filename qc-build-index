@@ -29,9 +29,12 @@ set -u
 qc_version=2.0
 
 [ -z "${QC_DIR:-}" ] && QC_DIR=$HOME/.qc
-QC_DSTORE_INDEX=$QC_DIR/index.dstore
 
-CFG="$QC_DIR/qc-index.cfg"
+QC_DIR_CFG="$QC_DIR"
+QC_DIR_INDEX="$QC_DIR/index"
+QC_DIR_LOG="$QC_DIR/index"
+
+CFG_FILE="$QC_DIR_CFG/qc-index.cfg"
 
 typeset -a TMP_FILES=()
 
@@ -230,9 +233,9 @@ build_index()
     # Always ignore directories with line breaks in their name.
     IGNORE_DIRS+=( \*$'\n'\* )
 
-    [ ! -d "$QC_DIR" ] && mkdir "$QC_DIR"
+    [ ! -d "$QC_DIR_INDEX" ] && mkdir -p "$QC_DIR_INDEX"
 
-    typeset index_file=$QC_DIR/$idx_name
+    typeset index_file=$QC_DIR_INDEX/$idx_name
 
     typeset new_index
     new_index=$(mktemp "${index_file/.index/.updating-index}.XXXX")
@@ -447,18 +450,18 @@ build_index_using_fd()
 copy_default_config()
 {
     if [ -r "$script_dir/../share/quick-change-directory/qc-index.cfg" ]; then
-        echo "Copying default config file to $CFG"
-        cp "$script_dir/../share/quick-change-directory/qc-index.cfg" "$CFG"
+        echo "Copying default config file to $CFG_FILE"
+        cp "$script_dir/../share/quick-change-directory/qc-index.cfg" "$CFG_FILE"
     elif [ -r "/usr/share/quick-change-directory/qc-index.cfg" ]; then
-        echo "Copying default config file to $CFG"
-        cp "/usr/share/quick-change-directory/qc-index.cfg" "$CFG"
+        echo "Copying default config file to $CFG_FILE"
+        cp "/usr/share/quick-change-directory/qc-index.cfg" "$CFG_FILE"
     elif [ -e "$script_dir/qc-index.cfg" ]; then
-        echo "Copying default config file to $CFG"
-        cp "$script_dir/qc-index.cfg" "$CFG"
+        echo "Copying default config file to $CFG_FILE"
+        cp "$script_dir/qc-index.cfg" "$CFG_FILE"
     fi
-    if [ ! -e "$CFG" ]; then
-        echo "Creating simple default config in $CFG"
-        cat <<'EOF' > "$CFG"
+    if [ ! -e "$CFG_FILE" ]; then
+        echo "Creating simple default config in $CFG_FILE"
+        cat <<'EOF' > "$CFG_FILE"
 # simple default config
 
 # create index of $HOME excluding hidden directories and directories named 'CVS'
@@ -499,7 +502,7 @@ configure_crontab()
     fi
 
     local exe="${script_file/#$HOME/\${HOME\}}"
-    local log_file="$QC_DIR/qc-build-index.log"
+    local log_file="$QC_DIR_LOG/qc-build-index.log"
     log_file="${log_file/#$HOME/\${HOME\}}"
 
     local cron_entry="*/$minutes * * * * $exe >$log_file 2>&1"
@@ -521,9 +524,9 @@ check_unknown_index_files()
     find_args+=( \( -name \*.index -o -name \*.index.hidden -o -name \*.index.ext )
     find_args+=( -o -name \*.index.host.\* -o -name \*.index.hidden.host.\* -o -name \*.index.ext.host.\* \) )
 
-    mapfile -d$'\n' -t existing_idx_files < <( find "$QC_DIR" -maxdepth 1 "${find_args[@]}" -printf "%f\n" )
+    mapfile -d$'\n' -t existing_idx_files < <( find "$QC_DIR_INDEX" -maxdepth 1 "${find_args[@]}" -printf "%f\n" )
 
-    mapfile -d$'\n' -t configured_idx_files < <( grep -v '^[[:space:]]*\(#.*\)\?$' "$QC_DIR/qc-index.cfg" | sed 's/^[[:space:]]*//' | cut -d' ' -f1 )
+    mapfile -d$'\n' -t configured_idx_files < <( grep -v '^[[:space:]]*\(#.*\)\?$' "$CFG_FILE" | sed 's/^[[:space:]]*//' | cut -d' ' -f1 )
 
     for c in "${configured_idx_files[@]}"; do
         c="${c/%\$HOSTNAME/*}"
@@ -554,7 +557,7 @@ check_unknown_index_files()
     find_args+=( \) )
 
 
-    mapfile -d$'\n' -t old_idx_files < <( find "$QC_DIR" -maxdepth 1 "${find_args[@]}" -mtime +7 -printf "%f\n" )
+    mapfile -d$'\n' -t old_idx_files < <( find "$QC_DIR_INDEX" -maxdepth 1 "${find_args[@]}" -mtime +7 -printf "%f\n" )
 
     if [ "${#old_idx_files[@]}" -ne 0 ]; then
         echo
@@ -631,13 +634,12 @@ done
 
 shift $((OPTIND-1))
 
-if [ ! -d "$QC_DIR" ]; then
+if [ ! -d "$QC_DIR_INDEX" ]; then
     echo "qc-build-index: First call -- initialization ...."
-    echo "Creating directory $QC_DIR"
-    mkdir "$QC_DIR" || exit 1
-    touch "$QC_DSTORE_INDEX"
+    echo "Creating directory $QC_DIR_INDEX"
+    mkdir -p "$QC_DIR_INDEX" || exit 1
 fi
-if [ ! -e "$CFG" ]; then
+if [ ! -e "$CFG_FILE" ]; then
     copy_default_config
 fi
 
@@ -668,12 +670,12 @@ while IFS= read -r line; do
     # Check for command substitution -- we don't allow this
     # shellcheck disable=SC2016  # the '$(' MUST NOT be expanded
     if [[ $line == *'$('* ]] || [[ $line == *'`'* ]]; then
-        printf >&2 '%s[%d] ERROR: Possible command substitution: %s\n' "$CFG" "$lno" "$line"
+        printf >&2 '%s[%d] ERROR: Possible command substitution: %s\n' "$CFG_FILE" "$lno" "$line"
         continue
     fi
 
     if ! eval "idx_args=( $line )"; then
-        printf >&2 '%s[%d] ERROR: Cannot parse: %s\n' "$CFG" "$lno" "$line"
+        printf >&2 '%s[%d] ERROR: Cannot parse: %s\n' "$CFG_FILE" "$lno" "$line"
         continue
     fi
     ((idxCount++))
@@ -696,13 +698,13 @@ while IFS= read -r line; do
         *.index?(.ext|.hidden) ) : ;;
         *.index?(.ext|.hidden).host.$HOSTNAME ) : ;;
         *.index?(.ext|.hidden).host.*[A-Z]* )
-            printf >&2 '%s[%d] Hostname contains upper case char(s) - ignoring %s\n' "$CFG" "$lno" "${idx_args[0]}"
+            printf >&2 '%s[%d] Hostname contains upper case char(s) - ignoring %s\n' "$CFG_FILE" "$lno" "${idx_args[0]}"
             continue
             ;;
         *.index?(.ext|.hidden).host.* )
             continue # silently ignore index with other host name
             ;;
-        *) printf >&2 '%s[%d] Ignoring invalid index name %s\n' "$CFG" "$lno" "${idx_args[0]}"
+        *) printf >&2 '%s[%d] Ignoring invalid index name %s\n' "$CFG_FILE" "$lno" "${idx_args[0]}"
             continue
             ;;
     esac
@@ -723,13 +725,13 @@ while IFS= read -r line; do
     echo "Updating ${idx_args[0]}..."
     build_index "${idx_args[@]}"
 
-done < "$CFG"
+done < "$CFG_FILE"
 IFS="$oifs"
 
 check_unknown_index_files
 
 if [ "$idxCount" -eq 0 ]; then
-    echo >&2 "ERROR: No index defined in $CFG"
+    echo >&2 "ERROR: No index defined in $CFG_FILE"
     exit 1
 fi
 

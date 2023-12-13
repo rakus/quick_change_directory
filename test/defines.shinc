@@ -87,6 +87,15 @@ startTest()
 
 endTest()
 {
+    # Tests should be creates in $QC_DIR/index. Make sure, no index file(s) was
+    # created in $QC_DIR directly.
+    if [ -n "$(find "$QC_DIR" -maxdepth 1 -name \*.index\*)" ]; then
+        echo "ERROR: Unexpected index files found"
+        find "$QC_DIR" -maxdepth 1 -name \*.index\*
+        echo
+        TEST_STATUS=1
+    fi
+
     echo ""
     echo "----------------------------------------------------------------------"
     if [ $TEST_STATUS -eq 0 ]; then
@@ -137,6 +146,7 @@ TEST_DIRECTORY="/tmp/qc-testDirectory"
 mkdir -p "$TEST_DIRECTORY"
 mkdir -p "$TEST_DIRECTORY/.qc"
 export QC_DIR="$TEST_DIRECTORY"/.qc
+export QC_DIR_INDEX="$QC_DIR/index"
 
 if [ -z "${SKIP_QC_INSTALL:-}" ]; then
     "$script_dir"/../INSTALL -fSC -t "$QC_DIR" copy
@@ -162,7 +172,7 @@ if [ -n "${BUILD_TEST_DIRS:-}" ]; then
     echo "test.index '$TEST_DIRECTORY' -- '.*'" > "$QC_DIR/qc-index.cfg"
     #echo "hidden.index.ext -f '*testDirectory/.*' '$TEST_DIRECTORY'" >> "$QC_DIR/qc-index.cfg"
     echo "test.index.hidden '$TEST_DIRECTORY'" >> "$QC_DIR/qc-index.cfg"
-    touch "$QC_DIR/test.index"
+    touch "$QC_DIR_INDEX/test.index"
 fi
 
 if [ -z "${SKIP_QC_INSTALL:-}" ]; then

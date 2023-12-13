@@ -12,9 +12,15 @@ qc_version=2.0
 # Directory for qc index files
 [ -z "${QC_DIR:-}" ] && QC_DIR=$HOME/.qc
 
+QC_DIR_CFG="$QC_DIR"
+QC_DIR_DATA="$QC_DIR"
+QC_DIR_INDEX="$QC_DIR/index"
+
+CFG_FILE="$QC_DIR_CFG/qc-index.cfg"
+
 # Manual index file storing directory names and bookmarked directories. This
 # file is managed using the command 'dstore'.
-QC_DSTORE_INDEX=$QC_DIR/index.dstore
+QC_DSTORE_INDEX=$QC_DIR_DATA/index.dstore
 
 # error on unset variable
 set -u
@@ -224,13 +230,13 @@ get_indexes()
     typeset -a idx_files
 
     if [[ $default = 1 ]]; then
-        idx_files+=( "$QC_DIR"/*.index "$QC_DIR"/*.index.host."$HOSTNAME" )
+        idx_files+=( "$QC_DIR_INDEX"/*.index "$QC_DIR_INDEX"/*.index.host."$HOSTNAME" )
     fi
     if [[ $hidden = 1 ]]; then
-        idx_files+=( "$QC_DIR"/*.index.hidden "$QC_DIR"/*.index.hidden.host."$HOSTNAME" )
+        idx_files+=( "$QC_DIR_INDEX"/*.index.hidden "$QC_DIR_INDEX"/*.index.hidden.host."$HOSTNAME" )
     fi
     if [[ $extended = 1 ]]; then
-        idx_files+=( "$QC_DIR"/*.index.ext "$QC_DIR"/*.index.ext.host."$HOSTNAME" )
+        idx_files+=( "$QC_DIR_INDEX"/*.index.ext "$QC_DIR_INDEX"/*.index.ext.host."$HOSTNAME" )
     fi
 
     [ -e "$QC_DSTORE_INDEX" ] && idx_files+=( "$QC_DSTORE_INDEX" )
@@ -398,7 +404,6 @@ dir_select()
 # Update/create the index.
 updateIndex()
 {
-    typeset PATH="$QC_DIR:$PATH"
     if command -v qc-build-index &>/dev/null; then
         echo "Updating index ..."
         typeset -a ARGS
@@ -424,12 +429,11 @@ updateIndex()
 
 internalUpdateIndex()
 {
-    [ -z "${QC_DIR:-}" ] && QC_DIR="$HOME/.qc"
-    if [ ! -d "$QC_DIR" ]; then
-        mkdir "$QC_DIR" || return 1
+    if [ ! -d "$QC_DIR_INDEX" ]; then
+        mkdir "$QC_DIR_INDEX" || return 1
     fi
 
-    typeset INDEX_FILE=$QC_DIR/home.index
+    typeset INDEX_FILE=$QC_DIR_INDEX/home.index
     # shellcheck disable=SC2155 # Declare and assign separately
     typeset NEW_INDEX=$(mktemp "${INDEX_FILE}.XXXX")
 
@@ -485,7 +489,6 @@ complete_index_dir()
         fi
 
         #{
-        #    echo "$QC_DIR"
         #    echo "last_part >>$last_part<<"
         #    echo "last_part_re >>$last_part_re<<"
         #    echo "grps >>$grps<<"
@@ -600,12 +603,12 @@ while true; do
             ;;
         --config)
             [ -n "$cl_completion" ] && exit 1
-            if [ ! -e "$QC_DIR/qc-index.cfg" ]; then
-                echo >&2 "ERROR: $QC_DIR/qc-index.cfg does not exist."
+            if [ ! -e "$CFG_FILE" ]; then
+                echo >&2 "ERROR: $CFG_FILE does not exist."
                 echo >&2 "       Use 'qc -u' to create a default config file."
                 exit 1
             fi
-            ${VISUAL:-${EDITOR:-vi}} "$QC_DIR/qc-index.cfg" </dev/tty >/dev/tty
+            ${VISUAL:-${EDITOR:-vi}} "$CFG_FILE" </dev/tty >/dev/tty
             exit 0
             ;;
         --) shift

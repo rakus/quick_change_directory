@@ -31,8 +31,8 @@ clear_test_dirs()
     if [ -d "$TEST_DIRECTORY/tree" ]; then
         rm -rf "${TEST_DIRECTORY:?}"/tree
     fi
-    if [ -d "$QC_DIR" ]; then
-        rm "$QC_DIR"/*.index*
+    if [ -d "$QC_DIR_INDEX" ]; then
+        rm "$QC_DIR_INDEX"/*.index*
     fi
 }
 create_dirs()
@@ -46,7 +46,7 @@ create_dirs()
 check_lines()
 {
     local msg="$1"
-    local file="$TEST_DIRECTORY/.qc/$2"
+    local file="$QC_DIR_INDEX/$2"
     local lines="$3"
 
     local cnt=0
@@ -84,7 +84,7 @@ EOF
 
 
     # delete all indexes (if they exist)
-    rm -f "$TEST_DIRECTORY/.qc/"*.index*
+    rm -f "$QC_DIR_INDEX/"*.index*
 
     echo
     echo "Build index"
@@ -109,16 +109,16 @@ EOF
 
     echo
     echo "Don't update extended index"
-    rm   "$TEST_DIRECTORY/.qc/"*.index.ext*
+    rm   "$QC_DIR_INDEX/"*.index.ext*
     build_index -E
     echo -n "Extended index not created"
-    if [ -e "$TEST_DIRECTORY/.qc/test.index.ext" ]; then
+    if [ -e "$QC_DIR_INDEX/test.index.ext" ]; then
         ERROR
     else
         OK
     fi
     echo -n "Host-local extended index not created"
-    if [ -e "$TEST_DIRECTORY/.qc/host-local.index.ext.host.$LC_HOSTNAME" ]; then
+    if [ -e "$QC_DIR_INDEX/host-local.index.ext.host.$LC_HOSTNAME" ]; then
         ERROR
     else
         OK
@@ -126,16 +126,16 @@ EOF
 
     echo
     echo "Don't create hidden index"
-    rm   "$TEST_DIRECTORY/.qc/"*.index.hidden*
+    rm   "$QC_DIR_INDEX/"*.index.hidden*
     build_index -H
     echo -n "Hidden index not created"
-    if [ -e "$TEST_DIRECTORY/.qc/test.index.hidden" ]; then
+    if [ -e "$QC_DIR_INDEX/test.index.hidden" ]; then
         ERROR
     else
         OK
     fi
     echo -n "Host-local hidden index not created"
-    if [ -e "$TEST_DIRECTORY/.qc/host-local.index.hidden.host.$LC_HOSTNAME" ]; then
+    if [ -e "$QC_DIR_INDEX/host-local.index.hidden.host.$LC_HOSTNAME" ]; then
         ERROR
     else
         OK
@@ -143,10 +143,10 @@ EOF
 
     echo
     echo "Only create create index by name 'ignore'"
-    rm   "$TEST_DIRECTORY/.qc/"*.index*
+    rm   "$QC_DIR_INDEX/"*.index*
     build_index ignore
     echo -n "Only ignore.index created"
-    if [ "$(ls "$TEST_DIRECTORY/.qc/"*.index*)" = "$TEST_DIRECTORY/.qc/ignore.index" ]; then
+    if [ "$(ls "$QC_DIR_INDEX/"*.index*)" = "$QC_DIR_INDEX/ignore.index" ]; then
         OK
     else
         ERROR
@@ -169,7 +169,7 @@ EOF
         echo
         echo "Test with fd and ignoring .gitignore"
 
-        sed -i "s/ / -I /" "$TEST_DIRECTORY/.qc/qc-index.cfg"
+        sed -i "s/ / -I /" "$QC_DIR/qc-index.cfg"
 
         build_index
         check_lines "normal index" "test.index" 21
