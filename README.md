@@ -334,18 +334,20 @@ E.g. To updates the directory `$PWD/data` use
 
 ##### Updating via Cron
 
-It is possible to update the index via cron. The script `qc-build-index` has a
-own option to manipulate the crontab. Executing `qc-build-index --cron 10` adds
-a crontab entry to update the index every 10 minutes.
+It is possible to update the index via cron.
 
-Example entry in the `crontab`:
+The command `qc` has a own option to manipulate the crontab. With
+
+    qc --cron 10
+
+the following entry is added to the crontab
 
     # Quick Change Directory: update index
     */10 * * * * ${HOME}/.qc/qc-build-index >${HOME}/.qc/index/qc-build-index.log 2>&1
 
-The current cron configuration can be displayed with `qc-build-index --cron`.
+With `qc --cron` the current crontab entry is shown and with `qc --cron 0` the
+entry is removed.
 
-See `qc-build-index --help` for other supported options.
 
 ### The Manual Index
 
@@ -470,10 +472,15 @@ directory.
 
    `[ -f "$HOME/.qc/quick_change_directory.sh" ] && . "$HOME/.qc/quick_change_directory.sh"`
 
-4. Optional: Configure crontab, so the directory index is updated every 10 minutes.
+4. Now source `quick_change_directory.sh` by executing `.
+   $HOME/.qc/quick_change_directory.sh` or just start a new shell.
+
+5. Run `qc -u` to create the index files.
+
+6. Optional: Configure crontab, so the directory index is updated every few minutes.
    The index update will typically just take a few seconds.
 
-   Run `$HOME/.qc/qc-build-index --cron 10`.
+   E.g. run `qc --cron 10`.
 
    This will add the following lines to your crontab (use `crontab -l` to check):
 
@@ -486,10 +493,6 @@ directory.
    This log file is always overwritten, so it only contains the log of the last
    execution.
 
-5. Now source `quick_change_directory.sh` by executing `.
-   $HOME/.qc/quick_change_directory.sh` or just start a new shell.
-
-6. Run `qc -u` to create the index files.
 
 ### Installation Script
 
