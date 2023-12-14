@@ -118,6 +118,11 @@ test_completion "white" -- "whitespace dir/"
 
 test_completion NotThere
 
+# Case-insensitive completion
+test_completion -i A ad -- admin/
+test_completion -i yoyo -- yoyo/ yoyoDyne/
+
+# Test label and label/name completion
 test_completion :la -- "label"
 
 test_completion :la A -- "Admin/"

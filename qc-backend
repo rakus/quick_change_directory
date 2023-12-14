@@ -503,7 +503,7 @@ complete_index_dir()
         #    search_dirs "$indexSelect" "$@"
         #} >&2
 
-        mapfile -d$'\n' -t compl < <(search_dirs "$indexSelect" "$@" | sed -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]//g" | sed "s|^.*/${last_part_re}\([^/]*/\?\)$|$last_part\\$grps|;s|$|/|" | sort -u)
+        mapfile -d$'\n' -t compl < <(search_dirs "$indexSelect" "$@" | sed -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]//g" | sed "s|^.*/${last_part_re}\([^/]*/\?\)$|$last_part\\$grps|${QC_NO_CASE+i} ;s|$|/|" | sort -u)
 
         if [ "${#compl[*]}" -gt 0 ]; then
             printf '%q\n' "${compl[@]}"
