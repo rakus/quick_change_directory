@@ -262,7 +262,7 @@ search_dirs()
         :*)
             pattern=$1
             if [ ! -e "$QC_DSTORE_INDEX" ]; then
-                echo >&2 "qc: Dstore index file not found! Use 'dstore' to create it."
+                echo >&2 "qc: Dstore index file not found! See 'dstore --help'."
                 return 1
             fi
             # grep: -h: Suppress the prefixing of file names on output.
@@ -586,8 +586,13 @@ while true; do
             ;;
         -l)
             [ -n "$cl_completion" ] && exit 1
-            grep --color=always '^:[^ ]* ' "$QC_DSTORE_INDEX" >&2
-            exit 0
+            if [ -e "$QC_DSTORE_INDEX" ]; then
+                grep --color=always '^:[^ ]* ' "$QC_DSTORE_INDEX" >&2
+                exit 0
+            else
+                echo >&2 "qc: Dstore index file not found! See 'dstore --help'."
+                exit 1
+            fi
             ;;
         --print-expr) PRINT_EXPR=true
             ;;
