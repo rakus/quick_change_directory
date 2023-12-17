@@ -16,12 +16,12 @@ qc_version=2.0
 # Directory for qc index files
 [ -z "${QC_DIR:-}" ] && QC_DIR=$HOME/.qc
 
-QC_DIR_CFG="$QC_DIR"
+QC_DIR_DATA="$QC_DIR"
 QC_DIR_INDEX="$QC_DIR/index"
 
 # Manual index file storing directory names and bookmarked directories. This
 # file is managed using the command 'dstore'.
-QC_DSTORE_INDEX=$QC_DIR_CFG/index.dstore
+QC_DSTORE_INDEX=$QC_DIR_DATA/index.dstore
 
 show_help()
 {
@@ -133,9 +133,11 @@ __qc_fqname()
 
 
 #---------[ MAIN ]-------------------------------------------------------------
-# create ~/.qc/index.dstore if it does not exist.
-[ ! -d "$QC_DIR_CFG" ] && mkdir -p "$QC_DIR_CFG"
-[ ! -e "$QC_DSTORE_INDEX" ] && touch "$QC_DSTORE_INDEX"
+# create empty index.dstore if it does not exist.
+if [ ! -e "$QC_DSTORE_INDEX" ]; then
+    mkdir -p "$(dirname "$QC_DSTORE_INDEX")"
+    touch "$QC_DSTORE_INDEX"
+fi
 
 typeset delete=''
 

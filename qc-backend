@@ -437,9 +437,7 @@ updateIndex()
 
 internalUpdateIndex()
 {
-    if [ ! -d "$QC_DIR_INDEX" ]; then
-        mkdir "$QC_DIR_INDEX" || return 1
-    fi
+    mkdir -p "$QC_DIR_INDEX" || return 1
 
     typeset INDEX_FILE=$QC_DIR_INDEX/home.index
     # shellcheck disable=SC2155 # Declare and assign separately

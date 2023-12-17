@@ -233,8 +233,6 @@ build_index()
     # Always ignore directories with line breaks in their name.
     IGNORE_DIRS+=( \*$'\n'\* )
 
-    [ ! -d "$QC_DIR_INDEX" ] && mkdir -p "$QC_DIR_INDEX"
-
     typeset index_file=$QC_DIR_INDEX/$idx_name
 
     typeset new_index
