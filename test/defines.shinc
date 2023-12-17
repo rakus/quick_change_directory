@@ -172,6 +172,7 @@ if [ -n "${BUILD_TEST_DIRS:-}" ]; then
     echo "test.index '$TEST_DIRECTORY' -- '.*'" > "$QC_DIR/qc-index.cfg"
     #echo "hidden.index.ext -f '*testDirectory/.*' '$TEST_DIRECTORY'" >> "$QC_DIR/qc-index.cfg"
     echo "test.index.hidden '$TEST_DIRECTORY'" >> "$QC_DIR/qc-index.cfg"
+    mkdir -p "$QC_DIR_INDEX"
     touch "$QC_DIR_INDEX/test.index"
 fi
 

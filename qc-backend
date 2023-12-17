@@ -238,13 +238,13 @@ get_indexes()
     typeset -a idx_files
 
     if [[ $default = 1 ]]; then
-        idx_files+=( "$QC_DIR_INDEX"/*.index "$QC_DIR_INDEX"/*.index.host."$HOSTNAME" )
+        idx_files+=( "$QC_DIR_INDEX"/*.index "$QC_DIR_INDEX/$HOSTNAME"/*.index )
     fi
     if [[ $hidden = 1 ]]; then
-        idx_files+=( "$QC_DIR_INDEX"/*.index.hidden "$QC_DIR_INDEX"/*.index.hidden.host."$HOSTNAME" )
+        idx_files+=( "$QC_DIR_INDEX"/*.index.hidden "$QC_DIR_INDEX/$HOSTNAME"/*.index.hidden )
     fi
     if [[ $extended = 1 ]]; then
-        idx_files+=( "$QC_DIR_INDEX"/*.index.ext "$QC_DIR_INDEX"/*.index.ext.host."$HOSTNAME" )
+        idx_files+=( "$QC_DIR_INDEX"/*.index.ext "$QC_DIR_INDEX/$HOSTNAME"/*.index.ext )
     fi
 
     [ -e "$QC_DSTORE_INDEX" ] && idx_files+=( "$QC_DSTORE_INDEX" )

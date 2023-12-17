@@ -256,16 +256,17 @@ created in `~/.qc/index`.
 
 _Host-Local Index Files_
 
-All the above index file types can also be defined as being host-local. This is
-useful if the home directory is shared between different machines and an index
-should only be created and searched on a special host.
+All the above index file types can also be defined as being host-local by
+prefixing it with the host name and a '/'. This is useful if the home directory
+is shared between different machines and an index should only be created and
+searched on a special host.
 
-The name of a host-local index is like mentioned above, but with
-`.host.<hostname>` appended. The host name must be given in lower case. It is
-also possible to use the environment variable `$HOSTNAME` here.
+The name of a host-local index is like mentioned above, but with a prefix of
+`<hostname>/`. E.g. `pluto/data.index` creates the index only on a host named
+"pluto".
 
-E.g. The index file named `data.index.host.pluto` is only updated and searched
-on a machine with the host name "pluto".
+Instead of a actual host name, the variable `$HOSTNAME` can be used. Then the
+index will be created on every host. E.g.: `$HOSTNAME/test.index`
 
 
 ##### Options

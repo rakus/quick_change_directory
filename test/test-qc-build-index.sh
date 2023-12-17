@@ -32,7 +32,7 @@ clear_test_dirs()
         rm -rf "${TEST_DIRECTORY:?}"/tree
     fi
     if [ -d "$QC_DIR_INDEX" ]; then
-        rm "$QC_DIR_INDEX"/*.index*
+        rm -f "$QC_DIR_INDEX"/*.index* "$QC_DIR_INDEX"/*/*.index*
     fi
 }
 create_dirs()
@@ -78,13 +78,13 @@ test.index.hidden "$TEST_DIRECTORY/tree" -- .qc ignore
 test.index.ext "$TEST_DIRECTORY/tree"
 test-with-hidden.index.ext -h "$TEST_DIRECTORY/tree"
 ignore.index -f '*/ignore' -f '*/ignore/*'  "$TEST_DIRECTORY/tree"
-host-local.index.ext.host.\$HOSTNAME -h "$TEST_DIRECTORY/tree"
-host-local.index.hidden.host.\$HOSTNAME "$TEST_DIRECTORY/tree" -- .ignore ignore
+\$HOSTNAME/host-local.index.ext -h "$TEST_DIRECTORY/tree"
+\$HOSTNAME/host-local.index.hidden "$TEST_DIRECTORY/tree" -- .ignore ignore
 EOF
 
 
     # delete all indexes (if they exist)
-    rm -f "$QC_DIR_INDEX/"*.index*
+    rm -f "$QC_DIR_INDEX/"*.index* "$QC_DIR_INDEX/"*/*.index*
 
     echo
     echo "Build index"
@@ -94,8 +94,8 @@ EOF
     check_lines "extended index" "test.index.ext" 23
     check_lines "extended index with hidden" "test-with-hidden.index.ext" 45
     check_lines "filtered index" "ignore.index" 2
-    check_lines "host-local extended index" "host-local.index.ext.host.$LC_HOSTNAME" 45
-    check_lines "host-local hidden index" "host-local.index.hidden.host.$LC_HOSTNAME" 18
+    check_lines "host-local extended index" "$LC_HOSTNAME/host-local.index.ext" 45
+    check_lines "host-local hidden index" "$LC_HOSTNAME/host-local.index.hidden" 18
 
     echo
     echo "Incremental update index"
@@ -109,7 +109,7 @@ EOF
 
     echo
     echo "Don't update extended index"
-    rm   "$QC_DIR_INDEX/"*.index.ext*
+    rm   "$QC_DIR_INDEX/"*.index.ext* "$QC_DIR_INDEX/$LC_HOSTNAME/"*.index.ext*
     build_index -E
     echo -n "Extended index not created"
     if [ -e "$QC_DIR_INDEX/test.index.ext" ]; then
@@ -118,7 +118,7 @@ EOF
         OK
     fi
     echo -n "Host-local extended index not created"
-    if [ -e "$QC_DIR_INDEX/host-local.index.ext.host.$LC_HOSTNAME" ]; then
+    if [ -e "$QC_DIR_INDEX/$LC_HOSTNAME/host-local.index.ext" ]; then
         ERROR
     else
         OK
@@ -126,7 +126,7 @@ EOF
 
     echo
     echo "Don't create hidden index"
-    rm   "$QC_DIR_INDEX/"*.index.hidden*
+    rm   "$QC_DIR_INDEX/"*.index.hidden* "$QC_DIR_INDEX/$LC_HOSTNAME/"*.index.hidden*
     build_index -H
     echo -n "Hidden index not created"
     if [ -e "$QC_DIR_INDEX/test.index.hidden" ]; then
@@ -135,7 +135,7 @@ EOF
         OK
     fi
     echo -n "Host-local hidden index not created"
-    if [ -e "$QC_DIR_INDEX/host-local.index.hidden.host.$LC_HOSTNAME" ]; then
+    if [ -e "$QC_DIR_INDEX/$LC_HOSTNAME/host-local.index.hidden" ]; then
         ERROR
     else
         OK
@@ -143,7 +143,7 @@ EOF
 
     echo
     echo "Only create create index by name 'ignore'"
-    rm   "$QC_DIR_INDEX/"*.index*
+    rm -f "$QC_DIR_INDEX/"*.index* "$QC_DIR_INDEX/$LC_HOSTNAME/"*.index*
     build_index ignore
     echo -n "Only ignore.index created"
     if [ "$(ls "$QC_DIR_INDEX/"*.index*)" = "$QC_DIR_INDEX/ignore.index" ]; then

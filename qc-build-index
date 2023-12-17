@@ -145,9 +145,8 @@ build_index()
     typeset idx_name=$1
     shift
 
-    if [ "$idx_name" != "$(basename "$idx_name")" ]; then
-        echo >&2 "ERROR: Index name must be a plain filename: $idx_name"
-        return 1
+    if [[ "$idx_name" = */* ]]; then
+        mkdir -p "$QC_DIR_INDEX/$(dirname "$idx_name")"
     fi
 
     # global variable used by build_index_using_fd and build_index_using_find
@@ -221,8 +220,7 @@ build_index()
     fi
 
     case "$idx_name" in
-        *.index.hidden) ;&
-        *.index.hidden.host.$HOSTNAME)
+        *.index.hidden)
             hidden_only=true
             ;;
         *) : ;;
@@ -514,20 +512,25 @@ configure_crontab()
 
 check_unknown_index_files()
 {
+    typeset -l HOSTNAME="$HOSTNAME"
+
     typeset -a find_args
     find_args+=( \( -not -name \*~ \) )
     find_args+=( -and )
     find_args+=( -type f )
     find_args+=( -and )
-    find_args+=( \( -name \*.index -o -name \*.index.hidden -o -name \*.index.ext )
-    find_args+=( -o -name \*.index.host.\* -o -name \*.index.hidden.host.\* -o -name \*.index.ext.host.\* \) )
+    find_args+=( \( -name \*.index -o -name \*.index.hidden -o -name \*.index.ext \) )
 
-    mapfile -d$'\n' -t existing_idx_files < <( find "$QC_DIR_INDEX" -maxdepth 1 "${find_args[@]}" -printf "%f\n" )
+    mapfile -d$'\n' -t existing_idx_files < <(find "$QC_DIR_INDEX" -maxdepth 2 "${find_args[@]}" -printf "%P\n" )
+    #if [ -d "$QC_DIR_INDEX/$HOSTNAME" ]; then
+    #    mapfile -d$'\n' -t -O "${#existing_idx_files[@]}" existing_idx_files < <(find "$QC_DIR_INDEX/$HOSTNAME" -maxdepth 1 "${find_args[@]}" -printf "$HOSTNAME/%f\n" )
+
+    #fi
 
     mapfile -d$'\n' -t configured_idx_files < <( grep -v '^[[:space:]]*\(#.*\)\?$' "$CFG_FILE" | sed 's/^[[:space:]]*//' | cut -d' ' -f1 )
 
     for c in "${configured_idx_files[@]}"; do
-        c="${c/%\$HOSTNAME/*}"
+        c="${c/#\$HOSTNAME/*}"
         for idx in "${!existing_idx_files[@]}"; do
             # shellcheck disable=SC2053
             if [[ "${existing_idx_files[$idx]}" = $c ]]; then
@@ -544,18 +547,23 @@ check_unknown_index_files()
         done
     fi
 
+
     find_args=()
     find_args+=( \( )
     for c in "${configured_idx_files[@]}"; do
-        c="${c/%\$HOSTNAME/*}"
-        find_args+=( -name "$c" )
-        find_args+=( -o )
+        if [[ "$c" != */* ]]; then
+            find_args+=( -name "$c" )
+        else
+            xxx="$QC_DIR_INDEX/$c"
+            xxx="${xxx/\$HOSTNAME/*}"
+            find_args+=( -wholename "$xxx" )
+        fi
+            find_args+=( -o )
     done
     unset "find_args[-1]"
     find_args+=( \) )
 
-
-    mapfile -d$'\n' -t old_idx_files < <( find "$QC_DIR_INDEX" -maxdepth 1 "${find_args[@]}" -mtime +7 -printf "%f\n" )
+    mapfile -d$'\n' -t old_idx_files < <(find "$QC_DIR_INDEX" -maxdepth 2 "${find_args[@]}" -mtime +7 -printf "%P\n" )
 
     if [ "${#old_idx_files[@]}" -ne 0 ]; then
         echo
@@ -681,28 +689,44 @@ while IFS= read -r line; do
     if [ -n "${ignExt:-}" ]; then
         case "${idx_args[0]}" in
             *.index.ext) continue ;;
-            *.index.ext.host.$HOSTNAME) continue ;;
         esac
     fi
 
     if [ -n "${ignHidden:-}" ]; then
         case "${idx_args[0]}" in
             *.index.hidden) continue ;;
-            *.index.hidden.host.$HOSTNAME) continue ;;
         esac
     fi
 
+    if [[ "${idx_args[0]}" = *.host.* ]]; then
+        typeset new_def_line
+        # shellcheck disable=SC2001
+        new_def_line="$(echo "$line" | sed "s%^\([^ ]*\).host.\([^ ]*\)%\2/\1%")"
+
+        printf >&2 '%s[%d] Legacy host local index found - replace line %d with "%s"\n' "$CFG_FILE" "$lno" "$lno" "$new_def_line"
+
+        # shellcheck disable=SC2001
+        idx_args[0]="$(echo "${idx_args[0]}" | sed "s%^\([^ ]*\).host.\([^ ]*\)$%\2/\1%")"
+        printf >&2 '%s[%d] Legacy host local index name auto-corrected to "%s"\n' "$CFG_FILE" "$lno" "${idx_args[0]}"
+    fi
+
+
     case "${idx_args[0]}" in
-        *.index?(.ext|.hidden) ) : ;;
-        *.index?(.ext|.hidden).host.$HOSTNAME ) : ;;
-        *.index?(.ext|.hidden).host.*[A-Z]* )
-            printf >&2 '%s[%d] Hostname contains upper case char(s) - ignoring %s\n' "$CFG_FILE" "$lno" "${idx_args[0]}"
+        *[A-Z]*/*.index?(.ext|.hidden) )
+            printf >&2 '%s[%d] Hostname contains upper case char(s) - ignoring index "%s"\n' "$CFG_FILE" "$lno" "${idx_args[0]}"
             continue
             ;;
-        *.index?(.ext|.hidden).host.* )
+        */*/*)
+            printf >&2 '%s[%d] Multiple "/" found - ignoring index "%s"\n' "$CFG_FILE" "$lno" "${idx_args[0]}"
+            continue
+            ;;
+        $HOSTNAME/*.index?(.ext|.hidden) ) : ;;
+        */*.index?(.ext|.hidden) )
             continue # silently ignore index with other host name
             ;;
-        *) printf >&2 '%s[%d] Ignoring invalid index name %s\n' "$CFG_FILE" "$lno" "${idx_args[0]}"
+        *.index?(.ext|.hidden) ) : ;;
+
+        *) printf >&2 '%s[%d] Ignoring invalid index name "%s"\n' "$CFG_FILE" "$lno" "${idx_args[0]}"
             continue
             ;;
     esac
