@@ -52,29 +52,32 @@ fi
 show_help()
 {
     echo "USAGE:"
-    echo "   $script_name [-H] [-E] [-i dir] [index...]"
+    echo "   $script_name [-n name] [-H] [-E] [-i dir] [index...]"
     echo "   $script_name --cron [minutes]"
     echo ""
-    echo "   -H      Don't update hidden index(es)."
+    echo "   -n name  Label the update run. Used as label when configuring crontab"
+    echo "            when creating entries with option '--cron"
     echo ""
-    echo "   -E      Don't update extension index(es)."
+    echo "   -H       Don't update hidden index(es)."
     echo ""
-    echo "   -i dir  Incremental update the given dir in the affected index(es)."
-    echo "           Indexes that does not contain the dir are not touched."
+    echo "   -E       Don't update extension index(es)."
     echo ""
-    echo "   index   Name of the indexes that should be updated. The given names are"
-    echo "           matched against the index names. So 'home' will match home.index"
-    echo "           and 'home.hidden.index.ext'."
-    echo "           To only update extension indexes use '*.ext'."
+    echo "   -i dir   Incremental update the given dir in the affected index(es)."
+    echo "            Indexes that does not contain the dir are not touched."
+    echo ""
+    echo "   index    Name of the indexes that should be updated. The given names are"
+    echo "            matched against the index names. So 'home' will match home.index"
+    echo "            and 'home.hidden.index.ext'."
+    echo "            To only update extension indexes use '*.ext'."
     echo ""
     echo "   --cron [minutes]"
-    echo "           Configure crontab to run $script_name."
-    echo "           minutes:"
-    echo "             not given: Lists current crontab config."
-    echo "             0:         Removes $script_name from crontab."
-    echo "             1 - 30:    Configures to run on the full hour and every multiple"
-    echo "                        of given minutes. E.g. for '12' it will run at "
-    echo "                        *:00, *:12, *:24, *:36 and *:48."
+    echo "            Configure crontab to run $script_name."
+    echo "            minutes:"
+    echo "              not given: Lists current crontab config."
+    echo "              0:         Removes $script_name from crontab."
+    echo "              1 - 30:    Configures to run on the full hour and every multiple"
+    echo "                         of given minutes. E.g. for '12' it will run at "
+    echo "                         *:00, *:12, *:24, *:36 and *:48."
     echo ""
 }
 
@@ -476,10 +479,12 @@ configure_crontab()
         echo "ERROR: Command 'crontab' not available"
         return 1
     fi
-    local cron_label="# Quick Change Directory: update index"
+
+    local job_name="default update"
+    local cron_label="# Quick Change Directory: $job_name"
 
     if [ -z "${1:-}" ]; then
-        crontab -l 2>/dev/null | grep "$cron_label\|$script_name"
+        crontab -l 2>/dev/null | grep "^$cron_label$\|\($script_name -n \"$job_name\"\)"
         return 0
     fi
     if [ -n "${1//[0-9]/}" ]; then
@@ -490,14 +495,14 @@ configure_crontab()
     # shellcheck disable=SC2086 # minutes is a int number
     if [ $minutes -eq 0 ] ; then
         echo "Removing $script_name from crontab"
-        crontab -l 2>/dev/null | grep -v "$cron_label\|$script_name" | crontab -
+        crontab -l 2>/dev/null | grep -v "^$cron_label$\|\($script_name -n \"$job_name\"\)" | crontab -
         return
     elif [ $minutes -lt 1 ] || [ $minutes -gt 30 ]; then
         echo >&2 "ERROR: Minutes value for '--cron' out of range 1-30"
         return 1
     fi
 
-    local exe="${script_file/#$HOME/\${HOME\}}"
+    local exe="${script_file/#$HOME/\${HOME\}} -n \"$job_name\""
     local log_file="$QC_DIR_LOG/qc-build-index.log"
     log_file="${log_file/#$HOME/\${HOME\}}"
 
@@ -507,7 +512,7 @@ configure_crontab()
     echo "$cron_label"
     echo "$cron_entry"
 
-    (crontab -l 2>/dev/null | grep -v "$cron_label" | grep -v "$script_name"; echo "$cron_label"; echo "$cron_entry") | crontab -
+    (crontab -l 2>/dev/null | grep -v "^$cron_label$\|\($script_name -n \"$job_name\"\)"; echo "$cron_label"; echo "$cron_entry") | crontab -
 }
 
 check_unknown_index_files()
@@ -582,7 +587,7 @@ trap "cleanup" EXIT
 
 typeset -a inc_upd=()
 
-if ! _args="$(getopt -n "$script_name" -o "i:HE" --long "help,version,cron" -- "$@")"; then
+if ! _args="$(getopt -n "$script_name" -o "n:i:HE" --long "help,version,cron" -- "$@")"; then
     echo >&2 "Try '$script_name --help' for more information."
     exit 1
 fi
@@ -590,6 +595,10 @@ eval "set -- $_args"
 
 while true; do
     case $1 in
+        -n)
+            shift
+            job_name="$1"
+            ;;
         -i)
             shift
             d=$1
@@ -649,6 +658,9 @@ if [ ! -e "$CFG_FILE" ]; then
     copy_default_config
 fi
 
+if [ -n "${job_name:-}" ]; then
+    echo "Update: $job_name"
+fi
 if [[ -n "${QC_USE_FIND:-}" || -z "$FD_CMD" ]]; then
     echo "Using find command"
     QC_USE_FIND=true

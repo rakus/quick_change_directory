@@ -343,11 +343,19 @@ The command `qc` has a own option to manipulate the crontab. With
 
 the following entry is added to the crontab
 
-    # Quick Change Directory: update index
-    */10 * * * * ${HOME}/.qc/qc-build-index >${HOME}/.qc/index/qc-build-index.log 2>&1
+    # Quick Change Directory: default update
+    */10 * * * * ${HOME}/.qc/qc-build-index -n "default update" >${HOME}/.qc/index/qc-build-index.log 2>&1
 
 With `qc --cron` the current crontab entry is shown and with `qc --cron 0` the
 entry is removed.
+
+**NOTES**
+
+* If you want to add other custom crontab entries for qc-build-index, use a
+  different name than "default update" (in the comment and for the `-n` option),
+  so the entry won't be processed by `qc --cron`.
+* Older versions of qc created a slightly different entry in crontab, that is
+  not detected by the current version. Use `crontab -e` to clean that up.
 
 
 ### The Manual Index
