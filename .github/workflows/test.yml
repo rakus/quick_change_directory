@@ -57,3 +57,17 @@ jobs:
         shell: bash
         run: |
           test/run.sh all
+
+  test-macos:
+
+    runs-on: macos-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install GNU Tools, fd and ksh
+        run: brew install bash gnu-getopt coreutils findutils grep gnu-sed fd ksh93
+
+      - name: Run Tests
+        run: make test
+

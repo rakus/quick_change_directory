@@ -18,6 +18,26 @@ QC_DIR_INDEX="$QC_DIR/index"
 
 CFG_FILE="$QC_DIR_CFG/qc-index.cfg"
 
+if [ "$(uname)" = "Darwin" ]; then
+    if [ -z "${HOMEBREW_PREFIX:-}" ]; then
+        HOMEBREW_PREFIX="$(dirname "$(dirname "$(command -v brew)")")"
+        if [ ! -d "$HOMEBREW_PREFIX/Cellar" ]; then
+            # Ok, call brew as last resort (slow)
+            HOMEBREW_PREFIX="$(brew --prefix)"
+        fi
+    fi
+    PATH="$HOMEBREW_PREFIX/opt/gnu-getopt/bin:$PATH"
+    export PATH
+
+    shopt -s expand_aliases
+
+    alias grep=ggrep
+    alias sed=gsed
+    alias stat=gstat
+    alias readlink=greadlink
+    alias wc=gwc
+fi
+
 # Manual index file storing directory names and bookmarked directories. This
 # file is managed using the command 'dstore'.
 QC_DSTORE_INDEX=$QC_DIR_DATA/index.dstore

@@ -38,6 +38,26 @@ CFG_FILE="$QC_DIR_CFG/qc-index.cfg"
 
 typeset -a TMP_FILES=()
 
+if [ "$(uname)" = "Darwin" ]; then
+    if [ -z "${HOMEBREW_PREFIX:-}" ]; then
+        HOMEBREW_PREFIX="$(dirname "$(dirname "$(command -v brew)")")"
+        if [ ! -d "$HOMEBREW_PREFIX/Cellar" ]; then
+            # Ok, call brew as last resort (slow)
+            HOMEBREW_PREFIX="$(brew --prefix)"
+        fi
+    fi
+    PATH="$HOMEBREW_PREFIX/opt/gnu-getopt/bin:$PATH"
+    export PATH
+
+    shopt -s expand_aliases
+
+    alias grep=ggrep
+    alias sed=gsed
+    alias find=gfind
+    alias readlink=greadlink
+    alias wc=gwc
+fi
+
 # Detect the fd executable name. On Debian/Ubuntu the executable is named
 # 'fdfind' to prevent a name clash with another tool (package fdclone).
 FD_CMD="$(command -v fdfind)"

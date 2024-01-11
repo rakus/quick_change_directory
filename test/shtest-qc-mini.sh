@@ -42,6 +42,11 @@ g2re()
 
 startTest "qc_mini"
 
+if [ "$(uname)" = "Darwin" ]; then
+    echo "qc_mini not compatible with MacOS/Darwin"
+    skipTest
+fi
+
 if [ -z "${TEST_SHELL:-}" ]; then
     if [ -n "${BASH_VERSION:-}" ]; then
         TEST_SHELL="bash"
