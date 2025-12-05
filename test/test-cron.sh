@@ -48,7 +48,7 @@ fi
 
 printf "Remove cron entry"
 qc-build-index --cron 0 >/dev/null
-if [ -z "$(qc-build-index --cron >/dev/null)" ]; then
+if [ -z "$(qc-build-index --cron)" ]; then
     OK
 else
     ERROR
@@ -72,7 +72,7 @@ fi
 # remove entry
 printf "Remove cron entry again"
 qc-build-index --cron 0 >/dev/null
-if [ -z "$(qc-build-index --cron >/dev/null)" ]; then
+if [ -z "$(qc-build-index --cron)" ]; then
     OK
 else
     ERROR
