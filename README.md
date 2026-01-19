@@ -11,7 +11,6 @@ It creates a index file with all directories from a directory tree and
 then searches this index to find the directory to change to. The creation of the
 index is configurable and multiple indexes can be created.
 
-
 ## Searching and changing directories
 
 Prerequisite for searching for directories is that an index is created. The
@@ -450,6 +449,21 @@ The following files are distributed:
 | `qc-index.cfg`              | Defines indexes to create.                       | `~/.qc/qc-index.cfg`   |
 | `qc_mini`                   | Minimal version of qc. See [QC Mini](#qc-mini).  | Not installed          |
 
+### Preparation for macOS
+
+On macOS additional GNU tools have to be installed, as the available BSD tools
+are missing some features, that Quick Change Directory needs.
+
+    brew install bash gnu-getopt coreutils findutils grep gnu-sed fd
+
+The qc-related scripts detect macOS and then use the GNU tools installed via
+Homebrew. E.g. they use `ggrep` instead of `grep`.
+
+The performance should be better when the environment variable `HOMEBREW_PREFIX`
+is set. See the man page of brew and search for "shellenv" or add the following
+to you profile (`~/.zprofile` or `~/.bash_profile`):
+
+    export HOMEBREW_PREFIX="$(brew --prefix)"
 
 ### I don't want to install -- just test it
 
@@ -566,6 +580,7 @@ Differences:
 * Limited expressions (`**` not supported).
 * Search is always case-sensitive (even labels).
 * Command line completion had little testing.
+* Not ported to macOS.
 * Help for `qc` and `dstore` can be displayed with `-h`.
 
 ----

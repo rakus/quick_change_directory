@@ -14,6 +14,7 @@ script_dir="$(cd "$(dirname "$0")" && pwd)" || exit 1
 set -u
 
 if [ -n "${BASH_VERSION:-}" ]; then
+    # shellcheck disable=SC3044 # only executed in bash
     shopt -s expand_aliases
 fi
 
